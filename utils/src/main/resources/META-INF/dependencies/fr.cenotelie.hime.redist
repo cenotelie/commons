@@ -1,0 +1,7 @@
+type = Java Library
+name = Hime Runtime
+version = 3.2.2
+copyright = Copyright (c) 2017 Association Cénotélie
+link = https://cenotelie.fr/hime
+licenseName = LGPL v3
+licenseText = /META-INF/dependencies/fr.cenotelie.hime.redist.license
