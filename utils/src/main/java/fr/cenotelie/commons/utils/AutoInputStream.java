@@ -108,31 +108,30 @@ public class AutoInputStream extends InputStream {
      *
      * @param charset The detected charset
      * @param prefix  The prefix for the stream
-     * @return The detected charset
      */
-    private Charset doSetup(Charset charset, int[] prefix) {
+    private void doSetup(Charset charset, int[] prefix) {
         this.charset = charset;
         this.prefix = prefix;
         this.index = 0;
-        return charset;
     }
 
     /**
      * Detects the encoding of the steam
      *
-     * @return The detected charset
      * @throws IOException When reading fails
      */
-    private Charset doDetectEncoding() throws IOException {
+    private void doDetectEncoding() throws IOException {
         int b0 = stream.read();
         if (b0 == -1) {
             // steam was empty
-            return doSetup(IOUtils.CHARSET, null);
+            doSetup(IOUtils.CHARSET, null);
+            return;
         }
         int b1 = stream.read();
         if (b1 == -1) {
             // stream contained just one byte
-            return doSetup(IOUtils.CHARSET, new int[]{b1});
+            doSetup(IOUtils.CHARSET, new int[]{b1});
+            return;
         }
 
         if (b0 == BOM_UTF8[0] && b1 == BOM_UTF8[1]) {
@@ -140,19 +139,23 @@ public class AutoInputStream extends InputStream {
             int b2 = stream.read();
             if (b2 == -1) {
                 // weird, the stream ended here, assume that was not BOM
-                return doSetup(IOUtils.CHARSET, new int[]{b0, b1});
+                doSetup(IOUtils.CHARSET, new int[]{b0, b1});
+                return;
             }
             if (b2 == BOM_UTF8[2]) {
                 // this is the UTF-8 BOM
-                return doSetup(IOUtils.UTF8, null);
+                doSetup(IOUtils.UTF8, null);
+                return;
             }
             // starts as UTF-8 BOM, but was not, assume that was not BOM
-            return doSetup(IOUtils.CHARSET, new int[]{b0, b1, b2});
+            doSetup(IOUtils.CHARSET, new int[]{b0, b1, b2});
+            return;
         }
 
         if (b0 == BOM_UTF16_BE[0] && b1 == BOM_UTF16_BE[1]) {
             // matched the UTF-16 BE BOM
-            return doSetup(Charset.forName("UTF-16BE"), null);
+            doSetup(Charset.forName("UTF-16BE"), null);
+            return;
         }
 
         if (b0 == BOM_UTF32_BE[0] && b1 == BOM_UTF32_BE[1]) {
@@ -160,49 +163,59 @@ public class AutoInputStream extends InputStream {
             int b2 = stream.read();
             if (b2 == -1) {
                 // weird, the stream ended here, assume that was not BOM
-                return doSetup(IOUtils.CHARSET, new int[]{b0, b1});
+                doSetup(IOUtils.CHARSET, new int[]{b0, b1});
+                return;
             }
             if (b2 != BOM_UTF32_BE[2]) {
                 // starts as UTF-32 BE, but was not, assume that was not BOM
-                return doSetup(IOUtils.CHARSET, new int[]{b0, b1, b2});
+                doSetup(IOUtils.CHARSET, new int[]{b0, b1, b2});
+                return;
             }
             int b3 = stream.read();
             if (b3 == -1) {
                 // weird, the stream ended here, assume that was not BOM
-                return doSetup(IOUtils.CHARSET, new int[]{b0, b1, b2});
+                doSetup(IOUtils.CHARSET, new int[]{b0, b1, b2});
+                return;
             }
             if (b3 != BOM_UTF32_BE[3]) {
                 // starts as UTF-32 BE, but was not, assume that was not BOM
-                return doSetup(IOUtils.CHARSET, new int[]{b0, b1, b2, b3});
+                doSetup(IOUtils.CHARSET, new int[]{b0, b1, b2, b3});
+                return;
             }
             // matched the UTF-32 BE BOM
-            return doSetup(Charset.forName("UTF-32BE"), null);
+            doSetup(Charset.forName("UTF-32BE"), null);
+            return;
         }
 
         if (b0 != BOM_UTF16_LE[0] || b1 != BOM_UTF16_LE[1]) {
             // not a BOM
-            return doSetup(IOUtils.CHARSET, new int[]{b0, b1});
+            doSetup(IOUtils.CHARSET, new int[]{b0, b1});
+            return;
         }
         // starts as UTF-16 LE BOM
         int b2 = stream.read();
         if (b2 == -1) {
             // was a UTF-16 LE BOM alone
-            return doSetup(Charset.forName("UTF-16LE"), null);
+            doSetup(Charset.forName("UTF-16LE"), null);
+            return;
         }
         if (b2 != BOM_UTF32_LE[2]) {
             // not continuing as a UTF-32 LE BOM
-            return doSetup(Charset.forName("UTF-16LE"), new int[]{b2});
+            doSetup(Charset.forName("UTF-16LE"), new int[]{b2});
+            return;
         }
         int b3 = stream.read();
         if (b3 == -1) {
             // was a UTF-16 LE BOM followed by b2
-            return doSetup(Charset.forName("UTF-16LE"), new int[]{b2});
+            doSetup(Charset.forName("UTF-16LE"), new int[]{b2});
+            return;
         }
         if (b3 != BOM_UTF32_LE[3]) {
             // was a UTF-16 LE BOM followed by b2 and b3
-            return doSetup(Charset.forName("UTF-16LE"), new int[]{b2, b3});
+            doSetup(Charset.forName("UTF-16LE"), new int[]{b2, b3});
+            return;
         }
         // is a UTF-32 LE BOM
-        return doSetup(Charset.forName("UTF-32LE"), null);
+        doSetup(Charset.forName("UTF-32LE"), null);
     }
 }
