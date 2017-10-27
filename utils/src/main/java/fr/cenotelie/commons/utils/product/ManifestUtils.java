@@ -30,6 +30,64 @@ import java.util.jar.Manifest;
  */
 public class ManifestUtils {
     /**
+     * The symbolic name of the bundle
+     */
+    public static final String BUNDLE_SYMBOLIC_NAME = "Bundle-SymbolicName";
+    /**
+     * The human-readable name of the bundle
+     */
+    public static final String BUNDLE_NAME = "Bundle-Name";
+    /**
+     * The description of the bundle
+     */
+    public static final String BUNDLE_DESCRIPTION = "Bundle-Description";
+    /**
+     * The version of the bundle
+     */
+    public static final String BUNDLE_VERSION = "Bundle-Version";
+    /**
+     * The bundle's vendor
+     */
+    public static final String BUNDLE_VENDOR = "Bundle-Vendor";
+    /**
+     * The URL to the bundle's documentation
+     */
+    public static final String BUNDLE_DOCURL = "Bundle-DocURL";
+    /**
+     * The user that built this bundle
+     */
+    public static final String BUILTBY = "Built-By";
+
+    /**
+     * The list of embedded dependencies in this bundle
+     */
+    public static final String X_DEPENDENCIES = "Bundle-Dependencies";
+    /**
+     * The URL to the product description for this bundle
+     */
+    public static final String X_PRODUCT_LINK = "Bundle-Product-Link";
+    /**
+     * The name if the license for this bundle
+     */
+    public static final String X_LICENSE_NAME = "Bundle-License-Name";
+    /**
+     * The resource that contains the license for this bundle
+     */
+    public static final String X_LICENSE_RESOURCE = "Bundle-License-Resource";
+    /**
+     * The hash of the commit in the SCM that was used to build this bundle
+     */
+    public static final String X_SCM_TAG = "Bundle-SCM-Tag";
+    /**
+     * The tag of the build that produced this bundle
+     */
+    public static final String X_BUILD_TAG = "Bundle-Build-Tag";
+    /**
+     * The timestamp when this bundle was built
+     */
+    public static final String X_BUILD_TIMESTAMP = "Bundle-Build-Timestamp";
+
+    /**
      * Gets the manifest for the jar of the specified type
      *
      * @param type A type

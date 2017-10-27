@@ -45,7 +45,7 @@ public class HttpConnection implements Closeable {
     /**
      * The default user agent
      */
-    public static final String USER_AGENT_DEFAULT = "Mozilla/5.0 (X11; Linux x86_64) xOWL/1.0";
+    public static final String USER_AGENT_DEFAULT = "Mozilla/5.0 (X11; Linux x86_64) HttpConnection/1.0";
 
     /**
      * Represents a trust manager that accepts all certificates

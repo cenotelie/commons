@@ -26,11 +26,11 @@ public interface DocumentAnalyzer extends DocumentService {
     /**
      * The error code for a complete failure of the parser to produce output
      */
-    String CODE_PARSER_FAILURE = "xowl-0";
+    String CODE_PARSER_FAILURE = "lsp-0";
     /**
      * The error code for parsing errors
      */
-    String CODE_PARSING_ERROR = "xowl-1";
+    String CODE_PARSING_ERROR = "lsp-1";
 
     /**
      * Analyzes this document

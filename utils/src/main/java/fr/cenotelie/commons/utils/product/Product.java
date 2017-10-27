@@ -92,18 +92,18 @@ public class Product implements Serializable {
         Manifest manifest = ManifestUtils.getManifest(type);
         this.identifier = identifier;
         this.name = name;
-        this.description = manifest.getMainAttributes().getValue("Bundle-Description");
+        this.description = manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_DESCRIPTION);
         this.version = new VersionInfo(manifest);
         this.iconName = null;
         this.iconContent = null;
-        this.vendor = manifest.getMainAttributes().getValue("Bundle-Vendor");
+        this.vendor = manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_VENDOR);
         this.copyright = "Copyright (c) " + vendor;
-        this.vendorLink = manifest.getMainAttributes().getValue("Bundle-DocURL");
-        this.link = manifest.getMainAttributes().getValue("XOWL-Product-Link");
+        this.vendorLink = manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_DOCURL);
+        this.link = manifest.getMainAttributes().getValue(ManifestUtils.X_PRODUCT_LINK);
         this.license = new LicenseEmbedded(
-                manifest.getMainAttributes().getValue("XOWL-License-Name"),
+                manifest.getMainAttributes().getValue(ManifestUtils.X_LICENSE_NAME),
                 type,
-                manifest.getMainAttributes().getValue("XOWL-License-Resource")
+                manifest.getMainAttributes().getValue(ManifestUtils.X_LICENSE_RESOURCE)
         );
     }
 
@@ -115,20 +115,20 @@ public class Product implements Serializable {
      */
     public Product(Class<?> type) throws IOException {
         Manifest manifest = ManifestUtils.getManifest(type);
-        this.identifier = manifest.getMainAttributes().getValue("Bundle-SymbolicName");
-        this.name = manifest.getMainAttributes().getValue("Bundle-Name");
-        this.description = manifest.getMainAttributes().getValue("Bundle-Description");
+        this.identifier = manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_SYMBOLIC_NAME);
+        this.name = manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_NAME);
+        this.description = manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_DESCRIPTION);
         this.version = new VersionInfo(manifest);
         this.iconName = null;
         this.iconContent = null;
-        this.vendor = manifest.getMainAttributes().getValue("Bundle-Vendor");
+        this.vendor = manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_VENDOR);
         this.copyright = "Copyright (c) " + vendor;
-        this.vendorLink = manifest.getMainAttributes().getValue("Bundle-DocURL");
-        this.link = manifest.getMainAttributes().getValue("XOWL-Product-Link");
+        this.vendorLink = manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_DOCURL);
+        this.link = manifest.getMainAttributes().getValue(ManifestUtils.X_PRODUCT_LINK);
         this.license = new LicenseEmbedded(
-                manifest.getMainAttributes().getValue("XOWL-License-Name"),
+                manifest.getMainAttributes().getValue(ManifestUtils.X_LICENSE_NAME),
                 type,
-                manifest.getMainAttributes().getValue("XOWL-License-Resource")
+                manifest.getMainAttributes().getValue(ManifestUtils.X_LICENSE_RESOURCE)
         );
     }
 

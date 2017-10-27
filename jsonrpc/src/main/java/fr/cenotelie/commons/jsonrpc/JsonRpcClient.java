@@ -33,19 +33,19 @@ public interface JsonRpcClient {
      */
     ApiError ERROR_RESPONSE_PARSING = new ApiError(0x0001,
             "Error while parsing the response",
-            "http://cenotelie.fr/xowl/support/jsonrpc/errors/0x0001.html");
+            "http://cenotelie.fr/commons/support/jsonrpc/errors/0x0001.html");
     /**
      * Error when the response object is not valid
      */
     ApiError ERROR_INVALID_RESPONSE = new ApiError(0x0002,
             "Invalid response",
-            "http://cenotelie.fr/xowl/support/jsonrpc/errors/0x0002.html");
+            "http://cenotelie.fr/commons/support/jsonrpc/errors/0x0002.html");
     /**
      * Error when a context is missing while de-serializing
      */
     ApiError ERROR_MISSING_CONTEXT = new ApiError(0x0003,
             "Missing context while de-serializing",
-            "http://cenotelie.fr/xowl/support/jsonrpc/errors/0x0003.html");
+            "http://cenotelie.fr/commons/support/jsonrpc/errors/0x0003.html");
 
     /**
      * Gets the next unique identifier for a request

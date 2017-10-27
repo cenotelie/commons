@@ -29,7 +29,7 @@ import java.util.List;
  */
 public class IOUtils {
     /**
-     * The line separator for all xOWL IO operations
+     * The line separator for all IO operations
      */
     public static final String LINE_SEPARATOR = "\n";
     /**
@@ -37,7 +37,7 @@ public class IOUtils {
      */
     public static final Charset UTF8 = Charset.forName("UTF-8");
     /**
-     * The charset to use for xOWL
+     * The default charset
      */
     public static final Charset CHARSET = UTF8;
     /**
@@ -132,7 +132,7 @@ public class IOUtils {
      * @throws IOException When reading failed
      */
     public static Reader getAutoReader(File file) throws IOException {
-        return new InputStreamReader(new FileInputStream(file));
+        return new AutoReader(new FileInputStream(file));
     }
 
     /**

@@ -196,7 +196,7 @@ public interface HttpConstants {
     /**
      * The boundary to be used for multipart HTTP requests and responses
      */
-    String MULTIPART_BOUNDARY = "xowl_boundary";
+    String MULTIPART_BOUNDARY = "cenotelie_boundary";
     /**
      * The MIME content type for plain text
      */

@@ -55,11 +55,11 @@ public class VersionInfo implements Serializable {
      * @param manifest The original manifest
      */
     public VersionInfo(Manifest manifest) {
-        this.number = manifest.getMainAttributes().getValue("Bundle-Version");
-        this.scmTag = manifest.getMainAttributes().getValue("XOWL-SCM-Tag");
-        this.buildUser = manifest.getMainAttributes().getValue("Built-By");
-        this.buildTag = manifest.getMainAttributes().getValue("XOWL-Build-Tag");
-        this.buildTimestamp = manifest.getMainAttributes().getValue("XOWL-Build-Timestamp");
+        this.number = manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_VERSION);
+        this.scmTag = manifest.getMainAttributes().getValue(ManifestUtils.X_SCM_TAG);
+        this.buildUser = manifest.getMainAttributes().getValue(ManifestUtils.BUILTBY);
+        this.buildTag = manifest.getMainAttributes().getValue(ManifestUtils.X_BUILD_TAG);
+        this.buildTimestamp = manifest.getMainAttributes().getValue(ManifestUtils.X_BUILD_TIMESTAMP);
     }
 
     /**

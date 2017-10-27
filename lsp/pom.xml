@@ -10,7 +10,7 @@
     <version>1.0.1-SNAPSHOT</version>
     <name>Cénotélie Commons - Language Server Protocol</name>
     <description>Base implementation of the Language Server Protocol</description>
-    <url>https://xowl.org/</url>
+    <url>https://cenotelie.fr/</url>
     <dependencies>
         <dependency>
             <groupId>junit</groupId>

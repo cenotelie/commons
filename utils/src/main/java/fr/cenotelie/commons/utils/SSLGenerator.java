@@ -50,7 +50,7 @@ public class SSLGenerator {
             String[] command = new String[]{"keytool", "-genkeypair",
                     "-alias", alias,
                     "-keyalg", "RSA", "-keysize", "2048",
-                    "-dname", "CN=" + alias + ", O=xowl.org",
+                    "-dname", "CN=" + alias + ", O=" + alias,
                     "-validity", "3650", "-storetype", "JKS",
                     "-keystore", target.getAbsolutePath()};
             final Process process = Runtime.getRuntime().exec(command);
