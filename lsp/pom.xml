@@ -13,18 +13,6 @@
     <url>https://cenotelie.fr/</url>
     <dependencies>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-            <version>6.0.0</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
             <groupId>fr.cenotelie.commons</groupId>
             <artifactId>commons-jsonrpc</artifactId>
             <version>1.0.1-SNAPSHOT</version>

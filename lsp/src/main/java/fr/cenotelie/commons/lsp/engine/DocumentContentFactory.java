@@ -18,7 +18,7 @@
 package fr.cenotelie.commons.lsp.engine;
 
 /**
- * Represents a factory for document content objects
+ * Represents a factory of document content implementations
  *
  * @author Laurent Wouters
  */

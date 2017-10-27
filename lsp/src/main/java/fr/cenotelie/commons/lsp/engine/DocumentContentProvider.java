@@ -17,11 +17,6 @@
 
 package fr.cenotelie.commons.lsp.engine;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.ServiceReference;
-
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
@@ -30,22 +25,33 @@ import java.util.ServiceLoader;
  *
  * @author Laurent Wouters
  */
-class DocumentContentProvider implements DocumentContentFactory {
+class DocumentContentProvider {
     /**
      * The singleton instance
      */
     private static final DocumentContentProvider INSTANCE = new DocumentContentProvider();
 
     /**
-     * The Java service loader for the factories
+     * The factory to use
      */
-    private final ServiceLoader<DocumentContentFactory> javaProvider;
+    private final DocumentContentFactory factory;
 
     /**
      * Initialize this provider
      */
     private DocumentContentProvider() {
-        this.javaProvider = ServiceLoader.load(DocumentContentFactory.class);
+        ServiceLoader<DocumentContentFactory> javaProvider = ServiceLoader.load(DocumentContentFactory.class);
+        Iterator<DocumentContentFactory> services = javaProvider.iterator();
+        if (services.hasNext()) {
+            this.factory = services.next();
+        } else {
+            this.factory = new DocumentContentFactory() {
+                @Override
+                public DocumentContent newContent(String text) {
+                    return new DocumentContentString(text);
+                }
+            };
+        }
     }
 
     /**
@@ -55,26 +61,6 @@ class DocumentContentProvider implements DocumentContentFactory {
      * @return The document content object
      */
     public static DocumentContent getContent(String text) {
-        return INSTANCE.newContent(text);
-    }
-
-    @Override
-    public DocumentContent newContent(String text) {
-        Iterator<DocumentContentFactory> services = javaProvider.iterator();
-        if (services.hasNext())
-            return services.next().newContent(text);
-
-        Bundle bundle = FrameworkUtil.getBundle(DocumentContentProvider.class);
-        if (bundle == null)
-            return new DocumentContentString(text);
-        BundleContext context = FrameworkUtil.getBundle(DocumentContentProvider.class).getBundleContext();
-        if (context == null)
-            return new DocumentContentString(text);
-        ServiceReference reference = context.getServiceReference(DocumentContentFactory.class);
-        if (reference == null)
-            return new DocumentContentString(text);
-        DocumentContentFactory result = (DocumentContentFactory) context.getService(reference);
-        context.ungetService(reference);
-        return result.newContent(text);
+        return INSTANCE.factory.newContent(text);
     }
 }
