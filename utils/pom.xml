@@ -35,7 +35,6 @@
                 <configuration>
                     <instructions>
                         <Import-Package>!sun.*,*</Import-Package>
-                        <Bundle-Dependencies>fr.cenotelie.hime.redist</Bundle-Dependencies>
                     </instructions>
                 </configuration>
             </plugin>

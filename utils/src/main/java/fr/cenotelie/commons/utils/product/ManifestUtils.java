@@ -62,7 +62,7 @@ public class ManifestUtils {
      */
     public static final String BUNDLE_PRODUCT_LINK = "Bundle-Product-Link";
     /**
-     * The name if the license for this bundle
+     * The name of the license for this bundle
      */
     public static final String BUNDLE_LICENSE_NAME = "Bundle-License-Name";
     /**
@@ -87,7 +87,7 @@ public class ManifestUtils {
     public static final String BUILTBY = "Built-By";
 
     /**
-     * Gets the manifest for the jar of the specified type
+     * Gets the manifest for the jar that contains the specified type
      *
      * @param type A type
      * @return The manifest for the jar that contains the type
