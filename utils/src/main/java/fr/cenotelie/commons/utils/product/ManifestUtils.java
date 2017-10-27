@@ -54,38 +54,37 @@ public class ManifestUtils {
      */
     public static final String BUNDLE_DOCURL = "Bundle-DocURL";
     /**
-     * The user that built this bundle
-     */
-    public static final String BUILTBY = "Built-By";
-
-    /**
      * The list of embedded dependencies in this bundle
      */
-    public static final String X_DEPENDENCIES = "Bundle-Dependencies";
+    public static final String BUNDLE_DEPENDENCIES = "Bundle-Dependencies";
     /**
      * The URL to the product description for this bundle
      */
-    public static final String X_PRODUCT_LINK = "Bundle-Product-Link";
+    public static final String BUNDLE_PRODUCT_LINK = "Bundle-Product-Link";
     /**
      * The name if the license for this bundle
      */
-    public static final String X_LICENSE_NAME = "Bundle-License-Name";
+    public static final String BUNDLE_LICENSE_NAME = "Bundle-License-Name";
     /**
      * The resource that contains the license for this bundle
      */
-    public static final String X_LICENSE_RESOURCE = "Bundle-License-Resource";
+    public static final String BUNDLE_LICENSE_RESOURCE = "Bundle-License-Resource";
     /**
      * The hash of the commit in the SCM that was used to build this bundle
      */
-    public static final String X_SCM_TAG = "Bundle-SCM-Tag";
+    public static final String BUNDLE_SCM_TAG = "Bundle-SCM-Tag";
     /**
      * The tag of the build that produced this bundle
      */
-    public static final String X_BUILD_TAG = "Bundle-Build-Tag";
+    public static final String BUNDLE_BUILD_TAG = "Bundle-Build-Tag";
     /**
      * The timestamp when this bundle was built
      */
-    public static final String X_BUILD_TIMESTAMP = "Bundle-Build-Timestamp";
+    public static final String BUNDLE_BUILD_TIMESTAMP = "Bundle-Build-Timestamp";
+    /**
+     * The user that built this bundle
+     */
+    public static final String BUILTBY = "Built-By";
 
     /**
      * Gets the manifest for the jar of the specified type

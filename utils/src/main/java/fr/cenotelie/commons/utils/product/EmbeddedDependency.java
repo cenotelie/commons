@@ -178,7 +178,7 @@ public class EmbeddedDependency implements Identifiable, Serializable {
      */
     public static Collection<EmbeddedDependency> getDependenciesFor(Class<?> type) throws IOException {
         Manifest manifest = ManifestUtils.getManifest(type);
-        String value = manifest.getMainAttributes().getValue(ManifestUtils.X_DEPENDENCIES);
+        String value = manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_DEPENDENCIES);
         Collection<EmbeddedDependency> result = new ArrayList<>();
         if (value != null) {
             String[] identifiers = value.split(";");

@@ -56,10 +56,10 @@ public class VersionInfo implements Serializable {
      */
     public VersionInfo(Manifest manifest) {
         this.number = manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_VERSION);
-        this.scmTag = manifest.getMainAttributes().getValue(ManifestUtils.X_SCM_TAG);
+        this.scmTag = manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_SCM_TAG);
         this.buildUser = manifest.getMainAttributes().getValue(ManifestUtils.BUILTBY);
-        this.buildTag = manifest.getMainAttributes().getValue(ManifestUtils.X_BUILD_TAG);
-        this.buildTimestamp = manifest.getMainAttributes().getValue(ManifestUtils.X_BUILD_TIMESTAMP);
+        this.buildTag = manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_BUILD_TAG);
+        this.buildTimestamp = manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_BUILD_TIMESTAMP);
     }
 
     /**

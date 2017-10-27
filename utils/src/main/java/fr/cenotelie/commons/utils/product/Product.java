@@ -99,11 +99,11 @@ public class Product implements Serializable {
         this.vendor = manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_VENDOR);
         this.copyright = "Copyright (c) " + vendor;
         this.vendorLink = manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_DOCURL);
-        this.link = manifest.getMainAttributes().getValue(ManifestUtils.X_PRODUCT_LINK);
+        this.link = manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_PRODUCT_LINK);
         this.license = new LicenseEmbedded(
-                manifest.getMainAttributes().getValue(ManifestUtils.X_LICENSE_NAME),
+                manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_LICENSE_NAME),
                 type,
-                manifest.getMainAttributes().getValue(ManifestUtils.X_LICENSE_RESOURCE)
+                manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_LICENSE_RESOURCE)
         );
     }
 
@@ -124,11 +124,11 @@ public class Product implements Serializable {
         this.vendor = manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_VENDOR);
         this.copyright = "Copyright (c) " + vendor;
         this.vendorLink = manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_DOCURL);
-        this.link = manifest.getMainAttributes().getValue(ManifestUtils.X_PRODUCT_LINK);
+        this.link = manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_PRODUCT_LINK);
         this.license = new LicenseEmbedded(
-                manifest.getMainAttributes().getValue(ManifestUtils.X_LICENSE_NAME),
+                manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_LICENSE_NAME),
                 type,
-                manifest.getMainAttributes().getValue(ManifestUtils.X_LICENSE_RESOURCE)
+                manifest.getMainAttributes().getValue(ManifestUtils.BUNDLE_LICENSE_RESOURCE)
         );
     }
 
