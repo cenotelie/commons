@@ -81,7 +81,12 @@ public class UploadP2Mojo extends AbstractMojo {
                 targetUrl.endsWith("/") ? targetUrl : targetUrl + "/",
                 server.getUsername(),
                 server.getPassword());
-        upload(repository, connection, "");
+        File[] children = repository.listFiles();
+        if (children != null) {
+            for (File child : children) {
+                upload(child, connection, "");
+            }
+        }
     }
 
     /**

@@ -33,7 +33,7 @@
     </scm>
     <distributionManagement>
         <snapshotRepository>
-            <id>cenotelie-snapshots</id>
+            <id>cenotelie</id>
             <url>https://nexus.cenotelie.fr/repository/maven-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
