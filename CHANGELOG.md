@@ -1,5 +1,13 @@
 # Updates
 
+## 2.0.1
+
+Released on October 29th, 2017
+
+* Fixes:
+    * Fixed bug with upload of P2 repository with wrong layout.
+
+
 ## 2.0.0
 
 Released on October 29th, 2017
