@@ -1,5 +1,13 @@
 # Updates
 
+## 2.0.0
+
+Released on October 29th, 2017
+
+* Features:
+    * Implementation of the Maven plugin to upload Eclipse Update Sites to a web servers.
+
+
 ## 1.0.0
 
 October 19th, 2017, initial release of Cénotélie Commons.

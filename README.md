@@ -5,6 +5,7 @@ Commons provides general utility APIs and implementation of other specifications
 
 * Implementation of [JSON-RPC](http://www.jsonrpc.org/specification)
 * Implementation of [Language Server Protocol](https://langserver.org/)
+* Maven plugin to upload Eclipse Update Sites to a web server
 
 
 ## How do I use this software? ##
@@ -28,6 +29,7 @@ For example, the implementation of the [Language Server Protocol](https://langse
 * `utils`: General utility APIs, including the JSON parser.
 * `jsonrpc`: Implementation of [JSON-RPC](http://www.jsonrpc.org/specification)
 * `lsp`: Implementation of [Language Server Protocol](https://langserver.org/)
+* `p2uploader`: Maven plugin to upload Eclipse Update Sites to a web server
 
 
 ## How to build ##
