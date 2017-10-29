@@ -10,7 +10,7 @@
     <version>1.0.1-SNAPSHOT</version>
     <name>Cénotélie Commons - Utilities</name>
     <description>Utility APIs for Java projects</description>
-    <url>https://cenotelie.fr/</url>
+    <url>https://cenotelie.fr/commons</url>
     <dependencies>
         <dependency>
             <groupId>junit</groupId>

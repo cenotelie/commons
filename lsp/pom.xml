@@ -10,7 +10,7 @@
     <version>1.0.1-SNAPSHOT</version>
     <name>Cénotélie Commons - Language Server Protocol</name>
     <description>Base implementation of the Language Server Protocol</description>
-    <url>https://cenotelie.fr/</url>
+    <url>https://cenotelie.fr/commons</url>
     <dependencies>
         <dependency>
             <groupId>fr.cenotelie.commons</groupId>

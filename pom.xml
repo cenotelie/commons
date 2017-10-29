@@ -6,7 +6,7 @@
     <version>1.0.1-SNAPSHOT</version>
     <name>Cénotélie Commons</name>
     <description>Commons API for Java projects</description>
-    <url>https://cenotelie.fr/</url>
+    <url>https://cenotelie.fr/commons</url>
     <licenses>
         <license>
             <name>GNU Lesser General Public License, Version 3</name>

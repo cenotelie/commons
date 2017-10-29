@@ -10,7 +10,7 @@
     <version>1.0.1-SNAPSHOT</version>
     <name>Cénotélie Commons - JSON-RPC Implementation</name>
     <description>Implementation of the JSON-RPC protocol</description>
-    <url>https://cenotelie.fr/</url>
+    <url>https://cenotelie.fr/commons</url>
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
