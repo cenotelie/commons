@@ -121,6 +121,11 @@ public class RawSplitFiles extends RawFile {
     }
 
     @Override
+    public long getSize() {
+        return 0;
+    }
+
+    @Override
     public void flush() throws IOException {
 
     }
@@ -136,7 +141,7 @@ public class RawSplitFiles extends RawFile {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() throws IOException {
 
     }
 }

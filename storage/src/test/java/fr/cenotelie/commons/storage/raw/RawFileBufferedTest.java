@@ -34,66 +34,66 @@ import java.nio.file.Files;
 public class RawFileBufferedTest {
     @Test
     public void testGetSizeEmpty() throws IOException {
-        try (RawFileBuffered pf = new RawFileBuffered(File.createTempFile("test", ".bin"), true)) {
-            Assert.assertEquals("Unexpected length", 0, pf.getSize());
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+            Assert.assertEquals("Unexpected length", 0, rawFile.getSize());
         }
     }
 
     @Test
     public void testGetSizeSingleBlock() throws IOException {
-        try (RawFileBuffered pf = new RawFileBuffered(File.createTempFile("test", ".bin"), true)) {
-            try (IOAccess access = pf.access(0, 1, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+            try (IOAccess access = rawFile.access(0, 1, true)) {
                 access.writeByte((byte) 5);
             }
-            Assert.assertEquals("Unexpected length", RawFileBlock.BLOCK_SIZE, pf.getSize());
+            Assert.assertEquals("Unexpected length", RawFileBlock.BLOCK_SIZE, rawFile.getSize());
         }
     }
 
     @Test
     public void testGetSizeDoubleBlock() throws IOException {
-        try (RawFileBuffered pf = new RawFileBuffered(File.createTempFile("test", ".bin"), true)) {
-            try (IOAccess access = pf.access(0, 1, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+            try (IOAccess access = rawFile.access(0, 1, true)) {
                 access.writeByte((byte) 5);
             }
-            try (IOAccess access = pf.access(RawFileBlock.BLOCK_SIZE, 1, true)) {
+            try (IOAccess access = rawFile.access(RawFileBlock.BLOCK_SIZE, 1, true)) {
                 access.writeByte((byte) 6);
             }
-            Assert.assertEquals("Unexpected length", RawFileBlock.BLOCK_SIZE * 2, pf.getSize());
+            Assert.assertEquals("Unexpected length", RawFileBlock.BLOCK_SIZE * 2, rawFile.getSize());
         }
     }
 
     @Test
     public void testGetSizeAfterReload() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 1, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 1, true)) {
                 access.writeByte((byte) 5);
             }
-            pf.flush();
+            rawFile.flush();
         }
 
-        try (RawFileBuffered pf = new RawFileBuffered(file, false)) {
-            Assert.assertEquals("Unexpected length", RawFileBlock.BLOCK_SIZE, pf.getSize());
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, false))) {
+            Assert.assertEquals("Unexpected length", RawFileBlock.BLOCK_SIZE, rawFile.getSize());
         }
     }
 
     @Test
     public void testGetSizeAfterReloadEmpty() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            pf.flush();
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            rawFile.flush();
         }
 
-        try (RawFileBuffered pf = new RawFileBuffered(file, false)) {
-            Assert.assertEquals("Unexpected length", 0, pf.getSize());
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, false))) {
+            Assert.assertEquals("Unexpected length", 0, rawFile.getSize());
         }
     }
 
 
     @Test
     public void testGetIndexOnCreation() throws IOException {
-        try (RawFileBuffered pf = new RawFileBuffered(File.createTempFile("test", ".bin"), true)) {
-            try (IOAccess access = pf.access(0, 1, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+            try (IOAccess access = rawFile.access(0, 1, true)) {
                 Assert.assertEquals("Unexpected index", 0, access.getIndex());
             }
         }
@@ -101,8 +101,8 @@ public class RawFileBufferedTest {
 
     @Test
     public void testGetIndexAfterSeek() throws IOException {
-        try (RawFileBuffered pf = new RawFileBuffered(File.createTempFile("test", ".bin"), true)) {
-            try (IOAccess access = pf.access(0, 1, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+            try (IOAccess access = rawFile.access(0, 1, true)) {
                 access.seek(RawFileBlock.BLOCK_SIZE + 4);
                 Assert.assertEquals("Unexpected index", RawFileBlock.BLOCK_SIZE + 4, access.getIndex());
             }
@@ -111,8 +111,8 @@ public class RawFileBufferedTest {
 
     @Test
     public void testGetIndexAfterWriteByte() throws IOException {
-        try (RawFileBuffered pf = new RawFileBuffered(File.createTempFile("test", ".bin"), true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.seek(4);
                 access.writeByte((byte) 5);
                 Assert.assertEquals("Unexpected index", 5, access.getIndex());
@@ -122,8 +122,8 @@ public class RawFileBufferedTest {
 
     @Test
     public void testGetIndexAfterWriteBytes() throws IOException {
-        try (RawFileBuffered pf = new RawFileBuffered(File.createTempFile("test", ".bin"), true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.seek(4);
                 access.writeBytes(new byte[]{0x5, 0x6, 0x7});
                 Assert.assertEquals("Unexpected index", 7, access.getIndex());
@@ -133,8 +133,8 @@ public class RawFileBufferedTest {
 
     @Test
     public void testGetIndexAfterWriteChar() throws IOException {
-        try (RawFileBuffered pf = new RawFileBuffered(File.createTempFile("test", ".bin"), true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.seek(4);
                 access.writeChar('a');
                 Assert.assertEquals("Unexpected index", 6, access.getIndex());
@@ -144,8 +144,8 @@ public class RawFileBufferedTest {
 
     @Test
     public void testGetIndexAfterWriteInt() throws IOException {
-        try (RawFileBuffered pf = new RawFileBuffered(File.createTempFile("test", ".bin"), true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.seek(4);
                 access.writeInt(55);
                 Assert.assertEquals("Unexpected index", 8, access.getIndex());
@@ -155,8 +155,8 @@ public class RawFileBufferedTest {
 
     @Test
     public void testGetIndexAfterWriteLong() throws IOException {
-        try (RawFileBuffered pf = new RawFileBuffered(File.createTempFile("test", ".bin"), true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.seek(4);
                 access.writeLong(0x00BB00AA00FF00EEL);
                 Assert.assertEquals("Unexpected index", 12, access.getIndex());
@@ -166,8 +166,8 @@ public class RawFileBufferedTest {
 
     @Test
     public void testGetIndexAfterWriteFloat() throws IOException {
-        try (RawFileBuffered pf = new RawFileBuffered(File.createTempFile("test", ".bin"), true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.seek(4);
                 access.writeFloat(5.5f);
                 Assert.assertEquals("Unexpected index", 8, access.getIndex());
@@ -177,8 +177,8 @@ public class RawFileBufferedTest {
 
     @Test
     public void testGetIndexAfterWriteDouble() throws IOException {
-        try (RawFileBuffered pf = new RawFileBuffered(File.createTempFile("test", ".bin"), true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.seek(4);
                 access.writeDouble(5.5f);
                 Assert.assertEquals("Unexpected index", 12, access.getIndex());
@@ -189,11 +189,11 @@ public class RawFileBufferedTest {
     @Test
     public void testWriteSimpleByte() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 1, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 1, true)) {
                 access.writeByte((byte) 5);
             }
-            pf.flush();
+            rawFile.flush();
         }
         Assert.assertTrue("FileBackend has not been created", file.exists());
         Assert.assertEquals("Unexpected file length", (long) RawFileBlock.BLOCK_SIZE, file.length());
@@ -205,15 +205,15 @@ public class RawFileBufferedTest {
     @Test
     public void testReadSimpleByte() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.writeByte((byte) 5);
             }
-            pf.flush();
+            rawFile.flush();
         }
 
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, false)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, false)) {
                 Assert.assertEquals("Unexpected content", 5, access.readByte());
             }
         }
@@ -222,11 +222,11 @@ public class RawFileBufferedTest {
     @Test
     public void testWriteSimpleBytes() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.writeBytes(new byte[]{0x5, 0x6, 0x7});
             }
-            pf.flush();
+            rawFile.flush();
         }
         Assert.assertTrue("FileBackend has not been created", file.exists());
         Assert.assertEquals("Unexpected file length", (long) RawFileBlock.BLOCK_SIZE, file.length());
@@ -240,15 +240,15 @@ public class RawFileBufferedTest {
     @Test
     public void testReadSimpleBytes() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.writeBytes(new byte[]{0x5, 0x6, 0x7});
             }
-            pf.flush();
+            rawFile.flush();
         }
 
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 Assert.assertEquals("Unexpected content", 5, access.readByte());
                 Assert.assertEquals("Unexpected content", 6, access.readByte());
                 Assert.assertEquals("Unexpected content", 7, access.readByte());
@@ -259,11 +259,11 @@ public class RawFileBufferedTest {
     @Test
     public void testWriteSimpleChar() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.writeChar((char) 0xBBCC);
             }
-            pf.flush();
+            rawFile.flush();
         }
         Assert.assertTrue("FileBackend has not been created", file.exists());
         Assert.assertEquals("Unexpected file length", (long) RawFileBlock.BLOCK_SIZE, file.length());
@@ -276,15 +276,15 @@ public class RawFileBufferedTest {
     @Test
     public void testReadSimpleChar() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.writeChar((char) 0xBBCC);
             }
-            pf.flush();
+            rawFile.flush();
         }
 
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, false)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, false)) {
                 Assert.assertEquals("Unexpected content", (char) 0xBBCC, access.readChar());
             }
         }
@@ -293,11 +293,11 @@ public class RawFileBufferedTest {
     @Test
     public void testWriteSimpleInt() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.writeInt(55);
             }
-            pf.flush();
+            rawFile.flush();
         }
         Assert.assertTrue("FileBackend has not been created", file.exists());
         Assert.assertEquals("Unexpected file length", (long) RawFileBlock.BLOCK_SIZE, file.length());
@@ -310,15 +310,15 @@ public class RawFileBufferedTest {
     @Test
     public void testReadSimpleInt() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.writeInt(55);
             }
-            pf.flush();
+            rawFile.flush();
         }
 
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, false)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, false)) {
                 Assert.assertEquals("Unexpected content", 55, access.readInt());
             }
         }
@@ -327,11 +327,11 @@ public class RawFileBufferedTest {
     @Test
     public void testWriteSimpleLong() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.writeLong(0x00BB00AA00FF00EEL);
             }
-            pf.flush();
+            rawFile.flush();
         }
         Assert.assertTrue("FileBackend has not been created", file.exists());
         Assert.assertEquals("Unexpected file length", (long) RawFileBlock.BLOCK_SIZE, file.length());
@@ -344,15 +344,15 @@ public class RawFileBufferedTest {
     @Test
     public void testReadSimpleLong() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.writeLong(0x00BB00AA00FF00EEL);
             }
-            pf.flush();
+            rawFile.flush();
         }
 
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, false)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, false)) {
                 Assert.assertEquals("Unexpected content", 0x00BB00AA00FF00EEL, access.readLong());
             }
         }
@@ -361,11 +361,11 @@ public class RawFileBufferedTest {
     @Test
     public void testWriteSimpleFloat() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.writeFloat(5.5f);
             }
-            pf.flush();
+            rawFile.flush();
         }
         Assert.assertTrue("FileBackend has not been created", file.exists());
         Assert.assertEquals("Unexpected file length", (long) RawFileBlock.BLOCK_SIZE, file.length());
@@ -378,15 +378,15 @@ public class RawFileBufferedTest {
     @Test
     public void testReadSimpleFloat() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.writeFloat(5.5f);
             }
-            pf.flush();
+            rawFile.flush();
         }
 
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, false)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, false)) {
                 Assert.assertTrue("Unexpected content", 5.5f == access.readFloat());
             }
         }
@@ -395,11 +395,11 @@ public class RawFileBufferedTest {
     @Test
     public void testWriteSimpleDouble() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.writeDouble(5.5d);
             }
-            pf.flush();
+            rawFile.flush();
         }
         Assert.assertTrue("FileBackend has not been created", file.exists());
         Assert.assertEquals("Unexpected file length", (long) RawFileBlock.BLOCK_SIZE, file.length());
@@ -412,15 +412,15 @@ public class RawFileBufferedTest {
     @Test
     public void testReadSimpleDouble() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.writeDouble(5.5d);
             }
-            pf.flush();
+            rawFile.flush();
         }
 
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, false)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, false)) {
                 Assert.assertTrue("Unexpected content", 5.5d == access.readDouble());
             }
         }
@@ -429,13 +429,13 @@ public class RawFileBufferedTest {
     @Test
     public void testWriteWithinBlock() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.writeInt(55);
                 access.skip(4);
                 access.writeInt(66);
             }
-            pf.flush();
+            rawFile.flush();
         }
 
         Assert.assertTrue("FileBackend has not been created", file.exists());
@@ -451,14 +451,14 @@ public class RawFileBufferedTest {
     @Test
     public void testWriteTwoBlock() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.writeInt(55);
             }
-            try (IOAccess access = pf.access(RawFileBlock.BLOCK_SIZE, 12, true)) {
+            try (IOAccess access = rawFile.access(RawFileBlock.BLOCK_SIZE, 12, true)) {
                 access.writeInt(66);
             }
-            pf.flush();
+            rawFile.flush();
         }
         Assert.assertTrue("FileBackend has not been created", file.exists());
         Assert.assertEquals("Unexpected file length", (long) RawFileBlock.BLOCK_SIZE * 2, file.length());
@@ -473,17 +473,17 @@ public class RawFileBufferedTest {
     @Test
     public void testReadWrittenData() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.writeInt(55);
             }
-            try (IOAccess access = pf.access(RawFileBlock.BLOCK_SIZE, 12, true)) {
+            try (IOAccess access = rawFile.access(RawFileBlock.BLOCK_SIZE, 12, true)) {
                 access.writeInt(66);
             }
-            try (IOAccess access = pf.access(0, 12, false)) {
+            try (IOAccess access = rawFile.access(0, 12, false)) {
                 Assert.assertEquals("Unexpected content", 55, access.readInt());
             }
-            try (IOAccess access = pf.access(RawFileBlock.BLOCK_SIZE, 12, false)) {
+            try (IOAccess access = rawFile.access(RawFileBlock.BLOCK_SIZE, 12, false)) {
                 Assert.assertEquals("Unexpected content", 66, access.readInt());
             }
         }
@@ -492,21 +492,21 @@ public class RawFileBufferedTest {
     @Test
     public void testReload() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, true)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, true)) {
                 access.writeInt(55);
             }
-            try (IOAccess access = pf.access(RawFileBlock.BLOCK_SIZE, 12, true)) {
+            try (IOAccess access = rawFile.access(RawFileBlock.BLOCK_SIZE, 12, true)) {
                 access.writeInt(66);
             }
-            pf.flush();
+            rawFile.flush();
         }
 
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            try (IOAccess access = pf.access(0, 12, false)) {
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            try (IOAccess access = rawFile.access(0, 12, false)) {
                 Assert.assertEquals("Unexpected content", 55, access.readInt());
             }
-            try (IOAccess access = pf.access(RawFileBlock.BLOCK_SIZE, 12, false)) {
+            try (IOAccess access = rawFile.access(RawFileBlock.BLOCK_SIZE, 12, false)) {
                 Assert.assertEquals("Unexpected content", 66, access.readInt());
             }
         }
@@ -515,19 +515,19 @@ public class RawFileBufferedTest {
     @Test
     public void testConcurrentWriteRead() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            IOAccess access1 = pf.access(0, 4, true);
-            IOAccess access2 = pf.access(4, 4, true);
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            IOAccess access1 = rawFile.access(0, 4, true);
+            IOAccess access2 = rawFile.access(4, 4, true);
             access1.writeInt(4);
             access2.writeInt(5);
             access1.close();
             access2.close();
-            pf.flush();
+            rawFile.flush();
         }
 
-        try (RawFileBuffered pf = new RawFileBuffered(file, true)) {
-            IOAccess access1 = pf.access(0, 4, false);
-            IOAccess access2 = pf.access(4, 4, false);
+        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+            IOAccess access1 = rawFile.access(0, 4, false);
+            IOAccess access2 = rawFile.access(4, 4, false);
             Assert.assertEquals("Unexpected content", 4, access1.readInt());
             Assert.assertEquals("Unexpected content", 5, access2.readInt());
             access1.close();

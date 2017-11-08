@@ -43,9 +43,24 @@ public abstract class RawFile extends IOBackend implements AutoCloseable {
     public abstract boolean isWritable();
 
     /**
+     * Gets the size of this file
+     *
+     * @return The size of this file
+     */
+    public abstract long getSize();
+
+    /**
      * Flushes any outstanding changes to this file to the storage device
      *
      * @throws IOException When an IO error occurred
      */
     public abstract void flush() throws IOException;
+
+    /**
+     * Closes this resource, relinquishing any underlying resources
+     *
+     * @throws IOException When an IO error occurred
+     */
+    @Override
+    public abstract void close() throws IOException;
 }

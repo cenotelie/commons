@@ -94,15 +94,6 @@ public class RawFileBuffered extends RawFile {
     private final AtomicInteger state;
 
     /**
-     * Gets the size of this file
-     *
-     * @return The size of this file
-     */
-    public long getSize() {
-        return size.get();
-    }
-
-    /**
      * Initializes this data file
      *
      * @param file     The file location
@@ -179,6 +170,11 @@ public class RawFileBuffered extends RawFile {
     @Override
     public boolean isWritable() {
         return writable;
+    }
+
+    @Override
+    public long getSize() {
+        return size.get();
     }
 
     @Override

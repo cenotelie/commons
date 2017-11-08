@@ -179,6 +179,11 @@ public class RawFileMapped extends RawFile {
     }
 
     @Override
+    public long getSize() {
+        return buffer.capacity();
+    }
+
+    @Override
     public void flush() throws IOException {
         if (buffer != null)
             buffer.force();
@@ -195,7 +200,7 @@ public class RawFileMapped extends RawFile {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         buffer = null;
         endpoint = null;
     }
