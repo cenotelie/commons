@@ -17,10 +17,6 @@
 
 package fr.cenotelie.commons.storage;
 
-import fr.cenotelie.commons.utils.metrics.Metric;
-import fr.cenotelie.commons.utils.metrics.MetricSnapshotComposite;
-import fr.cenotelie.commons.utils.metrics.MetricSnapshotLong;
-
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLongArray;
 
@@ -78,30 +74,6 @@ public class IOAccessManager {
      * The pool of free threads identifiers
      */
     private final AtomicInteger threads;
-    /**
-     * The total number of accesses
-     */
-    private long totalAccesses;
-    /**
-     * The total number of tries for all accesses
-     */
-    private long totalTries;
-
-    /**
-     * Gets the current statistics for this file
-     *
-     * @param timestamp        The timestamp to use
-     * @param snapshot         The snapshot to fill
-     * @param metricContention The metric for the thread contention
-     * @param metricAccesses   The metric for the number of accesses
-     */
-    public void getStatistics(long timestamp, MetricSnapshotComposite snapshot, Metric metricContention, Metric metricAccesses) {
-        long contention = totalAccesses == 0 ? 1 : totalTries / totalAccesses;
-        snapshot.addPart(metricContention, new MetricSnapshotLong(timestamp, contention));
-        snapshot.addPart(metricAccesses, new MetricSnapshotLong(timestamp, totalAccesses));
-        totalTries = 0;
-        totalAccesses = 0;
-    }
 
     /**
      * Initializes this pool
@@ -121,8 +93,6 @@ public class IOAccessManager {
         this.accessesState.set(ACTIVE_TAIL_ID, 0x7FFFFFFF01000001L);
         this.accessesThreads = new AtomicInteger(0);
         this.threads = new AtomicInteger(0x00FFFF);
-        this.totalAccesses = 0;
-        this.totalTries = 0;
     }
 
     /**
@@ -505,11 +475,11 @@ public class IOAccessManager {
     public IOAccess get(int location, int length, boolean writable) {
         IOAccess access = newAccess(location);
         access.setupIOData(location, length, writable);
-        onAccess(listInsert(access.identifier, location));
+        listInsert(access.identifier, location);
         try {
             access.endpoint = backend.acquireEndpointAt(location);
         } catch (Throwable exception) {
-            onAccess(listRemove(access.identifier));
+            listRemove(access.identifier);
             // rethrow exception
             throw exception;
         }
@@ -529,7 +499,7 @@ public class IOAccessManager {
         IOAccess access = newAccess(location);
         access.setupIOData(location, length, writable);
         access.endpoint = endpoint;
-        onAccess(listInsert(access.identifier, location));
+        listInsert(access.identifier, location);
         return access;
     }
 
@@ -542,7 +512,7 @@ public class IOAccessManager {
         try {
             backend.releaseEndpoint(access.endpoint);
         } finally {
-            onAccess(listRemove(access.identifier));
+            listRemove(access.identifier);
         }
     }
 
@@ -614,15 +584,5 @@ public class IOAccessManager {
             return;
         // no more thread can touch this node, return the access as free again
         accessesState.set(accessIdentifier, stateSetFree(currentState));
-    }
-
-    /**
-     * Updates the contention statistics when an access is required
-     *
-     * @param tries The number of tries that it took to perform the access initialization or closure
-     */
-    private void onAccess(int tries) {
-        totalAccesses++;
-        totalTries += tries;
     }
 }

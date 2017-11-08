@@ -17,11 +17,7 @@
 
 package fr.cenotelie.commons.storage.raw;
 
-import fr.cenotelie.commons.storage.IOAccess;
-import fr.cenotelie.commons.storage.IOAccessManager;
 import fr.cenotelie.commons.storage.IOEndpoint;
-import fr.cenotelie.commons.utils.collections.Couple;
-import fr.cenotelie.commons.utils.metrics.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +28,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Represents a single file for storage
+ * This structure is thread-safe in the way it manages its inner data.
+ * However, it does not ensure that multiple thread do not overlap while reading and writing to locations.
  *
  * @author Laurent Wouters
  */
@@ -75,10 +73,6 @@ public class RawFileBuffered extends RawFile {
      */
     private final FileChannel channel;
     /**
-     * The access manager for this file
-     */
-    private final IOAccessManager accessManager;
-    /**
      * The loaded blocks in this file
      */
     private final RawFileBlockTS[] blocks;
@@ -98,26 +92,6 @@ public class RawFileBuffered extends RawFile {
      * The state of this file backend
      */
     private final AtomicInteger state;
-    /**
-     * The composite metric for this file
-     */
-    private final MetricComposite metricFile;
-    /**
-     * The metric for the total number of loaded blocks
-     */
-    private final Metric metricTotalBlocks;
-    /**
-     * The metric for the number of dirty blocks
-     */
-    private final Metric metricDirtyBlocks;
-    /**
-     * The metric for the thread contention over this file
-     */
-    private final Metric metricContention;
-    /**
-     * The metric for the total number of accesses to this file
-     */
-    private final Metric metricTotalAccesses;
 
     /**
      * Gets the size of this file
@@ -139,7 +113,6 @@ public class RawFileBuffered extends RawFile {
         this.file = file;
         this.writable = writable;
         this.channel = newChannel(file, writable);
-        this.accessManager = new IOAccessManager(this);
         this.blocks = new RawFileBlockTS[FILE_MAX_LOADED_BLOCKS];
         for (int i = 0; i != FILE_MAX_LOADED_BLOCKS; i++)
             this.blocks[i] = new RawFileBlockTS();
@@ -147,65 +120,6 @@ public class RawFileBuffered extends RawFile {
         this.size = new AtomicLong(initSize());
         this.time = new AtomicLong(Long.MIN_VALUE + 1);
         this.state = new AtomicInteger(STATE_READY);
-        this.metricTotalBlocks = new MetricBase(RawFileBuffered.class.getCanonicalName() + ".LoadedBlocks",
-                "File - Total Loaded Blocks",
-                "blocks",
-                1000000000,
-                new Couple<>(Metric.HINT_IS_NUMERIC, "true"),
-                new Couple<>(Metric.HINT_MIN_VALUE, "0"),
-                new Couple<>(Metric.HINT_MAX_VALUE, Integer.toString(FILE_MAX_LOADED_BLOCKS)));
-        this.metricDirtyBlocks = new MetricBase(RawFileBuffered.class.getCanonicalName() + ".DirtyBlocks",
-                "File - Total Dirty Blocks",
-                "blocks",
-                1000000000,
-                new Couple<>(Metric.HINT_IS_NUMERIC, "true"),
-                new Couple<>(Metric.HINT_MIN_VALUE, "0"),
-                new Couple<>(Metric.HINT_MAX_VALUE, Integer.toString(FILE_MAX_LOADED_BLOCKS)));
-        this.metricContention = new MetricBase(RawFileBuffered.class.getCanonicalName() + ".Contention",
-                "File - Thread Contention (Mean number of tries)",
-                "tries",
-                1000000000,
-                new Couple<>(Metric.HINT_IS_NUMERIC, "true"),
-                new Couple<>(Metric.HINT_MIN_VALUE, "0"));
-        this.metricTotalAccesses = new MetricBase(RawFileBuffered.class.getCanonicalName() + ".TotalAccesses",
-                "File - Total Accesses",
-                "accesses",
-                1000000000,
-                new Couple<>(Metric.HINT_IS_NUMERIC, "true"),
-                new Couple<>(Metric.HINT_MIN_VALUE, "0"));
-        this.metricFile = new MetricComposite(RawFileBuffered.class.getCanonicalName() + "[" + file.getAbsolutePath() + "]",
-                "Physical File " + file.getAbsolutePath(),
-                1000000000,
-                metricTotalBlocks, metricDirtyBlocks, metricContention, metricTotalAccesses);
-    }
-
-
-    /**
-     * Gets the composite metric for this file
-     *
-     * @return The metric for this file
-     */
-    public Metric getMetric() {
-        return metricFile;
-    }
-
-    /**
-     * Gets a snapshot of the metrics for this file
-     *
-     * @param timestamp The timestamp to use
-     * @return The snapshot
-     */
-    public MetricSnapshot getMetricSnapshot(long timestamp) {
-        int dirty = 0;
-        for (int i = 0; i != blockCount.get(); i++) {
-            if (blocks[i].isDirty)
-                dirty++;
-        }
-        MetricSnapshotComposite snapshot = new MetricSnapshotComposite(timestamp);
-        snapshot.addPart(metricTotalBlocks, new MetricSnapshotInt(timestamp, blockCount.get()));
-        snapshot.addPart(metricDirtyBlocks, new MetricSnapshotInt(timestamp, dirty));
-        accessManager.getStatistics(timestamp, snapshot, metricContention, metricTotalAccesses);
-        return snapshot;
     }
 
     /**
@@ -312,34 +226,6 @@ public class RawFileBuffered extends RawFile {
     }
 
     /**
-     * Accesses the content of this file through an access element
-     * An access must be within the boundaries of a block.
-     *
-     * @param index    The index within this file of the reserved area for the access
-     * @param length   The length of the reserved area for the access
-     * @param writable Whether the access shall allow writing
-     * @return The access element
-     */
-    public IOAccess access(int index, int length, boolean writable) {
-        return accessManager.get(index, length, this.writable && writable);
-    }
-
-    /**
-     * Accesses a specific block of this file through an access element
-     *
-     * @param index    The index within this file of the reserved area for the access
-     * @param length   The length of the reserved area for the access
-     * @param writable Whether the access shall allow writing
-     * @param block    The block that will backs the access
-     * @return The access element
-     */
-    protected IOAccess access(int index, int length, boolean writable, RawFileBlockTS block) {
-        IOAccess access = accessManager.get(index, length, this.writable && writable, block);
-        block.use(block.location, tick());
-        return access;
-    }
-
-    /**
      * Acquires the block for the specified index in this file
      * This method ensures that:
      * 1) Only one block object can be assigned to a location in the file
@@ -349,7 +235,7 @@ public class RawFileBuffered extends RawFile {
      * @param index The requested index in this file
      * @return The corresponding block
      */
-    protected RawFileBlockTS getBlockFor(long index) {
+    private RawFileBlockTS getBlockFor(long index) {
         long targetLocation = index & INDEX_MASK_UPPER;
         if (blockCount.get() < FILE_MAX_LOADED_BLOCKS)
             return getBlockWhenNotFull(targetLocation);

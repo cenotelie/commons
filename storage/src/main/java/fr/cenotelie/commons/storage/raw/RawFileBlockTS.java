@@ -23,14 +23,7 @@ import java.nio.channels.FileChannel;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Represents a block of contiguous data in a file with thread-safe accesses
- * <p>
- * A block is designed to be thread-safe when it is accessed through a transaction.
- * Multiple threads can read from the block at the same time, but only one thread can lock and write to it at any given time.
- * Writing to the block prevents other threads from reading.
- * This structure assumes:
- * 1) A high number of read compared to a low number of write
- * 2) The quick release of the block when a write has exclusive use
+ * Represents a block of contiguous data in a file that is managed in a thread-safe manner
  * This structure uses lock-free mechanisms for thread safety and uses a state-machine to track its use:
  * <p>
  * +--------------+------------------------------------------------------------+

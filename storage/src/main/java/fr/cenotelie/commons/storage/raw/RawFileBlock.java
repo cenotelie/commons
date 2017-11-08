@@ -154,7 +154,7 @@ class RawFileBlock extends IOEndpoint implements AutoCloseable {
 
     @Override
     public byte readByte(long index) {
-        return buffer.get((int) ((int) (index & INDEX_MASK_LOWER)));
+        return buffer.get((int) (index & INDEX_MASK_LOWER));
     }
 
     @Override
