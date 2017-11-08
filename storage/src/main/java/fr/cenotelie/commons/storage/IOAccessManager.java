@@ -381,11 +381,9 @@ public class IOAccessManager {
      *
      * @param toInsert The access to be inserted
      * @param key      The key to insert at
-     * @return The number of tries
      */
-    private int listInsert(int toInsert, int key) {
+    private void listInsert(int toInsert, int key) {
         int threadIdentifier = getThreadId();
-        int count = 1;
         while (true) {
             beginActiveAccess(threadIdentifier);
             boolean success = listSearchAndInsert(toInsert, key);
@@ -393,10 +391,8 @@ public class IOAccessManager {
             poolCleanup(threadIdentifier);
             if (success)
                 break;
-            count++;
         }
         returnThreadId(threadIdentifier);
-        return count;
     }
 
     /**
@@ -446,11 +442,9 @@ public class IOAccessManager {
      * Removes an access from the list of live accesses
      *
      * @param toRemove The access to be removed
-     * @return The number of tries
      */
-    private int listRemove(int toRemove) {
+    private void listRemove(int toRemove) {
         int threadIdentifier = getThreadId();
-        int count = 1;
         while (true) {
             beginActiveAccess(threadIdentifier);
             boolean success = listSearchAndRemove(toRemove);
@@ -458,10 +452,8 @@ public class IOAccessManager {
             poolCleanup(threadIdentifier);
             if (success)
                 break;
-            count++;
         }
         returnThreadId(threadIdentifier);
-        return count;
     }
 
     /**
