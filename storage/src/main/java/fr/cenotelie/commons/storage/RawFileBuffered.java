@@ -40,7 +40,7 @@ public class RawFileBuffered implements RawFile {
     /**
      * The mask for the index of a block
      */
-    protected static final int INDEX_MASK_UPPER = ~RawFileBlock.INDEX_MASK_LOWER;
+    protected static final long INDEX_MASK_UPPER = ~RawFileBlock.INDEX_MASK_LOWER;
 
     /**
      * The backend is ready for IO

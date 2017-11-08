@@ -29,7 +29,7 @@ public interface IOEndpoint {
      * @param index The index within this element for this operation
      * @return The byte
      */
-    byte readByte(int index);
+    byte readByte(long index);
 
     /**
      * Reads a specified number of bytes a the current index
@@ -38,7 +38,7 @@ public interface IOEndpoint {
      * @param length The number of bytes to read
      * @return The bytes
      */
-    byte[] readBytes(int index, int length);
+    byte[] readBytes(long index, int length);
 
     /**
      * Reads a specified number of bytes a the current index
@@ -48,7 +48,7 @@ public interface IOEndpoint {
      * @param start  The index in the buffer to start filling at
      * @param length The number of bytes to read
      */
-    void readBytes(int index, byte[] buffer, int start, int length);
+    void readBytes(long index, byte[] buffer, int start, int length);
 
     /**
      * Reads a single char at the current index
@@ -56,7 +56,7 @@ public interface IOEndpoint {
      * @param index The index within this element for this operation
      * @return The char
      */
-    char readChar(int index);
+    char readChar(long index);
 
     /**
      * Reads a single int at the current index
@@ -64,7 +64,7 @@ public interface IOEndpoint {
      * @param index The index within this element for this operation
      * @return The int
      */
-    int readInt(int index);
+    int readInt(long index);
 
     /**
      * Reads a single long at the current index
@@ -72,7 +72,7 @@ public interface IOEndpoint {
      * @param index The index within this element for this operation
      * @return The long
      */
-    long readLong(int index);
+    long readLong(long index);
 
     /**
      * Reads a single float at the current index
@@ -80,7 +80,7 @@ public interface IOEndpoint {
      * @param index The index within this element for this operation
      * @return The float
      */
-    float readFloat(int index);
+    float readFloat(long index);
 
     /**
      * Reads a single double at the current index
@@ -88,7 +88,7 @@ public interface IOEndpoint {
      * @param index The index within this element for this operation
      * @return The double
      */
-    double readDouble(int index);
+    double readDouble(long index);
 
     /**
      * Writes a single byte at the current index
@@ -96,7 +96,7 @@ public interface IOEndpoint {
      * @param index The index within this element for this operation
      * @param value The byte to write
      */
-    void writeByte(int index, byte value);
+    void writeByte(long index, byte value);
 
     /**
      * Writes bytes at the current index
@@ -104,7 +104,7 @@ public interface IOEndpoint {
      * @param index The index within this element for this operation
      * @param value The bytes to write
      */
-    void writeBytes(int index, byte[] value);
+    void writeBytes(long index, byte[] value);
 
     /**
      * Writes bytes at the current index
@@ -114,7 +114,7 @@ public interface IOEndpoint {
      * @param start  The index in the buffer to start writing from
      * @param length The number of bytes to write
      */
-    void writeBytes(int index, byte[] buffer, int start, int length);
+    void writeBytes(long index, byte[] buffer, int start, int length);
 
     /**
      * Writes a single char at the current index
@@ -122,7 +122,7 @@ public interface IOEndpoint {
      * @param index The index within this element for this operation
      * @param value The char to write
      */
-    void writeChar(int index, char value);
+    void writeChar(long index, char value);
 
     /**
      * Writes a single int at the current index
@@ -130,7 +130,7 @@ public interface IOEndpoint {
      * @param index The index within this element for this operation
      * @param value The int to write
      */
-    void writeInt(int index, int value);
+    void writeInt(long index, int value);
 
     /**
      * Writes a single long at the current index
@@ -138,7 +138,7 @@ public interface IOEndpoint {
      * @param index The index within this element for this operation
      * @param value The long to write
      */
-    void writeLong(int index, long value);
+    void writeLong(long index, long value);
 
     /**
      * Writes a single float at the current index
@@ -146,7 +146,7 @@ public interface IOEndpoint {
      * @param index The index within this element for this operation
      * @param value The float to write
      */
-    void writeFloat(int index, float value);
+    void writeFloat(long index, float value);
 
     /**
      * Writes a single double at the current index
@@ -154,5 +154,5 @@ public interface IOEndpoint {
      * @param index The index within this element for this operation
      * @param value The double to write
      */
-    void writeDouble(int index, double value);
+    void writeDouble(long index, double value);
 }

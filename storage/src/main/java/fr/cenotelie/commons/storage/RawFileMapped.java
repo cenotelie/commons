@@ -90,86 +90,86 @@ public class RawFileMapped implements RawFile, IOEndpoint {
     }
 
     @Override
-    public byte readByte(int index) {
-        return buffer.get(index);
+    public byte readByte(long index) {
+        return buffer.get((int) index);
     }
 
     @Override
-    public byte[] readBytes(int index, int length) {
+    public byte[] readBytes(long index, int length) {
         byte[] result = new byte[length];
         readBytes(index, result, 0, length);
         return result;
     }
 
     @Override
-    public synchronized void readBytes(int index, byte[] buffer, int start, int length) {
-        this.buffer.position(index);
+    public synchronized void readBytes(long index, byte[] buffer, int start, int length) {
+        this.buffer.position((int) index);
         this.buffer.get(buffer, start, length);
     }
 
     @Override
-    public char readChar(int index) {
-        return buffer.getChar(index);
+    public char readChar(long index) {
+        return buffer.getChar((int) index);
     }
 
     @Override
-    public int readInt(int index) {
-        return buffer.getInt(index);
+    public int readInt(long index) {
+        return buffer.getInt((int) index);
     }
 
     @Override
-    public long readLong(int index) {
-        return buffer.getLong(index);
+    public long readLong(long index) {
+        return buffer.getLong((int) index);
     }
 
     @Override
-    public float readFloat(int index) {
-        return buffer.getFloat(index);
+    public float readFloat(long index) {
+        return buffer.getFloat((int) index);
     }
 
     @Override
-    public double readDouble(int index) {
-        return buffer.getDouble(index);
+    public double readDouble(long index) {
+        return buffer.getDouble((int) index);
     }
 
     @Override
-    public void writeByte(int index, byte value) {
-        buffer.put(index, value);
+    public void writeByte(long index, byte value) {
+        buffer.put((int) index, value);
     }
 
     @Override
-    public void writeBytes(int index, byte[] value) {
+    public void writeBytes(long index, byte[] value) {
         writeBytes(index, value, 0, value.length);
     }
 
     @Override
-    public void writeBytes(int index, byte[] buffer, int start, int length) {
-        this.buffer.position(index);
+    public void writeBytes(long index, byte[] buffer, int start, int length) {
+        this.buffer.position((int) index);
         this.buffer.put(buffer, start, length);
     }
 
     @Override
-    public void writeChar(int index, char value) {
-        buffer.putChar(index, value);
+    public void writeChar(long index, char value) {
+        buffer.putChar((int) index, value);
     }
 
     @Override
-    public void writeInt(int index, int value) {
-        buffer.putInt(index, value);
+    public void writeInt(long index, int value) {
+        buffer.putInt((int) index, value);
     }
 
     @Override
-    public void writeLong(int index, long value) {
-        buffer.putLong(index, value);
+    public void writeLong(long index, long value) {
+        buffer.putLong((int) index, value);
     }
 
     @Override
-    public void writeFloat(int index, float value) {
-        buffer.putFloat(index, value);
+    public void writeFloat(long index, float value) {
+        buffer.putFloat((int) index, value);
     }
 
     @Override
-    public void writeDouble(int index, double value) {
-        buffer.putDouble(index, value);
+    public void writeDouble(long index, double value) {
+        buffer.putDouble((int) index, value);
     }
 }

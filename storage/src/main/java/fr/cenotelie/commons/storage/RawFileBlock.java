@@ -40,7 +40,7 @@ class RawFileBlock implements AutoCloseable, IOEndpoint {
     /**
      * The mask for the index within a block
      */
-    public static final int INDEX_MASK_LOWER = BLOCK_SIZE - 1;
+    public static final long INDEX_MASK_LOWER = BLOCK_SIZE - 1;
 
     /**
      * The associated buffer
@@ -151,93 +151,93 @@ class RawFileBlock implements AutoCloseable, IOEndpoint {
     }
 
     @Override
-    public byte readByte(int index) {
-        return buffer.get(index & INDEX_MASK_LOWER);
+    public byte readByte(long index) {
+        return buffer.get((int) ((int) (index & INDEX_MASK_LOWER)));
     }
 
     @Override
-    public byte[] readBytes(int index, int length) {
+    public byte[] readBytes(long index, int length) {
         byte[] result = new byte[length];
         readBytes(index, result, 0, length);
         return result;
     }
 
     @Override
-    public synchronized void readBytes(int index, byte[] buffer, int start, int length) {
-        this.buffer.position(index & INDEX_MASK_LOWER);
+    public synchronized void readBytes(long index, byte[] buffer, int start, int length) {
+        this.buffer.position((int) (index & INDEX_MASK_LOWER));
         this.buffer.get(buffer, start, length);
     }
 
     @Override
-    public char readChar(int index) {
-        return buffer.getChar(index & INDEX_MASK_LOWER);
+    public char readChar(long index) {
+        return buffer.getChar((int) (index & INDEX_MASK_LOWER));
     }
 
     @Override
-    public int readInt(int index) {
-        return buffer.getInt(index & INDEX_MASK_LOWER);
+    public int readInt(long index) {
+        return buffer.getInt((int) (index & INDEX_MASK_LOWER));
     }
 
     @Override
-    public long readLong(int index) {
-        return buffer.getLong(index & INDEX_MASK_LOWER);
+    public long readLong(long index) {
+        return buffer.getLong((int) (index & INDEX_MASK_LOWER));
     }
 
     @Override
-    public float readFloat(int index) {
-        return buffer.getFloat(index & INDEX_MASK_LOWER);
+    public float readFloat(long index) {
+        return buffer.getFloat((int) (index & INDEX_MASK_LOWER));
     }
 
     @Override
-    public double readDouble(int index) {
-        return buffer.getDouble(index & INDEX_MASK_LOWER);
+    public double readDouble(long index) {
+        return buffer.getDouble((int) (index & INDEX_MASK_LOWER));
     }
 
     @Override
-    public void writeByte(int index, byte value) {
-        buffer.put(index & INDEX_MASK_LOWER, value);
+    public void writeByte(long index, byte value) {
+        buffer.put((int) (index & INDEX_MASK_LOWER), value);
         isDirty = true;
     }
 
     @Override
-    public void writeBytes(int index, byte[] value) {
+    public void writeBytes(long index, byte[] value) {
         writeBytes(index, value, 0, value.length);
     }
 
     @Override
-    public void writeBytes(int index, byte[] buffer, int start, int length) {
-        this.buffer.position(index & INDEX_MASK_LOWER);
+    public void writeBytes(long index, byte[] buffer, int start, int length) {
+        this.buffer.position((int) (index & INDEX_MASK_LOWER));
         this.buffer.put(buffer, start, length);
         isDirty = true;
     }
 
     @Override
-    public void writeChar(int index, char value) {
-        buffer.putChar(index & INDEX_MASK_LOWER, value);
+    public void writeChar(long index, char value) {
+        buffer.putChar((int) (index & INDEX_MASK_LOWER), value);
         isDirty = true;
     }
 
     @Override
-    public void writeInt(int index, int value) {
-        buffer.putInt(index & INDEX_MASK_LOWER, value);
+    public void writeInt(long index, int value) {
+        buffer.putInt((int) (index & INDEX_MASK_LOWER), value);
         isDirty = true;
     }
 
     @Override
-    public void writeLong(int index, long value) {
-        buffer.putLong(index & INDEX_MASK_LOWER, value);
+    public void writeLong(long index, long value) {
+        buffer.putLong((int) (index & INDEX_MASK_LOWER), value);
         isDirty = true;
     }
 
     @Override
-    public void writeFloat(int index, float value) {
-        buffer.putFloat(index & INDEX_MASK_LOWER, value);
+    public void writeFloat(long index, float value) {
+        buffer.putFloat((int) (index & INDEX_MASK_LOWER), value);
         isDirty = true;
     }
 
     @Override
-    public void writeDouble(int index, double value) {
-        buffer.putDouble(index & INDEX_MASK_LOWER, value);
+    public void writeDouble(long index, double value) {
+        buffer.putDouble((int) (index & INDEX_MASK_LOWER), value);
         isDirty = true;
     }
 
