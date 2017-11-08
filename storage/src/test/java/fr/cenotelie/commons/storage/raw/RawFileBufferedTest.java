@@ -15,8 +15,9 @@
  * If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-package fr.cenotelie.commons.storage;
+package fr.cenotelie.commons.storage.raw;
 
+import fr.cenotelie.commons.storage.IOAccess;
 import org.junit.Assert;
 import org.junit.Test;
 
