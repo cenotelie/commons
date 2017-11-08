@@ -30,7 +30,7 @@ import java.util.Arrays;
  *
  * @author Laurent Wouters
  */
-class RawFileBlock implements AutoCloseable, IOEndpoint {
+class RawFileBlock extends IOEndpoint implements AutoCloseable {
     /**
      * The number of bits to use in order to represent an index within a block
      */

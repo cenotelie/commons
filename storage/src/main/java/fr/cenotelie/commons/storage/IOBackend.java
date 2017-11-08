@@ -22,7 +22,7 @@ package fr.cenotelie.commons.storage;
  *
  * @author Laurent Wouters
  */
-public interface IOBackend {
+public abstract class IOBackend {
     /**
      * Acquires an endpoint that enables reading and writing to the backend at the specified index
      * The endpoint must be subsequently released by a call to
@@ -30,12 +30,12 @@ public interface IOBackend {
      * @param index An index within this backend
      * @return The corresponding endpoint
      */
-    IOEndpoint acquireEndpointAt(long index);
+    public abstract IOEndpoint acquireEndpointAt(long index);
 
     /**
      * When an endpoint is no longer required
      *
      * @param endpoint The endpoint to release
      */
-    void releaseEndpoint(IOEndpoint endpoint);
+    public abstract void releaseEndpoint(IOEndpoint endpoint);
 }

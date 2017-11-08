@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Laurent Wouters
  */
-public class RawFileBuffered implements RawFile {
+public class RawFileBuffered extends RawFile {
     /**
      * The maximum number of loaded blocks
      */

@@ -29,7 +29,7 @@ import java.util.List;
  *
  * @author Laurent Wouters
  */
-public class RawSplitFiles implements RawFile {
+public class RawSplitFiles extends RawFile {
     /**
      * The factory to use for new individual files
      */

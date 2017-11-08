@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicLongArray;
  *
  * @author Laurent Wouters
  */
-class IOAccessManager {
+public class IOAccessManager {
     /**
      * The size of the access pool
      */

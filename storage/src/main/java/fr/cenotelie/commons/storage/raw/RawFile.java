@@ -27,25 +27,25 @@ import java.io.IOException;
  *
  * @author Laurent Wouters
  */
-public interface RawFile extends AutoCloseable, IOBackend {
+public abstract class RawFile extends IOBackend implements AutoCloseable {
     /**
      * Gets the backing system file
      *
      * @return The backing system file
      */
-    File getSystemFile();
+    public abstract File getSystemFile();
 
     /**
      * Gets whether this file can be written to
      *
      * @return Whether this file can be written to
      */
-    boolean isWritable();
+    public abstract boolean isWritable();
 
     /**
      * Flushes any outstanding changes to this file to the storage device
      *
      * @throws IOException When an IO error occurred
      */
-    void flush() throws IOException;
+    public abstract void flush() throws IOException;
 }
