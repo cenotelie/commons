@@ -1,0 +1,28 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>fr.cenotelie.commons</groupId>
+        <artifactId>commons-top</artifactId>
+        <version>2.0.2-SNAPSHOT</version>
+    </parent>
+    <artifactId>commons-storage</artifactId>
+    <packaging>bundle</packaging>
+    <version>2.0.2-SNAPSHOT</version>
+    <name>Cénotélie Commons - Storage API</name>
+    <description>Implementation of file storage APIs</description>
+    <url>https://cenotelie.fr/commons</url>
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>fr.cenotelie.commons</groupId>
+            <artifactId>commons-utils</artifactId>
+            <version>2.0.2-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+</project>

@@ -41,6 +41,7 @@
         <module>utils</module>
         <module>jsonrpc</module>
         <module>lsp</module>
+        <module>storage</module>
         <module>p2uploader</module>
     </modules>
     <build>
