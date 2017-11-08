@@ -20,6 +20,7 @@ package fr.cenotelie.commons.storage;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
@@ -47,7 +48,22 @@ public class IOAccessManagerTest {
     public void testConcurrentAccesses() {
         Collection<Thread> threads = new ArrayList<>();
         final Random random = new Random();
-        final IOAccessManager manager = new IOAccessManager(null);
+        final IOAccessManager manager = new IOAccessManager(new IOBackend() {
+            @Override
+            public IOEndpoint acquireEndpointAt(long index) {
+                return null;
+            }
+
+            @Override
+            public void releaseEndpoint(IOEndpoint endpoint) {
+
+            }
+
+            @Override
+            public void close() throws IOException {
+
+            }
+        });
 
         for (int i = 0; i != THREAD_COUNT; i++) {
             Thread thread = new Thread(new Runnable() {
