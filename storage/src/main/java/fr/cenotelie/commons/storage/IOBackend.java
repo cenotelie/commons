@@ -17,12 +17,14 @@
 
 package fr.cenotelie.commons.storage;
 
+import java.io.IOException;
+
 /**
  * Represents backend device for IO operations.
  *
  * @author Laurent Wouters
  */
-public abstract class IOBackend {
+public abstract class IOBackend implements AutoCloseable {
     /**
      * Acquires an endpoint that enables reading and writing to the backend at the specified index
      * The endpoint must be subsequently released by a call to
@@ -38,4 +40,12 @@ public abstract class IOBackend {
      * @param endpoint The endpoint to release
      */
     public abstract void releaseEndpoint(IOEndpoint endpoint);
+
+    /**
+     * Closes this resource, relinquishing any underlying resources
+     *
+     * @throws IOException When an IO error occurred
+     */
+    @Override
+    public abstract void close() throws IOException;
 }

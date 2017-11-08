@@ -30,7 +30,7 @@ import java.util.Arrays;
  *
  * @author Laurent Wouters
  */
-class RawFileBlock extends IOEndpoint implements AutoCloseable {
+class RawFileBlock extends IOEndpoint {
     /**
      * The number of bits to use in order to represent an index within a block
      */
@@ -241,9 +241,5 @@ class RawFileBlock extends IOEndpoint implements AutoCloseable {
     public void writeDouble(long index, double value) {
         buffer.putDouble((int) (index & INDEX_MASK_LOWER), value);
         isDirty = true;
-    }
-
-    @Override
-    public void close() {
     }
 }

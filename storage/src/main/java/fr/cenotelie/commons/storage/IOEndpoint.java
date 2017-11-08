@@ -22,7 +22,7 @@ package fr.cenotelie.commons.storage;
  *
  * @author Laurent Wouters
  */
-public abstract class IOEndpoint {
+public abstract class IOEndpoint implements AutoCloseable {
     /**
      * Reads a single byte at the current index
      *
@@ -155,4 +155,11 @@ public abstract class IOEndpoint {
      * @param value The double to write
      */
     public abstract void writeDouble(long index, double value);
+
+    /**
+     * Closes this resource, relinquishing any underlying resources
+     */
+    @Override
+    public void close() {
+    }
 }

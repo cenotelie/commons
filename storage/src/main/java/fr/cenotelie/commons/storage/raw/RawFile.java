@@ -27,7 +27,7 @@ import java.io.IOException;
  *
  * @author Laurent Wouters
  */
-public abstract class RawFile extends IOBackend implements AutoCloseable {
+public abstract class RawFile extends IOBackend {
     /**
      * Gets the backing system file
      *
@@ -55,12 +55,4 @@ public abstract class RawFile extends IOBackend implements AutoCloseable {
      * @throws IOException When an IO error occurred
      */
     public abstract void flush() throws IOException;
-
-    /**
-     * Closes this resource, relinquishing any underlying resources
-     *
-     * @throws IOException When an IO error occurred
-     */
-    @Override
-    public abstract void close() throws IOException;
 }
