@@ -34,7 +34,7 @@ public class IOAccess implements AutoCloseable {
     /**
      * The location in the backend
      */
-    private int location;
+    private long location;
     /**
      * The length of the proxy in the backend
      */
@@ -46,7 +46,7 @@ public class IOAccess implements AutoCloseable {
     /**
      * The current index in the backend
      */
-    private int index;
+    private long index;
 
     /**
      * Initializes an empty access
@@ -67,7 +67,7 @@ public class IOAccess implements AutoCloseable {
      * @param length   The length of the allowed span
      * @param writable Whether the access allows writing
      */
-    public IOAccess(IOEndpoint endpoint, int location, int length, boolean writable) {
+    public IOAccess(IOEndpoint endpoint, long location, int length, boolean writable) {
         this.endpoint = endpoint;
         this.location = location;
         this.length = length;
@@ -82,7 +82,7 @@ public class IOAccess implements AutoCloseable {
      * @param length   The length of the allowed span
      * @param writable Whether the access allows writing
      */
-    void setupIOData(int location, int length, boolean writable) {
+    void setupIOData(long location, int length, boolean writable) {
         this.location = location;
         this.length = length;
         this.writable = writable;
@@ -94,7 +94,7 @@ public class IOAccess implements AutoCloseable {
      *
      * @return The location of this access in the backend
      */
-    public int getLocation() {
+    public long getLocation() {
         return location;
     }
 
@@ -104,7 +104,7 @@ public class IOAccess implements AutoCloseable {
      *
      * @return The current access index
      */
-    public int getIndex() {
+    public long getIndex() {
         return (index - location);
     }
 
@@ -392,6 +392,6 @@ public class IOAccess implements AutoCloseable {
 
     @Override
     public String toString() {
-        return (writable ? "W" : "R") + "[0x" + Integer.toHexString(location) + ", 0x" + Integer.toHexString(location + length) + ")";
+        return (writable ? "W" : "R") + "[0x" + Long.toHexString(location) + ", 0x" + Long.toHexString(location + length) + ")";
     }
 }
