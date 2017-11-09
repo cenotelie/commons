@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicLongArray;
  *
  * @author Laurent Wouters
  */
-public class IOAccessManager {
+public class TSAccessManager {
     /**
      * The size of the access pool
      */
@@ -51,7 +51,7 @@ public class IOAccessManager {
     /**
      * The pool of existing accesses in the manager
      */
-    private final IOAccess[] accesses;
+    private final TSAccess[] accesses;
     /**
      * The current number of accesses in the pool
      */
@@ -80,12 +80,12 @@ public class IOAccessManager {
      *
      * @param backend The backend element that is protected by this manager
      */
-    public IOAccessManager(IOBackend backend) {
+    public TSAccessManager(IOBackend backend) {
         this.backend = backend;
-        this.accesses = new IOAccess[ACCESSES_POOL_SIZE];
-        this.accesses[ACTIVE_HEAD_ID] = new IOAccess(this, ACTIVE_HEAD_ID);
+        this.accesses = new TSAccess[ACCESSES_POOL_SIZE];
+        this.accesses[ACTIVE_HEAD_ID] = new TSAccess(this, ACTIVE_HEAD_ID);
         this.accesses[ACTIVE_HEAD_ID].setupIOData(0, 0, false);
-        this.accesses[ACTIVE_TAIL_ID] = new IOAccess(this, ACTIVE_TAIL_ID);
+        this.accesses[ACTIVE_TAIL_ID] = new TSAccess(this, ACTIVE_TAIL_ID);
         this.accesses[ACTIVE_TAIL_ID].setupIOData(Integer.MAX_VALUE, 0, false);
         this.accessesCount = new AtomicInteger(2);
         this.accessesState = new AtomicLongArray(ACCESSES_POOL_SIZE);
@@ -330,7 +330,7 @@ public class IOAccessManager {
      * @return Whether the attempt is successful
      */
     private boolean listSearchAndInsert(int toInsert, int key) {
-        IOAccess accessToInsert = accesses[toInsert];
+        TSAccess accessToInsert = accesses[toInsert];
 
         // find the left node
         int leftNode;
@@ -345,7 +345,7 @@ public class IOAccessManager {
             currentNodeState = accessesState.get(currentNode);
             if (!stateIsActive(currentNodeState))
                 return false;
-            IOAccess accessCurrentNode = accesses[currentNode];
+            TSAccess accessCurrentNode = accesses[currentNode];
             if ((accessToInsert.isWritable() || accessCurrentNode.isWritable()) && !accessToInsert.disjoints(accessCurrentNode))
                 // there is a write overlap
                 return false;
@@ -362,7 +362,7 @@ public class IOAccessManager {
                 return false;
             if (stateKey(currentNodeState) >= key + accessToInsert.getLength())
                 break;
-            IOAccess accessCurrentNode = accesses[currentNode];
+            TSAccess accessCurrentNode = accesses[currentNode];
             if ((accessToInsert.isWritable() || accessCurrentNode.isWritable()) && !accessToInsert.disjoints(accessCurrentNode))
                 // there is a write overlap
                 return false;
@@ -465,7 +465,7 @@ public class IOAccessManager {
      * @return The new access, or null if it cannot be obtained
      */
     public IOAccess get(int location, int length, boolean writable) {
-        IOAccess access = newAccess(location);
+        TSAccess access = newAccess(location);
         access.setupIOData(location, length, writable);
         listInsert(access.identifier, location);
         try {
@@ -488,7 +488,7 @@ public class IOAccessManager {
      * @return The new access, or null if it cannot be obtained
      */
     public IOAccess get(int location, int length, boolean writable, IOEndpoint endpoint) {
-        IOAccess access = newAccess(location);
+        TSAccess access = newAccess(location);
         access.setupIOData(location, length, writable);
         access.endpoint = endpoint;
         listInsert(access.identifier, location);
@@ -500,7 +500,7 @@ public class IOAccessManager {
      *
      * @param access The access
      */
-    void onAccessEnd(IOAccess access) {
+    void onAccessEnd(TSAccess access) {
         try {
             backend.releaseEndpoint(access.endpoint);
         } finally {
@@ -514,12 +514,12 @@ public class IOAccessManager {
      * @param key The key for the access
      * @return A free access object
      */
-    private IOAccess newAccess(int key) {
+    private TSAccess newAccess(int key) {
         int count = accessesCount.get();
         while (count < ACCESSES_POOL_SIZE) {
             // the pool is not full, try to grow it
             if (accessesCount.compareAndSet(count, count + 1)) {
-                accesses[count] = new IOAccess(this, count);
+                accesses[count] = new TSAccess(this, count);
                 accessesState.set(count, stateSetActive(key));
                 return accesses[count];
             }

@@ -18,8 +18,8 @@
 package fr.cenotelie.commons.storage.raw;
 
 import fr.cenotelie.commons.storage.IOAccess;
-import fr.cenotelie.commons.storage.IOAccessManager;
 import fr.cenotelie.commons.storage.IOEndpoint;
+import fr.cenotelie.commons.storage.TSAccessManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,7 +37,7 @@ public class RawFileThreadSafe extends RawFile {
     /**
      * The access manager to use
      */
-    private final IOAccessManager accessManager;
+    private final TSAccessManager accessManager;
 
     /**
      * Initializes this structure
@@ -46,7 +46,7 @@ public class RawFileThreadSafe extends RawFile {
      */
     public RawFileThreadSafe(RawFile backend) {
         this.backend = backend;
-        this.accessManager = new IOAccessManager(backend);
+        this.accessManager = new TSAccessManager(backend);
     }
 
     @Override

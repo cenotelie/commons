@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016 Association Cénotélie (cenotelie.fr)
+ * Copyright (c) 2017 Association Cénotélie (cenotelie.fr)
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation, either version 3
@@ -28,14 +28,6 @@ package fr.cenotelie.commons.storage;
  */
 public class IOAccess implements AutoCloseable {
     /**
-     * The parent manager
-     */
-    private final IOAccessManager manager;
-    /**
-     * The identifier of this access for the parent manager
-     */
-    final int identifier;
-    /**
      * The target endpoint for this access
      */
     IOEndpoint endpoint;
@@ -57,14 +49,30 @@ public class IOAccess implements AutoCloseable {
     private int index;
 
     /**
+     * Initializes an empty access
+     */
+    public IOAccess() {
+        this.endpoint = null;
+        this.location = -1;
+        this.length = 0;
+        this.writable = false;
+        this.index = -1;
+    }
+
+    /**
      * Initializes this access
      *
-     * @param manager    The parent manager
-     * @param identifier The identifier of this access for the parent manager
+     * @param endpoint The target endpoint for this access
+     * @param location The location of the span for this access within the backend
+     * @param length   The length of the allowed span
+     * @param writable Whether the access allows writing
      */
-    IOAccess(IOAccessManager manager, int identifier) {
-        this.manager = manager;
-        this.identifier = identifier;
+    public IOAccess(IOEndpoint endpoint, int location, int length, boolean writable) {
+        this.endpoint = endpoint;
+        this.location = location;
+        this.length = length;
+        this.writable = writable;
+        this.index = location;
     }
 
     /**
@@ -380,7 +388,6 @@ public class IOAccess implements AutoCloseable {
 
     @Override
     public void close() {
-        manager.onAccessEnd(this);
     }
 
     @Override

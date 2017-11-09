@@ -30,7 +30,7 @@ import java.util.Random;
  *
  * @author Laurent Wouters
  */
-public class IOAccessManagerTest {
+public class TSAccessManagerTest {
     /**
      * Numbers of threads
      */
@@ -48,7 +48,7 @@ public class IOAccessManagerTest {
     public void testConcurrentAccesses() {
         Collection<Thread> threads = new ArrayList<>();
         final Random random = new Random();
-        final IOAccessManager manager = new IOAccessManager(new IOBackend() {
+        final TSAccessManager manager = new TSAccessManager(new IOBackend() {
             @Override
             public IOEndpoint acquireEndpointAt(long index) {
                 return null;

@@ -27,7 +27,7 @@ import java.nio.channels.FileChannel;
 
 /**
  * Implements a raw file that is mapped to memory
- * This structure is not thread safe, unless its access is protected with an IOAccessManager
+ * This structure is not thread safe, unless its access is protected with an TSAccessManager
  *
  * @author Laurent Wouters
  */
