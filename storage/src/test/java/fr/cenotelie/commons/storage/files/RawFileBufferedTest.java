@@ -15,7 +15,7 @@
  * If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-package fr.cenotelie.commons.storage.raw;
+package fr.cenotelie.commons.storage.files;
 
 import fr.cenotelie.commons.storage.TSBackend;
 import fr.cenotelie.commons.storage.StorageAccess;

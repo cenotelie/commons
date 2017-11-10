@@ -18,7 +18,7 @@
 package fr.cenotelie.commons.storage.wal;
 
 import fr.cenotelie.commons.storage.StorageEndpoint;
-import fr.cenotelie.commons.storage.raw.RawFile;
+import fr.cenotelie.commons.storage.files.RawFile;
 
 import java.nio.ByteBuffer;
 
