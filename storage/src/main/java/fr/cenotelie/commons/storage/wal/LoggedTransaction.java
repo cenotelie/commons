@@ -15,37 +15,28 @@
  * If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-package fr.cenotelie.commons.storage;
-
-import java.io.IOException;
+package fr.cenotelie.commons.storage.wal;
 
 /**
- * Represents backend device for IO operations.
+ * Represents the data of a transaction that appears in the log
  *
  * @author Laurent Wouters
  */
-public abstract class IOBackend implements AutoCloseable {
+class LoggedTransaction {
     /**
-     * Acquires an endpoint that enables reading and writing to the backend at the specified index
-     * The endpoint must be subsequently released by a call to
-     *
-     * @param index An index within this backend
-     * @return The corresponding endpoint
+     * The sequence number for this transaction
      */
-    public abstract IOEndpoint acquireEndpointAt(long index);
-
+    public final long sequenceNumber;
     /**
-     * When an endpoint is no longer required
-     *
-     * @param endpoint The endpoint to release
+     * The locations of the pages modified by this transaction in the backend storage
      */
-    public abstract void releaseEndpoint(IOEndpoint endpoint);
-
+    public final long[] pageLocations;
     /**
-     * Closes this resource, relinquishing any underlying resources
-     *
-     * @throws IOException When an IO error occurred
+     * The offsets from the transaction's location to the data about the page's modification in the log
      */
-    @Override
-    public abstract void close() throws IOException;
+    public final int[] pageOffsets;
+    /**
+     * The location of this transaction in the log
+     */
+    public long location;
 }

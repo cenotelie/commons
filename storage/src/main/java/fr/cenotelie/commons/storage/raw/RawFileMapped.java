@@ -17,7 +17,7 @@
 
 package fr.cenotelie.commons.storage.raw;
 
-import fr.cenotelie.commons.storage.IOEndpoint;
+import fr.cenotelie.commons.storage.StorageEndpoint;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,7 +35,7 @@ public class RawFileMapped extends RawFile {
     /**
      * The IO endpoint for this file
      */
-    private final class Endpoint extends IOEndpoint {
+    private final class Endpoint extends StorageEndpoint {
         /**
          * The memory-mapped byte buffer for a file
          */
@@ -190,12 +190,12 @@ public class RawFileMapped extends RawFile {
     }
 
     @Override
-    public IOEndpoint acquireEndpointAt(long index) {
+    public StorageEndpoint acquireEndpointAt(long index) {
         return endpoint;
     }
 
     @Override
-    public void releaseEndpoint(IOEndpoint endpoint) {
+    public void releaseEndpoint(StorageEndpoint endpoint) {
         // do nothing
     }
 

@@ -17,7 +17,7 @@
 
 package fr.cenotelie.commons.storage.raw;
 
-import fr.cenotelie.commons.storage.IOEndpoint;
+import fr.cenotelie.commons.storage.StorageEndpoint;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -30,7 +30,7 @@ import java.util.Arrays;
  *
  * @author Laurent Wouters
  */
-class RawFileBlock extends IOEndpoint {
+class RawFileBlock extends StorageEndpoint {
     /**
      * The number of bits to use in order to represent an index within a block
      */

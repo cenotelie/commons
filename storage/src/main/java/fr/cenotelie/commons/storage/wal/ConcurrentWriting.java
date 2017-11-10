@@ -15,44 +15,15 @@
  * If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-package fr.cenotelie.commons.storage.raw;
+package fr.cenotelie.commons.storage.wal;
 
-import fr.cenotelie.commons.storage.StorageBackend;
-
-import java.io.File;
 import java.io.IOException;
 
 /**
- * Represents the raw access to a data file
+ * Exception raised when at the moment of committing a transaction to a write-ahead log,
+ * it appears there are some conflicts with the edits made by another transaction.
  *
  * @author Laurent Wouters
  */
-public abstract class RawFile extends StorageBackend {
-    /**
-     * Gets the backing system file
-     *
-     * @return The backing system file
-     */
-    public abstract File getSystemFile();
-
-    /**
-     * Gets whether this file can be written to
-     *
-     * @return Whether this file can be written to
-     */
-    public abstract boolean isWritable();
-
-    /**
-     * Gets the size of this file
-     *
-     * @return The size of this file
-     */
-    public abstract long getSize();
-
-    /**
-     * Flushes any outstanding changes to this file to the storage device
-     *
-     * @throws IOException When an IO error occurred
-     */
-    public abstract void flush() throws IOException;
+public class ConcurrentWriting extends IOException {
 }

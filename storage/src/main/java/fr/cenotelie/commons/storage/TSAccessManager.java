@@ -47,7 +47,7 @@ public class TSAccessManager {
     /**
      * The backend element that is protected by this manager
      */
-    private final IOBackend backend;
+    private final StorageBackend backend;
     /**
      * The pool of existing accesses in the manager
      */
@@ -80,13 +80,11 @@ public class TSAccessManager {
      *
      * @param backend The backend element that is protected by this manager
      */
-    public TSAccessManager(IOBackend backend) {
+    public TSAccessManager(StorageBackend backend) {
         this.backend = backend;
         this.accesses = new TSAccess[ACCESSES_POOL_SIZE];
-        this.accesses[ACTIVE_HEAD_ID] = new TSAccess(this, ACTIVE_HEAD_ID);
-        this.accesses[ACTIVE_HEAD_ID].setupIOData(0, 0, false);
-        this.accesses[ACTIVE_TAIL_ID] = new TSAccess(this, ACTIVE_TAIL_ID);
-        this.accesses[ACTIVE_TAIL_ID].setupIOData(Integer.MAX_VALUE, 0, false);
+        this.accesses[ACTIVE_HEAD_ID] = new TSAccess(this, ACTIVE_HEAD_ID, 0);
+        this.accesses[ACTIVE_TAIL_ID] = new TSAccess(this, ACTIVE_TAIL_ID, Integer.MAX_VALUE);
         this.accessesCount = new AtomicInteger(2);
         this.accessesState = new AtomicLongArray(ACCESSES_POOL_SIZE);
         this.accessesState.set(ACTIVE_HEAD_ID, 0x0000000001000001L);
@@ -464,33 +462,9 @@ public class TSAccessManager {
      * @param writable Whether the access allows writing
      * @return The new access, or null if it cannot be obtained
      */
-    public IOAccess get(int location, int length, boolean writable) {
+    public StorageAccess get(int location, int length, boolean writable) {
         TSAccess access = newAccess(location);
-        access.setupIOData(location, length, writable);
-        listInsert(access.identifier, location);
-        try {
-            access.endpoint = backend.acquireEndpointAt(location);
-        } catch (Throwable exception) {
-            listRemove(access.identifier);
-            // rethrow exception
-            throw exception;
-        }
-        return access;
-    }
-
-    /**
-     * Gets an access to the associated backend for the specified span
-     *
-     * @param location The location of the span within the backend
-     * @param length   The length of the allowed span
-     * @param writable Whether the access allows writing
-     * @param endpoint The target endpoint for this access
-     * @return The new access, or null if it cannot be obtained
-     */
-    public IOAccess get(int location, int length, boolean writable, IOEndpoint endpoint) {
-        TSAccess access = newAccess(location);
-        access.setupIOData(location, length, writable);
-        access.endpoint = endpoint;
+        access.setup(backend, location, length, writable);
         listInsert(access.identifier, location);
         return access;
     }
@@ -501,11 +475,7 @@ public class TSAccessManager {
      * @param access The access
      */
     void onAccessEnd(TSAccess access) {
-        try {
-            backend.releaseEndpoint(access.endpoint);
-        } finally {
-            listRemove(access.identifier);
-        }
+        listRemove(access.identifier);
     }
 
     /**

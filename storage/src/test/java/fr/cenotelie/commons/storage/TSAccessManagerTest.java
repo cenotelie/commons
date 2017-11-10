@@ -48,14 +48,14 @@ public class TSAccessManagerTest {
     public void testConcurrentAccesses() {
         Collection<Thread> threads = new ArrayList<>();
         final Random random = new Random();
-        final TSAccessManager manager = new TSAccessManager(new IOBackend() {
+        final TSAccessManager manager = new TSAccessManager(new StorageBackend() {
             @Override
-            public IOEndpoint acquireEndpointAt(long index) {
+            public StorageEndpoint acquireEndpointAt(long index) {
                 return null;
             }
 
             @Override
-            public void releaseEndpoint(IOEndpoint endpoint) {
+            public void releaseEndpoint(StorageEndpoint endpoint) {
 
             }
 
@@ -72,7 +72,7 @@ public class TSAccessManagerTest {
                     for (int i = 0; i != ACCESSES_COUNT; i++) {
                         int location = random.nextInt() & 0xFFFF;
                         int length = random.nextInt() & 0x00FF;
-                        try (IOAccess access = manager.get(location, length, false)) {
+                        try (StorageAccess access = manager.get(location, length, false)) {
                             Assert.assertEquals(location, access.getLocation());
                             Assert.assertEquals(length, access.getLength());
                         }

@@ -18,11 +18,26 @@
 package fr.cenotelie.commons.storage;
 
 /**
- * Represents an endpoint for IO operations, i.e. a structure that supports data being read from and written to
+ * Represents an endpoint for a storage system backend.
+ * An endpoint gives a controlled access to the storage system for IO operations.
  *
  * @author Laurent Wouters
  */
-public abstract class IOEndpoint implements AutoCloseable {
+public abstract class StorageEndpoint implements AutoCloseable {
+    /**
+     * Gets the lower bound for indices within the scope of this endpoint
+     *
+     * @return The lower bound for indices within the scope of this endpoint
+     */
+    public abstract long getIndexLowerBound();
+
+    /**
+     * Gets the upper bound (excluded) for indices within the scope of this endpoint
+     *
+     * @return The upper bound (excluded) for indices within the scope of this endpoint
+     */
+    public abstract long getIndexUpperBound();
+
     /**
      * Reads a single byte at the current index
      *
@@ -57,6 +72,14 @@ public abstract class IOEndpoint implements AutoCloseable {
      * @return The char
      */
     public abstract char readChar(long index);
+
+    /**
+     * Reads a single short at the current index
+     *
+     * @param index The index within this element for this operation
+     * @return The short
+     */
+    public abstract short readShort(long index);
 
     /**
      * Reads a single int at the current index
@@ -123,6 +146,14 @@ public abstract class IOEndpoint implements AutoCloseable {
      * @param value The char to write
      */
     public abstract void writeChar(long index, char value);
+
+    /**
+     * Writes a single short at the current index
+     *
+     * @param index The index within this element for this operation
+     * @param value The short to write
+     */
+    public abstract void writeShort(long index, short value);
 
     /**
      * Writes a single int at the current index

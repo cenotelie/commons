@@ -17,7 +17,7 @@
 
 package fr.cenotelie.commons.storage.wal;
 
-import fr.cenotelie.commons.storage.IOAccess;
+import fr.cenotelie.commons.storage.StorageAccess;
 
 import java.util.Arrays;
 
@@ -34,11 +34,11 @@ public class Transaction implements AutoCloseable {
     /**
      * The sequence number for this transaction
      */
-    private final long sequenceNumber;
+    final long sequenceNumber;
     /**
      * The sequence number of the last transaction known to this one
      */
-    private final long endMark;
+    final long endMark;
     /**
      * Whether this transaction allows writing
      */
@@ -74,8 +74,13 @@ public class Transaction implements AutoCloseable {
         this.pagesCount = 0;
     }
 
+    /**
+     * Closes this transaction and commit the edits (if any) made within this transaction to the write-ahead log
+     *
+     * @throws ConcurrentWriting when a concurrent transaction already committed conflicting changes to the log
+     */
     @Override
-    public void close() {
+    public void close() throws ConcurrentWriting {
         parent.onTransactionEnd(this);
     }
 
@@ -97,10 +102,10 @@ public class Transaction implements AutoCloseable {
      * @param writable Whether the access shall allow writing
      * @return The access element
      */
-    public IOAccess access(long index, int length, boolean writable) {
+    public StorageAccess access(long index, int length, boolean writable) {
         writable = this.writable & writable;
         Page page = acquirePage(index, writable);
-        return new IOAccess(page, index, length, writable);
+        return new StorageAccess(page, index, length, writable);
     }
 
     /**

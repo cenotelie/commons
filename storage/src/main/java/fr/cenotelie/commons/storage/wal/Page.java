@@ -17,14 +17,14 @@
 
 package fr.cenotelie.commons.storage.wal;
 
-import fr.cenotelie.commons.storage.IOEndpoint;
+import fr.cenotelie.commons.storage.StorageEndpoint;
 
 /**
  * Represents a page of data protected by a write-ahead log as seen by a transaction
  *
  * @author Laurent Wouters
  */
-abstract class Page extends IOEndpoint {
+abstract class Page extends StorageEndpoint {
     /**
      * The number of bits to use in order to represent an index within a page
      */

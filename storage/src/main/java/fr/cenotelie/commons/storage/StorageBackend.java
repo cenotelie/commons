@@ -15,44 +15,37 @@
  * If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-package fr.cenotelie.commons.storage.raw;
+package fr.cenotelie.commons.storage;
 
-import fr.cenotelie.commons.storage.StorageBackend;
-
-import java.io.File;
 import java.io.IOException;
 
 /**
- * Represents the raw access to a data file
+ * Represents a backend storage system for IO operations.
  *
  * @author Laurent Wouters
  */
-public abstract class RawFile extends StorageBackend {
+public abstract class StorageBackend implements AutoCloseable {
     /**
-     * Gets the backing system file
+     * Acquires an endpoint that enables reading and writing to the backend at the specified index
+     * The endpoint must be subsequently released by a call to
      *
-     * @return The backing system file
+     * @param index An index within this backend
+     * @return The corresponding endpoint
      */
-    public abstract File getSystemFile();
+    public abstract StorageEndpoint acquireEndpointAt(long index);
 
     /**
-     * Gets whether this file can be written to
+     * When an endpoint is no longer required
      *
-     * @return Whether this file can be written to
+     * @param endpoint The endpoint to release
      */
-    public abstract boolean isWritable();
+    public abstract void releaseEndpoint(StorageEndpoint endpoint);
 
     /**
-     * Gets the size of this file
-     *
-     * @return The size of this file
-     */
-    public abstract long getSize();
-
-    /**
-     * Flushes any outstanding changes to this file to the storage device
+     * Closes this resource, relinquishing any underlying resources
      *
      * @throws IOException When an IO error occurred
      */
-    public abstract void flush() throws IOException;
+    @Override
+    public abstract void close() throws IOException;
 }

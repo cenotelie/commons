@@ -17,7 +17,7 @@
 
 package fr.cenotelie.commons.storage.wal;
 
-import fr.cenotelie.commons.storage.IOEndpoint;
+import fr.cenotelie.commons.storage.StorageEndpoint;
 
 /**
  * Represents a WAL page that is really a proxy onto the page held by the backend storage system
@@ -28,7 +28,7 @@ class PageProxy extends Page {
     /**
      * The endpoint used to access the backend storage system
      */
-    private final IOEndpoint endpoint;
+    private final StorageEndpoint endpoint;
 
     /**
      * Initializes this page
@@ -36,7 +36,7 @@ class PageProxy extends Page {
      * @param location The position of the page within the backing system
      * @param endpoint The endpoint used to access the backend storage system
      */
-    public PageProxy(long location, IOEndpoint endpoint) {
+    public PageProxy(long location, StorageEndpoint endpoint) {
         super(location);
         this.endpoint = endpoint;
     }

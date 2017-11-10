@@ -17,7 +17,7 @@
 
 package fr.cenotelie.commons.storage.raw;
 
-import fr.cenotelie.commons.storage.IOEndpoint;
+import fr.cenotelie.commons.storage.StorageEndpoint;
 
 import java.io.File;
 import java.io.IOException;
@@ -131,12 +131,12 @@ public class RawSplitFiles extends RawFile {
     }
 
     @Override
-    public IOEndpoint acquireEndpointAt(long index) {
+    public StorageEndpoint acquireEndpointAt(long index) {
         return null;
     }
 
     @Override
-    public void releaseEndpoint(IOEndpoint endpoint) {
+    public void releaseEndpoint(StorageEndpoint endpoint) {
 
     }
 

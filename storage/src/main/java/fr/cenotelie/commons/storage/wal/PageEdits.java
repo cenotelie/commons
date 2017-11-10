@@ -17,7 +17,7 @@
 
 package fr.cenotelie.commons.storage.wal;
 
-import fr.cenotelie.commons.storage.IOAccess;
+import fr.cenotelie.commons.storage.StorageAccess;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -60,7 +60,7 @@ class PageEdits {
      *
      * @param access The access to use
      */
-    public PageEdits(IOAccess access) {
+    public PageEdits(StorageAccess access) {
         this.editCount = access.readInt();
         this.editIndex = new int[editCount];
         this.editContent = new byte[editCount][];
@@ -242,7 +242,7 @@ class PageEdits {
      *
      * @param access The access to use for the serialization
      */
-    public void serialize(IOAccess access) {
+    public void serialize(StorageAccess access) {
         access.writeInt(editCount);
         for (int i = 0; i != editCount; i++) {
             access.writeInt(editContent[i].length);

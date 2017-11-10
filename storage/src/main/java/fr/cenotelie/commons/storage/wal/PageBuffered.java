@@ -17,7 +17,7 @@
 
 package fr.cenotelie.commons.storage.wal;
 
-import fr.cenotelie.commons.storage.IOEndpoint;
+import fr.cenotelie.commons.storage.StorageEndpoint;
 import fr.cenotelie.commons.storage.raw.RawFile;
 
 import java.nio.ByteBuffer;
@@ -49,7 +49,7 @@ class PageBuffered extends Page {
      * @param backend The backend storage system
      */
     public void load(RawFile backend) {
-        try (IOEndpoint endpoint = backend.acquireEndpointAt(location)) {
+        try (StorageEndpoint endpoint = backend.acquireEndpointAt(location)) {
             endpoint.readBytes(location, buffer.array(), 0, PAGE_SIZE);
         }
     }

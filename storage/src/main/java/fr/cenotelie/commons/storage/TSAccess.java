@@ -22,7 +22,7 @@ package fr.cenotelie.commons.storage;
  *
  * @author Laurent Wouters
  */
-class TSAccess extends IOAccess {
+class TSAccess extends StorageAccess {
     /**
      * The parent manager
      */
@@ -38,13 +38,27 @@ class TSAccess extends IOAccess {
      * @param manager    The parent manager
      * @param identifier The identifier of this access for the parent manager
      */
-    TSAccess(TSAccessManager manager, int identifier) {
+    public TSAccess(TSAccessManager manager, int identifier) {
+        super();
+        this.manager = manager;
+        this.identifier = identifier;
+    }
+
+    /**
+     * Initializes this access
+     *
+     * @param manager    The parent manager
+     * @param identifier The identifier of this access for the parent manager
+     */
+    public TSAccess(TSAccessManager manager, int identifier, int location) {
+        super(null, location, 0, false);
         this.manager = manager;
         this.identifier = identifier;
     }
 
     @Override
     public void close() {
+        releaseOnClose();
         manager.onAccessEnd(this);
     }
 }

@@ -17,8 +17,8 @@
 
 package fr.cenotelie.commons.storage.raw;
 
-import fr.cenotelie.commons.storage.IOAccess;
-import fr.cenotelie.commons.storage.IOEndpoint;
+import fr.cenotelie.commons.storage.StorageAccess;
+import fr.cenotelie.commons.storage.StorageEndpoint;
 import fr.cenotelie.commons.storage.TSAccessManager;
 
 import java.io.File;
@@ -70,12 +70,12 @@ public class RawFileThreadSafe extends RawFile {
     }
 
     @Override
-    public IOEndpoint acquireEndpointAt(long index) {
+    public StorageEndpoint acquireEndpointAt(long index) {
         throw new UnsupportedOperationException("This operation is not allowed");
     }
 
     @Override
-    public void releaseEndpoint(IOEndpoint endpoint) {
+    public void releaseEndpoint(StorageEndpoint endpoint) {
         throw new UnsupportedOperationException("This operation is not allowed");
     }
 
@@ -93,7 +93,7 @@ public class RawFileThreadSafe extends RawFile {
      * @param writable Whether the access shall allow writing
      * @return The access element
      */
-    public IOAccess access(int index, int length, boolean writable) {
+    public StorageAccess access(int index, int length, boolean writable) {
         return accessManager.get(index, length, backend.isWritable() && writable);
     }
 }

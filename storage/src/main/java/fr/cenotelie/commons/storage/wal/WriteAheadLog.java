@@ -17,8 +17,9 @@
 
 package fr.cenotelie.commons.storage.wal;
 
-import fr.cenotelie.commons.storage.TSAccessManager;
 import fr.cenotelie.commons.storage.raw.RawFile;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Implements a write-ahead log that guard the access to another backend storage system
@@ -35,9 +36,15 @@ public class WriteAheadLog {
      */
     private final RawFile log;
     /**
-     * The access manager for the log file
+     * The next identifier for transactions
      */
-    private final TSAccessManager manager;
+    private final AtomicLong sequencer;
+
+
+    /**
+     * The transactions that currently appears in the log
+     */
+    private LoggedTransaction[] loggedTransactions;
 
 
     /**
@@ -49,12 +56,24 @@ public class WriteAheadLog {
     public WriteAheadLog(RawFile backend, RawFile log) {
         this.backend = backend;
         this.log = log;
-        this.manager = new TSAccessManager(log);
+        this.sequencer = new AtomicLong(0);
+        reload();
+    }
+
+    /**
+     * Reloads this log
+     */
+    private void reload() {
+        long index = 0;
+        while (index < log.getSize()) {
+
+        }
     }
 
 
     /**
      * Starts a new transaction
+     * The transaction must be ended by a call to the transaction's close method.
      *
      * @param writable Whether the transaction shall support writing
      * @return The new transaction
@@ -64,11 +83,12 @@ public class WriteAheadLog {
     }
 
     /**
-     * When the transaction ended
+     * When the transaction ended, commit the edits (if any) to the log
      *
      * @param transaction The transaction that ended
+     * @throws ConcurrentWriting when a concurrent transaction already committed conflicting changes to the log
      */
-    void onTransactionEnd(Transaction transaction) {
+    void onTransactionEnd(Transaction transaction) throws ConcurrentWriting {
 
     }
 
