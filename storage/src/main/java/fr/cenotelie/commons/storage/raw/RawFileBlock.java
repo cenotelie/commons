@@ -153,6 +153,16 @@ class RawFileBlock extends StorageEndpoint {
     }
 
     @Override
+    public long getIndexLowerBound() {
+        return location;
+    }
+
+    @Override
+    public long getIndexUpperBound() {
+        return location + BLOCK_SIZE;
+    }
+
+    @Override
     public byte readByte(long index) {
         return buffer.get((int) (index & INDEX_MASK_LOWER));
     }
@@ -173,6 +183,11 @@ class RawFileBlock extends StorageEndpoint {
     @Override
     public char readChar(long index) {
         return buffer.getChar((int) (index & INDEX_MASK_LOWER));
+    }
+
+    @Override
+    public short readShort(long index) {
+        return buffer.getShort((int) (index & INDEX_MASK_LOWER));
     }
 
     @Override
@@ -216,6 +231,12 @@ class RawFileBlock extends StorageEndpoint {
     @Override
     public void writeChar(long index, char value) {
         buffer.putChar((int) (index & INDEX_MASK_LOWER), value);
+        isDirty = true;
+    }
+
+    @Override
+    public void writeShort(long index, short value) {
+        buffer.putShort((int) (index & INDEX_MASK_LOWER), value);
         isDirty = true;
     }
 
