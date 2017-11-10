@@ -17,7 +17,7 @@
 
 package fr.cenotelie.commons.storage.files;
 
-import fr.cenotelie.commons.storage.InMemoryStore;
+import fr.cenotelie.commons.storage.Constants;
 import fr.cenotelie.commons.storage.StorageEndpoint;
 
 import java.io.File;
@@ -229,7 +229,7 @@ public class RawFileBuffered extends RawFile {
      * @return The corresponding block
      */
     private RawFileBlockTS getBlockFor(long index) {
-        long targetLocation = index & InMemoryStore.INDEX_MASK_UPPER;
+        long targetLocation = index & Constants.INDEX_MASK_UPPER;
         if (blockCount.get() < FILE_MAX_LOADED_BLOCKS)
             return getBlockWhenNotFull(targetLocation);
         else
@@ -267,7 +267,7 @@ public class RawFileBuffered extends RawFile {
                     // reserved by this thread for the location
                     // update the file data
                     blockCount.incrementAndGet();
-                    extendSizeTo(Math.max(size.get(), targetLocation + InMemoryStore.PAGE_SIZE));
+                    extendSizeTo(Math.max(size.get(), targetLocation + Constants.PAGE_SIZE));
                     if (target.use(targetLocation, tick()))
                         return target;
                     break;
@@ -342,7 +342,7 @@ public class RawFileBuffered extends RawFile {
                     && target.reclaim(targetLocation, channel, size.get(), tick()) // try to reclaim
                     ) {
                 // update the file data
-                extendSizeTo(Math.max(size.get(), targetLocation + InMemoryStore.PAGE_SIZE));
+                extendSizeTo(Math.max(size.get(), targetLocation + Constants.PAGE_SIZE));
                 if (target.use(targetLocation, tick())) {
                     // we got the block
                     state.set(STATE_READY);

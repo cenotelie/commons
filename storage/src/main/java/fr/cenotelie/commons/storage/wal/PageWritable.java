@@ -17,7 +17,7 @@
 
 package fr.cenotelie.commons.storage.wal;
 
-import fr.cenotelie.commons.storage.InMemoryStore;
+import fr.cenotelie.commons.storage.Constants;
 
 import java.util.Arrays;
 
@@ -53,7 +53,7 @@ class PageWritable extends PageBuffered {
 
     @Override
     public void writeByte(long index, byte value) {
-        int shortIndex = (int) (index & InMemoryStore.INDEX_MASK_LOWER);
+        int shortIndex = (int) (index & Constants.INDEX_MASK_LOWER);
         buffer.put(shortIndex, value);
         edits.push(shortIndex, new byte[]{value});
     }
@@ -65,7 +65,7 @@ class PageWritable extends PageBuffered {
 
     @Override
     public void writeBytes(long index, byte[] buffer, int start, int length) {
-        int shortIndex = (int) (index & InMemoryStore.INDEX_MASK_LOWER);
+        int shortIndex = (int) (index & Constants.INDEX_MASK_LOWER);
         this.buffer.position(shortIndex);
         this.buffer.put(buffer, start, length);
         edits.push(shortIndex, Arrays.copyOfRange(buffer, start, length));
@@ -73,7 +73,7 @@ class PageWritable extends PageBuffered {
 
     @Override
     public void writeChar(long index, char value) {
-        int shortIndex = (int) (index & InMemoryStore.INDEX_MASK_LOWER);
+        int shortIndex = (int) (index & Constants.INDEX_MASK_LOWER);
         buffer.putChar(shortIndex, value);
         buffer.position(shortIndex);
         byte[] content = new byte[2];
@@ -83,7 +83,7 @@ class PageWritable extends PageBuffered {
 
     @Override
     public void writeInt(long index, int value) {
-        int shortIndex = (int) (index & InMemoryStore.INDEX_MASK_LOWER);
+        int shortIndex = (int) (index & Constants.INDEX_MASK_LOWER);
         buffer.putInt(shortIndex, value);
         buffer.position(shortIndex);
         byte[] content = new byte[4];
@@ -93,7 +93,7 @@ class PageWritable extends PageBuffered {
 
     @Override
     public void writeLong(long index, long value) {
-        int shortIndex = (int) (index & InMemoryStore.INDEX_MASK_LOWER);
+        int shortIndex = (int) (index & Constants.INDEX_MASK_LOWER);
         buffer.putLong(shortIndex, value);
         buffer.position(shortIndex);
         byte[] content = new byte[8];
@@ -103,7 +103,7 @@ class PageWritable extends PageBuffered {
 
     @Override
     public void writeFloat(long index, float value) {
-        int shortIndex = (int) (index & InMemoryStore.INDEX_MASK_LOWER);
+        int shortIndex = (int) (index & Constants.INDEX_MASK_LOWER);
         buffer.putFloat(shortIndex, value);
         buffer.position(shortIndex);
         byte[] content = new byte[4];
@@ -113,7 +113,7 @@ class PageWritable extends PageBuffered {
 
     @Override
     public void writeDouble(long index, double value) {
-        int shortIndex = (int) (index & InMemoryStore.INDEX_MASK_LOWER);
+        int shortIndex = (int) (index & Constants.INDEX_MASK_LOWER);
         buffer.putDouble(shortIndex, value);
         buffer.position(shortIndex);
         byte[] content = new byte[8];

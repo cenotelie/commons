@@ -17,7 +17,7 @@
 
 package fr.cenotelie.commons.storage.files;
 
-import fr.cenotelie.commons.storage.InMemoryStore;
+import fr.cenotelie.commons.storage.Constants;
 import fr.cenotelie.commons.storage.StorageEndpoint;
 
 import java.io.IOException;
@@ -95,7 +95,7 @@ class RawFileBlock extends StorageEndpoint {
     protected void load(FileChannel channel) throws IOException {
         int total = 0;
         buffer.position(0);
-        while (total < InMemoryStore.PAGE_SIZE) {
+        while (total < Constants.PAGE_SIZE) {
             int read = channel.read(buffer, location + total);
             if (read == -1)
                 throw new IOException("Unexpected end of stream");
@@ -113,7 +113,7 @@ class RawFileBlock extends StorageEndpoint {
         if (isDirty) {
             buffer.position(0);
             int total = 0;
-            while (total < InMemoryStore.PAGE_SIZE) {
+            while (total < Constants.PAGE_SIZE) {
                 int written = channel.write(buffer, location + total);
                 total += written;
             }
@@ -135,7 +135,7 @@ class RawFileBlock extends StorageEndpoint {
             return;
         }
         buffer.position(0);
-        for (int i = 0; i != InMemoryStore.PAGE_SIZE; i += ZEROES.length) {
+        for (int i = 0; i != Constants.PAGE_SIZE; i += ZEROES.length) {
             buffer.put(ZEROES);
         }
     }
@@ -147,12 +147,12 @@ class RawFileBlock extends StorageEndpoint {
 
     @Override
     public long getIndexUpperBound() {
-        return location + InMemoryStore.PAGE_SIZE;
+        return location + Constants.PAGE_SIZE;
     }
 
     @Override
     public byte readByte(long index) {
-        return buffer.get((int) (index & InMemoryStore.INDEX_MASK_LOWER));
+        return buffer.get((int) (index & Constants.INDEX_MASK_LOWER));
     }
 
     @Override
@@ -164,43 +164,43 @@ class RawFileBlock extends StorageEndpoint {
 
     @Override
     public synchronized void readBytes(long index, byte[] buffer, int start, int length) {
-        this.buffer.position((int) (index & InMemoryStore.INDEX_MASK_LOWER));
+        this.buffer.position((int) (index & Constants.INDEX_MASK_LOWER));
         this.buffer.get(buffer, start, length);
     }
 
     @Override
     public char readChar(long index) {
-        return buffer.getChar((int) (index & InMemoryStore.INDEX_MASK_LOWER));
+        return buffer.getChar((int) (index & Constants.INDEX_MASK_LOWER));
     }
 
     @Override
     public short readShort(long index) {
-        return buffer.getShort((int) (index & InMemoryStore.INDEX_MASK_LOWER));
+        return buffer.getShort((int) (index & Constants.INDEX_MASK_LOWER));
     }
 
     @Override
     public int readInt(long index) {
-        return buffer.getInt((int) (index & InMemoryStore.INDEX_MASK_LOWER));
+        return buffer.getInt((int) (index & Constants.INDEX_MASK_LOWER));
     }
 
     @Override
     public long readLong(long index) {
-        return buffer.getLong((int) (index & InMemoryStore.INDEX_MASK_LOWER));
+        return buffer.getLong((int) (index & Constants.INDEX_MASK_LOWER));
     }
 
     @Override
     public float readFloat(long index) {
-        return buffer.getFloat((int) (index & InMemoryStore.INDEX_MASK_LOWER));
+        return buffer.getFloat((int) (index & Constants.INDEX_MASK_LOWER));
     }
 
     @Override
     public double readDouble(long index) {
-        return buffer.getDouble((int) (index & InMemoryStore.INDEX_MASK_LOWER));
+        return buffer.getDouble((int) (index & Constants.INDEX_MASK_LOWER));
     }
 
     @Override
     public void writeByte(long index, byte value) {
-        buffer.put((int) (index & InMemoryStore.INDEX_MASK_LOWER), value);
+        buffer.put((int) (index & Constants.INDEX_MASK_LOWER), value);
         isDirty = true;
     }
 
@@ -211,44 +211,44 @@ class RawFileBlock extends StorageEndpoint {
 
     @Override
     public void writeBytes(long index, byte[] buffer, int start, int length) {
-        this.buffer.position((int) (index & InMemoryStore.INDEX_MASK_LOWER));
+        this.buffer.position((int) (index & Constants.INDEX_MASK_LOWER));
         this.buffer.put(buffer, start, length);
         isDirty = true;
     }
 
     @Override
     public void writeChar(long index, char value) {
-        buffer.putChar((int) (index & InMemoryStore.INDEX_MASK_LOWER), value);
+        buffer.putChar((int) (index & Constants.INDEX_MASK_LOWER), value);
         isDirty = true;
     }
 
     @Override
     public void writeShort(long index, short value) {
-        buffer.putShort((int) (index & InMemoryStore.INDEX_MASK_LOWER), value);
+        buffer.putShort((int) (index & Constants.INDEX_MASK_LOWER), value);
         isDirty = true;
     }
 
     @Override
     public void writeInt(long index, int value) {
-        buffer.putInt((int) (index & InMemoryStore.INDEX_MASK_LOWER), value);
+        buffer.putInt((int) (index & Constants.INDEX_MASK_LOWER), value);
         isDirty = true;
     }
 
     @Override
     public void writeLong(long index, long value) {
-        buffer.putLong((int) (index & InMemoryStore.INDEX_MASK_LOWER), value);
+        buffer.putLong((int) (index & Constants.INDEX_MASK_LOWER), value);
         isDirty = true;
     }
 
     @Override
     public void writeFloat(long index, float value) {
-        buffer.putFloat((int) (index & InMemoryStore.INDEX_MASK_LOWER), value);
+        buffer.putFloat((int) (index & Constants.INDEX_MASK_LOWER), value);
         isDirty = true;
     }
 
     @Override
     public void writeDouble(long index, double value) {
-        buffer.putDouble((int) (index & InMemoryStore.INDEX_MASK_LOWER), value);
+        buffer.putDouble((int) (index & Constants.INDEX_MASK_LOWER), value);
         isDirty = true;
     }
 }

@@ -15,7 +15,11 @@
  * If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-package fr.cenotelie.commons.storage;
+package fr.cenotelie.commons.storage.memory;
+
+import fr.cenotelie.commons.storage.Constants;
+import fr.cenotelie.commons.storage.StorageBackend;
+import fr.cenotelie.commons.storage.StorageEndpoint;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -27,24 +31,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Laurent Wouters
  */
 public class InMemoryStore extends StorageBackend {
-    /**
-     * The number of bits to use in order to represent an index within a page
-     */
-    public static final int PAGE_INDEX_LENGTH = 13;
-    /**
-     * The size of a page in bytes
-     */
-    public static final int PAGE_SIZE = 1 << PAGE_INDEX_LENGTH;
-    /**
-     * The mask for the index within a page
-     */
-    public static final long INDEX_MASK_LOWER = PAGE_SIZE - 1;
-    /**
-     * The mask for the index of a page
-     */
-    public static final long INDEX_MASK_UPPER = ~INDEX_MASK_LOWER;
-
-
     /**
      * The size of this store
      */
@@ -79,12 +65,12 @@ public class InMemoryStore extends StorageBackend {
 
     @Override
     public synchronized StorageEndpoint acquireEndpointAt(long index) {
-        int requested = (int) (index >>> PAGE_INDEX_LENGTH);
+        int requested = (int) (index >>> Constants.PAGE_INDEX_LENGTH);
         while (requested >= pages.length) {
             pages = Arrays.copyOf(pages, pages.length * 2);
         }
         if (pages[requested] == null)
-            pages[requested] = new InMemoryPage(this, requested << PAGE_INDEX_LENGTH);
+            pages[requested] = new InMemoryPage(this, requested << Constants.PAGE_INDEX_LENGTH);
         return pages[requested];
     }
 
