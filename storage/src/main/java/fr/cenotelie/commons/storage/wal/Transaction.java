@@ -17,6 +17,7 @@
 
 package fr.cenotelie.commons.storage.wal;
 
+import fr.cenotelie.commons.storage.InMemoryStore;
 import fr.cenotelie.commons.storage.StorageAccess;
 
 import java.util.Arrays;
@@ -116,7 +117,7 @@ public class Transaction implements AutoCloseable {
      * @return The acquired page
      */
     private Page acquirePage(long location, boolean writable) {
-        location = location & (~Page.INDEX_MASK_LOWER);
+        location = location & (~InMemoryStore.INDEX_MASK_LOWER);
         for (int i = 0; i != pagesCount; i++) {
             if (pageLocations[i] == location) {
                 if (!writable || pages[i].isWritable())

@@ -15,129 +15,48 @@
  * If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-package fr.cenotelie.commons.storage.files;
+package fr.cenotelie.commons.storage;
 
-import fr.cenotelie.commons.storage.InMemoryStore;
-import fr.cenotelie.commons.storage.StorageEndpoint;
-
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.Arrays;
 
 /**
- * Represents a block of contiguous data in a file
- * This class is not thread safe
+ * Represents a page of data for an in-memory storage system
  *
  * @author Laurent Wouters
  */
-class RawFileBlock extends StorageEndpoint {
+class InMemoryPage extends StorageEndpoint {
     /**
-     * The associated buffer
+     * The parent store
      */
-    protected ByteBuffer buffer;
+    private final InMemoryStore store;
     /**
-     * The location of this block in the parent file
+     * The location of the page
      */
-    protected long location;
+    private final long location;
     /**
-     * The timestamp for the last time this block was hit
+     * The page's content
      */
-    protected long lastHit;
-    /**
-     * Whether this block is dirty
-     */
-    protected boolean isDirty;
+    private final ByteBuffer buffer;
 
     /**
-     * Gets the location of this block in the parent file
+     * Initializes this page
      *
-     * @return The location of this block in the parent file
+     * @param store    The parent store
+     * @param location The location of the page
+     */
+    public InMemoryPage(InMemoryStore store, long location) {
+        this.store = store;
+        this.location = location;
+        this.buffer = ByteBuffer.allocate(InMemoryStore.PAGE_SIZE);
+    }
+
+    /**
+     * Gets the location of the page within the backing system
+     *
+     * @return The location of the page within the backing system
      */
     public long getLocation() {
         return location;
-    }
-
-    /**
-     * Gets the timestamp for the last time this block was hit
-     *
-     * @return The timestamp for the last time this block was hit
-     */
-    public long getLastHit() {
-        return lastHit;
-    }
-
-    /**
-     * Initializes this structure
-     */
-    public RawFileBlock() {
-        this.buffer = null;
-        this.location = -1;
-        this.lastHit = Long.MIN_VALUE;
-        this.isDirty = false;
-    }
-
-    /**
-     * Touches this block
-     *
-     * @param time The current time
-     */
-    protected void touch(long time) {
-        lastHit = Math.max(lastHit, time);
-    }
-
-    /**
-     * Loads this block using the specified file channel
-     *
-     * @param channel The file channel to read from
-     * @throws IOException When an IO error occurs
-     */
-    protected void load(FileChannel channel) throws IOException {
-        int total = 0;
-        buffer.position(0);
-        while (total < InMemoryStore.PAGE_SIZE) {
-            int read = channel.read(buffer, location + total);
-            if (read == -1)
-                throw new IOException("Unexpected end of stream");
-            total += read;
-        }
-    }
-
-    /**
-     * Serializes this block to the underlying file channel
-     *
-     * @param channel The originating file channel
-     * @throws IOException When an IO error occurs
-     */
-    protected void serialize(FileChannel channel) throws IOException {
-        if (isDirty) {
-            buffer.position(0);
-            int total = 0;
-            while (total < InMemoryStore.PAGE_SIZE) {
-                int written = channel.write(buffer, location + total);
-                total += written;
-            }
-            isDirty = false;
-        }
-    }
-
-    /**
-     * Arrays of empty data used for zeroing the content of a buffer
-     */
-    private static final byte[] ZEROES = new byte[256];
-
-    /**
-     * Zeroes the content of the buffer
-     */
-    protected void zeroes() {
-        if (buffer.hasArray()) {
-            Arrays.fill(buffer.array(), (byte) 0);
-            return;
-        }
-        buffer.position(0);
-        for (int i = 0; i != InMemoryStore.PAGE_SIZE; i += ZEROES.length) {
-            buffer.put(ZEROES);
-        }
     }
 
     @Override
@@ -201,54 +120,55 @@ class RawFileBlock extends StorageEndpoint {
     @Override
     public void writeByte(long index, byte value) {
         buffer.put((int) (index & InMemoryStore.INDEX_MASK_LOWER), value);
-        isDirty = true;
+        store.onWriteUpTo(index + 1);
     }
 
     @Override
     public void writeBytes(long index, byte[] value) {
         writeBytes(index, value, 0, value.length);
+        store.onWriteUpTo(index + value.length);
     }
 
     @Override
     public void writeBytes(long index, byte[] buffer, int start, int length) {
         this.buffer.position((int) (index & InMemoryStore.INDEX_MASK_LOWER));
         this.buffer.put(buffer, start, length);
-        isDirty = true;
+        store.onWriteUpTo(index + length);
     }
 
     @Override
     public void writeChar(long index, char value) {
         buffer.putChar((int) (index & InMemoryStore.INDEX_MASK_LOWER), value);
-        isDirty = true;
+        store.onWriteUpTo(index + 2);
     }
 
     @Override
     public void writeShort(long index, short value) {
         buffer.putShort((int) (index & InMemoryStore.INDEX_MASK_LOWER), value);
-        isDirty = true;
+        store.onWriteUpTo(index + 2);
     }
 
     @Override
     public void writeInt(long index, int value) {
         buffer.putInt((int) (index & InMemoryStore.INDEX_MASK_LOWER), value);
-        isDirty = true;
+        store.onWriteUpTo(index + 4);
     }
 
     @Override
     public void writeLong(long index, long value) {
         buffer.putLong((int) (index & InMemoryStore.INDEX_MASK_LOWER), value);
-        isDirty = true;
+        store.onWriteUpTo(index + 8);
     }
 
     @Override
     public void writeFloat(long index, float value) {
         buffer.putFloat((int) (index & InMemoryStore.INDEX_MASK_LOWER), value);
-        isDirty = true;
+        store.onWriteUpTo(index + 4);
     }
 
     @Override
     public void writeDouble(long index, double value) {
         buffer.putDouble((int) (index & InMemoryStore.INDEX_MASK_LOWER), value);
-        isDirty = true;
+        store.onWriteUpTo(index + 8);
     }
 }

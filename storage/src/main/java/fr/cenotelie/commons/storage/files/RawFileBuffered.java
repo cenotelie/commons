@@ -17,6 +17,7 @@
 
 package fr.cenotelie.commons.storage.files;
 
+import fr.cenotelie.commons.storage.InMemoryStore;
 import fr.cenotelie.commons.storage.StorageEndpoint;
 
 import java.io.File;
@@ -38,10 +39,6 @@ public class RawFileBuffered extends RawFile {
      * The maximum number of loaded blocks
      */
     private static final int FILE_MAX_LOADED_BLOCKS = 1024;
-    /**
-     * The mask for the index of a block
-     */
-    protected static final long INDEX_MASK_UPPER = ~RawFileBlock.INDEX_MASK_LOWER;
 
     /**
      * The backend is ready for IO
@@ -232,7 +229,7 @@ public class RawFileBuffered extends RawFile {
      * @return The corresponding block
      */
     private RawFileBlockTS getBlockFor(long index) {
-        long targetLocation = index & INDEX_MASK_UPPER;
+        long targetLocation = index & InMemoryStore.INDEX_MASK_UPPER;
         if (blockCount.get() < FILE_MAX_LOADED_BLOCKS)
             return getBlockWhenNotFull(targetLocation);
         else
@@ -270,7 +267,7 @@ public class RawFileBuffered extends RawFile {
                     // reserved by this thread for the location
                     // update the file data
                     blockCount.incrementAndGet();
-                    extendSizeTo(Math.max(size.get(), targetLocation + RawFileBlock.BLOCK_SIZE));
+                    extendSizeTo(Math.max(size.get(), targetLocation + InMemoryStore.PAGE_SIZE));
                     if (target.use(targetLocation, tick()))
                         return target;
                     break;
@@ -345,7 +342,7 @@ public class RawFileBuffered extends RawFile {
                     && target.reclaim(targetLocation, channel, size.get(), tick()) // try to reclaim
                     ) {
                 // update the file data
-                extendSizeTo(Math.max(size.get(), targetLocation + RawFileBlock.BLOCK_SIZE));
+                extendSizeTo(Math.max(size.get(), targetLocation + InMemoryStore.PAGE_SIZE));
                 if (target.use(targetLocation, tick())) {
                     // we got the block
                     state.set(STATE_READY);

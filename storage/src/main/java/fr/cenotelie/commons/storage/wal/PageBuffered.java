@@ -17,6 +17,7 @@
 
 package fr.cenotelie.commons.storage.wal;
 
+import fr.cenotelie.commons.storage.InMemoryStore;
 import fr.cenotelie.commons.storage.StorageEndpoint;
 import fr.cenotelie.commons.storage.files.RawFile;
 
@@ -40,7 +41,7 @@ class PageBuffered extends Page {
      */
     public PageBuffered(long location) {
         super(location);
-        this.buffer = ByteBuffer.allocate(PAGE_SIZE);
+        this.buffer = ByteBuffer.allocate(InMemoryStore.PAGE_SIZE);
     }
 
     /**
@@ -50,13 +51,13 @@ class PageBuffered extends Page {
      */
     public void load(RawFile backend) {
         try (StorageEndpoint endpoint = backend.acquireEndpointAt(location)) {
-            endpoint.readBytes(location, buffer.array(), 0, PAGE_SIZE);
+            endpoint.readBytes(location, buffer.array(), 0, InMemoryStore.PAGE_SIZE);
         }
     }
 
     @Override
     public byte readByte(long index) {
-        return buffer.get((int) (index & INDEX_MASK_LOWER));
+        return buffer.get((int) (index & InMemoryStore.INDEX_MASK_LOWER));
     }
 
     @Override
@@ -68,32 +69,32 @@ class PageBuffered extends Page {
 
     @Override
     public synchronized void readBytes(long index, byte[] buffer, int start, int length) {
-        this.buffer.position((int) (index & INDEX_MASK_LOWER));
+        this.buffer.position((int) (index & InMemoryStore.INDEX_MASK_LOWER));
         this.buffer.get(buffer, start, length);
     }
 
     @Override
     public char readChar(long index) {
-        return buffer.getChar((int) (index & INDEX_MASK_LOWER));
+        return buffer.getChar((int) (index & InMemoryStore.INDEX_MASK_LOWER));
     }
 
     @Override
     public int readInt(long index) {
-        return buffer.getInt((int) (index & INDEX_MASK_LOWER));
+        return buffer.getInt((int) (index & InMemoryStore.INDEX_MASK_LOWER));
     }
 
     @Override
     public long readLong(long index) {
-        return buffer.getLong((int) (index & INDEX_MASK_LOWER));
+        return buffer.getLong((int) (index & InMemoryStore.INDEX_MASK_LOWER));
     }
 
     @Override
     public float readFloat(long index) {
-        return buffer.getFloat((int) (index & INDEX_MASK_LOWER));
+        return buffer.getFloat((int) (index & InMemoryStore.INDEX_MASK_LOWER));
     }
 
     @Override
     public double readDouble(long index) {
-        return buffer.getDouble((int) (index & INDEX_MASK_LOWER));
+        return buffer.getDouble((int) (index & InMemoryStore.INDEX_MASK_LOWER));
     }
 }

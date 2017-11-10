@@ -26,19 +26,6 @@ import fr.cenotelie.commons.storage.StorageEndpoint;
  */
 abstract class Page extends StorageEndpoint {
     /**
-     * The number of bits to use in order to represent an index within a page
-     */
-    public static final int PAGE_INDEX_LENGTH = 13;
-    /**
-     * The size of a page in bytes
-     */
-    public static final int PAGE_SIZE = 1 << PAGE_INDEX_LENGTH;
-    /**
-     * The mask for the index within a page
-     */
-    public static final long INDEX_MASK_LOWER = PAGE_SIZE - 1;
-
-    /**
      * The location of the page within the backing system
      */
     protected final long location;

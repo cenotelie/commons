@@ -17,6 +17,8 @@
 
 package fr.cenotelie.commons.storage.files;
 
+import fr.cenotelie.commons.storage.InMemoryStore;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -171,7 +173,7 @@ class RawFileBlockTS extends RawFileBlock {
     private void doSetup(long location, FileChannel channel, long fileSize, long time) {
         this.location = location;
         if (this.buffer == null)
-            this.buffer = ByteBuffer.allocate(BLOCK_SIZE);
+            this.buffer = ByteBuffer.allocate(InMemoryStore.PAGE_SIZE);
         this.isDirty = false;
         if (this.location < fileSize) {
             try {
@@ -291,10 +293,5 @@ class RawFileBlockTS extends RawFileBlock {
         } finally {
             state.set(BLOCK_STATE_READY);
         }
-    }
-
-    @Override
-    public void close() {
-        release();
     }
 }
