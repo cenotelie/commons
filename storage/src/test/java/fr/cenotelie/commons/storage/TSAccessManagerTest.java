@@ -17,10 +17,10 @@
 
 package fr.cenotelie.commons.storage;
 
+import fr.cenotelie.commons.storage.memory.InMemoryStore;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
@@ -48,22 +48,7 @@ public class TSAccessManagerTest {
     public void testConcurrentAccesses() {
         Collection<Thread> threads = new ArrayList<>();
         final Random random = new Random();
-        final TSAccessManager manager = new TSAccessManager(new StorageBackend() {
-            @Override
-            public StorageEndpoint acquireEndpointAt(long index) {
-                return null;
-            }
-
-            @Override
-            public void releaseEndpoint(StorageEndpoint endpoint) {
-
-            }
-
-            @Override
-            public void close() throws IOException {
-
-            }
-        });
+        final TSAccessManager manager = new TSAccessManager(new InMemoryStore());
 
         for (int i = 0; i != THREAD_COUNT; i++) {
             Thread thread = new Thread(new Runnable() {

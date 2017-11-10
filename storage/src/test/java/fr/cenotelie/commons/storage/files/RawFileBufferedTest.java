@@ -17,8 +17,9 @@
 
 package fr.cenotelie.commons.storage.files;
 
-import fr.cenotelie.commons.storage.TSBackend;
+import fr.cenotelie.commons.storage.Constants;
 import fr.cenotelie.commons.storage.StorageAccess;
+import fr.cenotelie.commons.storage.TSBackend;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -46,7 +47,7 @@ public class RawFileBufferedTest {
             try (StorageAccess access = rawFile.access(0, 1, true)) {
                 access.writeByte((byte) 5);
             }
-            Assert.assertEquals("Unexpected length", RawFileBlock.BLOCK_SIZE, rawFile.getSize());
+            Assert.assertEquals("Unexpected length", Constants.PAGE_SIZE, rawFile.getSize());
         }
     }
 
@@ -56,10 +57,10 @@ public class RawFileBufferedTest {
             try (StorageAccess access = rawFile.access(0, 1, true)) {
                 access.writeByte((byte) 5);
             }
-            try (StorageAccess access = rawFile.access(RawFileBlock.BLOCK_SIZE, 1, true)) {
+            try (StorageAccess access = rawFile.access(Constants.PAGE_SIZE, 1, true)) {
                 access.writeByte((byte) 6);
             }
-            Assert.assertEquals("Unexpected length", RawFileBlock.BLOCK_SIZE * 2, rawFile.getSize());
+            Assert.assertEquals("Unexpected length", Constants.PAGE_SIZE * 2, rawFile.getSize());
         }
     }
 
@@ -74,7 +75,7 @@ public class RawFileBufferedTest {
         }
 
         try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, false))) {
-            Assert.assertEquals("Unexpected length", RawFileBlock.BLOCK_SIZE, rawFile.getSize());
+            Assert.assertEquals("Unexpected length", Constants.PAGE_SIZE, rawFile.getSize());
         }
     }
 
@@ -104,8 +105,8 @@ public class RawFileBufferedTest {
     public void testGetIndexAfterSeek() throws IOException {
         try (TSBackend rawFile = new TSBackend(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
             try (StorageAccess access = rawFile.access(0, 1, true)) {
-                access.seek(RawFileBlock.BLOCK_SIZE + 4);
-                Assert.assertEquals("Unexpected index", RawFileBlock.BLOCK_SIZE + 4, access.getIndex());
+                access.seek(Constants.PAGE_SIZE + 4);
+                Assert.assertEquals("Unexpected index", Constants.PAGE_SIZE + 4, access.getIndex());
             }
         }
     }
@@ -197,9 +198,9 @@ public class RawFileBufferedTest {
             rawFile.flush();
         }
         Assert.assertTrue("FileBackend has not been created", file.exists());
-        Assert.assertEquals("Unexpected file length", (long) RawFileBlock.BLOCK_SIZE, file.length());
+        Assert.assertEquals("Unexpected file length", (long) Constants.PAGE_SIZE, file.length());
         byte[] content = Files.readAllBytes(file.toPath());
-        Assert.assertEquals("Unexpected content length", RawFileBlock.BLOCK_SIZE, content.length);
+        Assert.assertEquals("Unexpected content length", Constants.PAGE_SIZE, content.length);
         Assert.assertEquals("Unexpected content", 5, content[0]);
     }
 
@@ -230,9 +231,9 @@ public class RawFileBufferedTest {
             rawFile.flush();
         }
         Assert.assertTrue("FileBackend has not been created", file.exists());
-        Assert.assertEquals("Unexpected file length", (long) RawFileBlock.BLOCK_SIZE, file.length());
+        Assert.assertEquals("Unexpected file length", (long) Constants.PAGE_SIZE, file.length());
         byte[] content = Files.readAllBytes(file.toPath());
-        Assert.assertEquals("Unexpected content length", RawFileBlock.BLOCK_SIZE, content.length);
+        Assert.assertEquals("Unexpected content length", Constants.PAGE_SIZE, content.length);
         Assert.assertEquals("Unexpected content", 5, content[0]);
         Assert.assertEquals("Unexpected content", 6, content[1]);
         Assert.assertEquals("Unexpected content", 7, content[2]);
@@ -267,9 +268,9 @@ public class RawFileBufferedTest {
             rawFile.flush();
         }
         Assert.assertTrue("FileBackend has not been created", file.exists());
-        Assert.assertEquals("Unexpected file length", (long) RawFileBlock.BLOCK_SIZE, file.length());
+        Assert.assertEquals("Unexpected file length", (long) Constants.PAGE_SIZE, file.length());
         byte[] content = Files.readAllBytes(file.toPath());
-        Assert.assertEquals("Unexpected content length", RawFileBlock.BLOCK_SIZE, content.length);
+        Assert.assertEquals("Unexpected content length", Constants.PAGE_SIZE, content.length);
         ByteBuffer buffer = ByteBuffer.wrap(content);
         Assert.assertEquals("Unexpected content", (char) 0xBBCC, buffer.getChar());
     }
@@ -301,9 +302,9 @@ public class RawFileBufferedTest {
             rawFile.flush();
         }
         Assert.assertTrue("FileBackend has not been created", file.exists());
-        Assert.assertEquals("Unexpected file length", (long) RawFileBlock.BLOCK_SIZE, file.length());
+        Assert.assertEquals("Unexpected file length", (long) Constants.PAGE_SIZE, file.length());
         byte[] content = Files.readAllBytes(file.toPath());
-        Assert.assertEquals("Unexpected content length", RawFileBlock.BLOCK_SIZE, content.length);
+        Assert.assertEquals("Unexpected content length", Constants.PAGE_SIZE, content.length);
         ByteBuffer buffer = ByteBuffer.wrap(content);
         Assert.assertEquals("Unexpected content", 55, buffer.getInt());
     }
@@ -335,9 +336,9 @@ public class RawFileBufferedTest {
             rawFile.flush();
         }
         Assert.assertTrue("FileBackend has not been created", file.exists());
-        Assert.assertEquals("Unexpected file length", (long) RawFileBlock.BLOCK_SIZE, file.length());
+        Assert.assertEquals("Unexpected file length", (long) Constants.PAGE_SIZE, file.length());
         byte[] content = Files.readAllBytes(file.toPath());
-        Assert.assertEquals("Unexpected content length", RawFileBlock.BLOCK_SIZE, content.length);
+        Assert.assertEquals("Unexpected content length", Constants.PAGE_SIZE, content.length);
         ByteBuffer buffer = ByteBuffer.wrap(content);
         Assert.assertEquals("Unexpected content", 0x00BB00AA00FF00EEL, buffer.getLong());
     }
@@ -369,9 +370,9 @@ public class RawFileBufferedTest {
             rawFile.flush();
         }
         Assert.assertTrue("FileBackend has not been created", file.exists());
-        Assert.assertEquals("Unexpected file length", (long) RawFileBlock.BLOCK_SIZE, file.length());
+        Assert.assertEquals("Unexpected file length", (long) Constants.PAGE_SIZE, file.length());
         byte[] content = Files.readAllBytes(file.toPath());
-        Assert.assertEquals("Unexpected content length", RawFileBlock.BLOCK_SIZE, content.length);
+        Assert.assertEquals("Unexpected content length", Constants.PAGE_SIZE, content.length);
         ByteBuffer buffer = ByteBuffer.wrap(content);
         Assert.assertTrue("Unexpected content", 5.5f == buffer.getFloat());
     }
@@ -403,9 +404,9 @@ public class RawFileBufferedTest {
             rawFile.flush();
         }
         Assert.assertTrue("FileBackend has not been created", file.exists());
-        Assert.assertEquals("Unexpected file length", (long) RawFileBlock.BLOCK_SIZE, file.length());
+        Assert.assertEquals("Unexpected file length", (long) Constants.PAGE_SIZE, file.length());
         byte[] content = Files.readAllBytes(file.toPath());
-        Assert.assertEquals("Unexpected content length", RawFileBlock.BLOCK_SIZE, content.length);
+        Assert.assertEquals("Unexpected content length", Constants.PAGE_SIZE, content.length);
         ByteBuffer buffer = ByteBuffer.wrap(content);
         Assert.assertTrue("Unexpected content", 5.5f == buffer.getDouble());
     }
@@ -440,9 +441,9 @@ public class RawFileBufferedTest {
         }
 
         Assert.assertTrue("FileBackend has not been created", file.exists());
-        Assert.assertEquals("Unexpected file length", (long) RawFileBlock.BLOCK_SIZE, file.length());
+        Assert.assertEquals("Unexpected file length", (long) Constants.PAGE_SIZE, file.length());
         byte[] content = Files.readAllBytes(file.toPath());
-        Assert.assertEquals("Unexpected content length", RawFileBlock.BLOCK_SIZE, content.length);
+        Assert.assertEquals("Unexpected content length", Constants.PAGE_SIZE, content.length);
         ByteBuffer buffer = ByteBuffer.wrap(content);
         Assert.assertEquals("Unexpected content", 55, buffer.getInt());
         Assert.assertEquals("Unexpected content", 0, buffer.getInt());
@@ -456,18 +457,18 @@ public class RawFileBufferedTest {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.writeInt(55);
             }
-            try (StorageAccess access = rawFile.access(RawFileBlock.BLOCK_SIZE, 12, true)) {
+            try (StorageAccess access = rawFile.access(Constants.PAGE_SIZE, 12, true)) {
                 access.writeInt(66);
             }
             rawFile.flush();
         }
         Assert.assertTrue("FileBackend has not been created", file.exists());
-        Assert.assertEquals("Unexpected file length", (long) RawFileBlock.BLOCK_SIZE * 2, file.length());
+        Assert.assertEquals("Unexpected file length", (long) Constants.PAGE_SIZE * 2, file.length());
         byte[] content = Files.readAllBytes(file.toPath());
-        Assert.assertEquals("Unexpected content length", RawFileBlock.BLOCK_SIZE * 2, content.length);
+        Assert.assertEquals("Unexpected content length", Constants.PAGE_SIZE * 2, content.length);
         ByteBuffer buffer = ByteBuffer.wrap(content);
         Assert.assertEquals("Unexpected content", 55, buffer.getInt());
-        buffer.position(RawFileBlock.BLOCK_SIZE);
+        buffer.position(Constants.PAGE_SIZE);
         Assert.assertEquals("Unexpected content", 66, buffer.getInt());
     }
 
@@ -478,13 +479,13 @@ public class RawFileBufferedTest {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.writeInt(55);
             }
-            try (StorageAccess access = rawFile.access(RawFileBlock.BLOCK_SIZE, 12, true)) {
+            try (StorageAccess access = rawFile.access(Constants.PAGE_SIZE, 12, true)) {
                 access.writeInt(66);
             }
             try (StorageAccess access = rawFile.access(0, 12, false)) {
                 Assert.assertEquals("Unexpected content", 55, access.readInt());
             }
-            try (StorageAccess access = rawFile.access(RawFileBlock.BLOCK_SIZE, 12, false)) {
+            try (StorageAccess access = rawFile.access(Constants.PAGE_SIZE, 12, false)) {
                 Assert.assertEquals("Unexpected content", 66, access.readInt());
             }
         }
@@ -497,7 +498,7 @@ public class RawFileBufferedTest {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.writeInt(55);
             }
-            try (StorageAccess access = rawFile.access(RawFileBlock.BLOCK_SIZE, 12, true)) {
+            try (StorageAccess access = rawFile.access(Constants.PAGE_SIZE, 12, true)) {
                 access.writeInt(66);
             }
             rawFile.flush();
@@ -507,7 +508,7 @@ public class RawFileBufferedTest {
             try (StorageAccess access = rawFile.access(0, 12, false)) {
                 Assert.assertEquals("Unexpected content", 55, access.readInt());
             }
-            try (StorageAccess access = rawFile.access(RawFileBlock.BLOCK_SIZE, 12, false)) {
+            try (StorageAccess access = rawFile.access(Constants.PAGE_SIZE, 12, false)) {
                 Assert.assertEquals("Unexpected content", 66, access.readInt());
             }
         }
