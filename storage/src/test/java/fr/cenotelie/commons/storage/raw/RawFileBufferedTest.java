@@ -17,6 +17,7 @@
 
 package fr.cenotelie.commons.storage.raw;
 
+import fr.cenotelie.commons.storage.TSBackend;
 import fr.cenotelie.commons.storage.StorageAccess;
 import org.junit.Assert;
 import org.junit.Test;
@@ -34,14 +35,14 @@ import java.nio.file.Files;
 public class RawFileBufferedTest {
     @Test
     public void testGetSizeEmpty() throws IOException {
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
             Assert.assertEquals("Unexpected length", 0, rawFile.getSize());
         }
     }
 
     @Test
     public void testGetSizeSingleBlock() throws IOException {
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
             try (StorageAccess access = rawFile.access(0, 1, true)) {
                 access.writeByte((byte) 5);
             }
@@ -51,7 +52,7 @@ public class RawFileBufferedTest {
 
     @Test
     public void testGetSizeDoubleBlock() throws IOException {
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
             try (StorageAccess access = rawFile.access(0, 1, true)) {
                 access.writeByte((byte) 5);
             }
@@ -65,14 +66,14 @@ public class RawFileBufferedTest {
     @Test
     public void testGetSizeAfterReload() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 1, true)) {
                 access.writeByte((byte) 5);
             }
             rawFile.flush();
         }
 
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, false))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, false))) {
             Assert.assertEquals("Unexpected length", RawFileBlock.BLOCK_SIZE, rawFile.getSize());
         }
     }
@@ -80,11 +81,11 @@ public class RawFileBufferedTest {
     @Test
     public void testGetSizeAfterReloadEmpty() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             rawFile.flush();
         }
 
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, false))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, false))) {
             Assert.assertEquals("Unexpected length", 0, rawFile.getSize());
         }
     }
@@ -92,7 +93,7 @@ public class RawFileBufferedTest {
 
     @Test
     public void testGetIndexOnCreation() throws IOException {
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
             try (StorageAccess access = rawFile.access(0, 1, true)) {
                 Assert.assertEquals("Unexpected index", 0, access.getIndex());
             }
@@ -101,7 +102,7 @@ public class RawFileBufferedTest {
 
     @Test
     public void testGetIndexAfterSeek() throws IOException {
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
             try (StorageAccess access = rawFile.access(0, 1, true)) {
                 access.seek(RawFileBlock.BLOCK_SIZE + 4);
                 Assert.assertEquals("Unexpected index", RawFileBlock.BLOCK_SIZE + 4, access.getIndex());
@@ -111,7 +112,7 @@ public class RawFileBufferedTest {
 
     @Test
     public void testGetIndexAfterWriteByte() throws IOException {
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.seek(4);
                 access.writeByte((byte) 5);
@@ -122,7 +123,7 @@ public class RawFileBufferedTest {
 
     @Test
     public void testGetIndexAfterWriteBytes() throws IOException {
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.seek(4);
                 access.writeBytes(new byte[]{0x5, 0x6, 0x7});
@@ -133,7 +134,7 @@ public class RawFileBufferedTest {
 
     @Test
     public void testGetIndexAfterWriteChar() throws IOException {
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.seek(4);
                 access.writeChar('a');
@@ -144,7 +145,7 @@ public class RawFileBufferedTest {
 
     @Test
     public void testGetIndexAfterWriteInt() throws IOException {
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.seek(4);
                 access.writeInt(55);
@@ -155,7 +156,7 @@ public class RawFileBufferedTest {
 
     @Test
     public void testGetIndexAfterWriteLong() throws IOException {
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.seek(4);
                 access.writeLong(0x00BB00AA00FF00EEL);
@@ -166,7 +167,7 @@ public class RawFileBufferedTest {
 
     @Test
     public void testGetIndexAfterWriteFloat() throws IOException {
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.seek(4);
                 access.writeFloat(5.5f);
@@ -177,7 +178,7 @@ public class RawFileBufferedTest {
 
     @Test
     public void testGetIndexAfterWriteDouble() throws IOException {
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(File.createTempFile("test", ".bin"), true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.seek(4);
                 access.writeDouble(5.5f);
@@ -189,7 +190,7 @@ public class RawFileBufferedTest {
     @Test
     public void testWriteSimpleByte() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 1, true)) {
                 access.writeByte((byte) 5);
             }
@@ -205,14 +206,14 @@ public class RawFileBufferedTest {
     @Test
     public void testReadSimpleByte() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.writeByte((byte) 5);
             }
             rawFile.flush();
         }
 
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, false)) {
                 Assert.assertEquals("Unexpected content", 5, access.readByte());
             }
@@ -222,7 +223,7 @@ public class RawFileBufferedTest {
     @Test
     public void testWriteSimpleBytes() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.writeBytes(new byte[]{0x5, 0x6, 0x7});
             }
@@ -240,14 +241,14 @@ public class RawFileBufferedTest {
     @Test
     public void testReadSimpleBytes() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.writeBytes(new byte[]{0x5, 0x6, 0x7});
             }
             rawFile.flush();
         }
 
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 Assert.assertEquals("Unexpected content", 5, access.readByte());
                 Assert.assertEquals("Unexpected content", 6, access.readByte());
@@ -259,7 +260,7 @@ public class RawFileBufferedTest {
     @Test
     public void testWriteSimpleChar() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.writeChar((char) 0xBBCC);
             }
@@ -276,14 +277,14 @@ public class RawFileBufferedTest {
     @Test
     public void testReadSimpleChar() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.writeChar((char) 0xBBCC);
             }
             rawFile.flush();
         }
 
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, false)) {
                 Assert.assertEquals("Unexpected content", (char) 0xBBCC, access.readChar());
             }
@@ -293,7 +294,7 @@ public class RawFileBufferedTest {
     @Test
     public void testWriteSimpleInt() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.writeInt(55);
             }
@@ -310,14 +311,14 @@ public class RawFileBufferedTest {
     @Test
     public void testReadSimpleInt() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.writeInt(55);
             }
             rawFile.flush();
         }
 
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, false)) {
                 Assert.assertEquals("Unexpected content", 55, access.readInt());
             }
@@ -327,7 +328,7 @@ public class RawFileBufferedTest {
     @Test
     public void testWriteSimpleLong() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.writeLong(0x00BB00AA00FF00EEL);
             }
@@ -344,14 +345,14 @@ public class RawFileBufferedTest {
     @Test
     public void testReadSimpleLong() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.writeLong(0x00BB00AA00FF00EEL);
             }
             rawFile.flush();
         }
 
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, false)) {
                 Assert.assertEquals("Unexpected content", 0x00BB00AA00FF00EEL, access.readLong());
             }
@@ -361,7 +362,7 @@ public class RawFileBufferedTest {
     @Test
     public void testWriteSimpleFloat() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.writeFloat(5.5f);
             }
@@ -378,14 +379,14 @@ public class RawFileBufferedTest {
     @Test
     public void testReadSimpleFloat() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.writeFloat(5.5f);
             }
             rawFile.flush();
         }
 
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, false)) {
                 Assert.assertTrue("Unexpected content", 5.5f == access.readFloat());
             }
@@ -395,7 +396,7 @@ public class RawFileBufferedTest {
     @Test
     public void testWriteSimpleDouble() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.writeDouble(5.5d);
             }
@@ -412,14 +413,14 @@ public class RawFileBufferedTest {
     @Test
     public void testReadSimpleDouble() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.writeDouble(5.5d);
             }
             rawFile.flush();
         }
 
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, false)) {
                 Assert.assertTrue("Unexpected content", 5.5d == access.readDouble());
             }
@@ -429,7 +430,7 @@ public class RawFileBufferedTest {
     @Test
     public void testWriteWithinBlock() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.writeInt(55);
                 access.skip(4);
@@ -451,7 +452,7 @@ public class RawFileBufferedTest {
     @Test
     public void testWriteTwoBlock() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.writeInt(55);
             }
@@ -473,7 +474,7 @@ public class RawFileBufferedTest {
     @Test
     public void testReadWrittenData() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.writeInt(55);
             }
@@ -492,7 +493,7 @@ public class RawFileBufferedTest {
     @Test
     public void testReload() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, true)) {
                 access.writeInt(55);
             }
@@ -502,7 +503,7 @@ public class RawFileBufferedTest {
             rawFile.flush();
         }
 
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             try (StorageAccess access = rawFile.access(0, 12, false)) {
                 Assert.assertEquals("Unexpected content", 55, access.readInt());
             }
@@ -515,7 +516,7 @@ public class RawFileBufferedTest {
     @Test
     public void testConcurrentWriteRead() throws IOException {
         File file = File.createTempFile("test", ".bin");
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             StorageAccess access1 = rawFile.access(0, 4, true);
             StorageAccess access2 = rawFile.access(4, 4, true);
             access1.writeInt(4);
@@ -525,7 +526,7 @@ public class RawFileBufferedTest {
             rawFile.flush();
         }
 
-        try (RawFileThreadSafe rawFile = new RawFileThreadSafe(new RawFileBuffered(file, true))) {
+        try (TSBackend rawFile = new TSBackend(new RawFileBuffered(file, true))) {
             StorageAccess access1 = rawFile.access(0, 4, false);
             StorageAccess access2 = rawFile.access(4, 4, false);
             Assert.assertEquals("Unexpected content", 4, access1.readInt());

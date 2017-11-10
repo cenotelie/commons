@@ -20,7 +20,6 @@ package fr.cenotelie.commons.storage.raw;
 import fr.cenotelie.commons.storage.StorageBackend;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * Represents the raw access to a data file
@@ -34,25 +33,4 @@ public abstract class RawFile extends StorageBackend {
      * @return The backing system file
      */
     public abstract File getSystemFile();
-
-    /**
-     * Gets whether this file can be written to
-     *
-     * @return Whether this file can be written to
-     */
-    public abstract boolean isWritable();
-
-    /**
-     * Gets the size of this file
-     *
-     * @return The size of this file
-     */
-    public abstract long getSize();
-
-    /**
-     * Flushes any outstanding changes to this file to the storage device
-     *
-     * @throws IOException When an IO error occurred
-     */
-    public abstract void flush() throws IOException;
 }

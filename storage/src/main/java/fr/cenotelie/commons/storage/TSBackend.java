@@ -15,25 +15,21 @@
  * If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-package fr.cenotelie.commons.storage.raw;
+package fr.cenotelie.commons.storage;
 
-import fr.cenotelie.commons.storage.StorageAccess;
-import fr.cenotelie.commons.storage.StorageEndpoint;
-import fr.cenotelie.commons.storage.TSAccessManager;
-
-import java.io.File;
 import java.io.IOException;
 
 /**
- * Implements a thread-safe proxy for a raw file that ensures that no writing thread can overlap with other threads accessing the same file
+ * Implements a thread-safe proxy for a storage system that ensures that
+ * no writing thread can overlap with other threads accessing the same backend
  *
  * @author Laurent Wouters
  */
-public class RawFileThreadSafe extends RawFile {
+public class TSBackend extends StorageBackend {
     /**
-     * The backend raw file
+     * The backend storage system
      */
-    private final RawFile backend;
+    private final StorageBackend backend;
     /**
      * The access manager to use
      */
@@ -42,16 +38,11 @@ public class RawFileThreadSafe extends RawFile {
     /**
      * Initializes this structure
      *
-     * @param backend The backend raw file
+     * @param backend The backend storage system
      */
-    public RawFileThreadSafe(RawFile backend) {
+    public TSBackend(StorageBackend backend) {
         this.backend = backend;
         this.accessManager = new TSAccessManager(backend);
-    }
-
-    @Override
-    public File getSystemFile() {
-        return backend.getSystemFile();
     }
 
     @Override

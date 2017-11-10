@@ -17,6 +17,7 @@
 
 package fr.cenotelie.commons.storage.wal;
 
+import fr.cenotelie.commons.storage.StorageBackend;
 import fr.cenotelie.commons.storage.raw.RawFile;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -30,11 +31,11 @@ public class WriteAheadLog {
     /**
      * The backend storage that is guarded by this WAL
      */
-    private final RawFile backend;
+    private final StorageBackend backend;
     /**
      * The raw file for the log itself
      */
-    private final RawFile log;
+    private final StorageBackend log;
     /**
      * The next identifier for transactions
      */

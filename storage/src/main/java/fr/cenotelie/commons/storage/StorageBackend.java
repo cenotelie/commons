@@ -26,6 +26,27 @@ import java.io.IOException;
  */
 public abstract class StorageBackend implements AutoCloseable {
     /**
+     * Gets whether this storage system can be written to
+     *
+     * @return Whether this storage system can be written to
+     */
+    public abstract boolean isWritable();
+
+    /**
+     * Gets the current size of this storage system
+     *
+     * @return The current size of this storage system
+     */
+    public abstract long getSize();
+
+    /**
+     * Flushes any outstanding changes to this storage system
+     *
+     * @throws IOException When an IO error occurred
+     */
+    public abstract void flush() throws IOException;
+
+    /**
      * Acquires an endpoint that enables reading and writing to the backend at the specified index
      * The endpoint must be subsequently released by a call to
      *
