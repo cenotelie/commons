@@ -71,6 +71,18 @@ public abstract class StorageBackend implements AutoCloseable {
     public abstract void releaseEndpoint(StorageEndpoint endpoint);
 
     /**
+     * Gets an access to the associated backend for the specified span
+     *
+     * @param location The location of the span within the backend
+     * @param length   The length of the allowed span
+     * @param writable Whether the access allows writing
+     * @return The new access, or null if it cannot be obtained
+     */
+    public StorageAccess access(long location, int length, boolean writable) {
+        return new StorageAccess(this, location, length, isWritable() && writable);
+    }
+
+    /**
      * Closes this resource, relinquishing any underlying resources
      *
      * @throws IOException When an IO error occurred
