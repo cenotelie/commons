@@ -59,6 +59,26 @@ public class InMemoryStore extends StorageBackend {
     }
 
     @Override
+    public void truncate(long length) {
+        int lastPage = (int) (length >>> Constants.PAGE_INDEX_LENGTH);
+        int lastIndex = (int) (length & Constants.INDEX_MASK_LOWER);
+        if (lastIndex == 0) {
+            lastPage--;
+            lastIndex = Constants.PAGE_SIZE;
+        }
+        if (lastPage >= pages.length)
+            // too small
+            return;
+        for (int i = pages.length - 1; i != lastPage; i--) {
+            // drop this page
+            pages[i] = null;
+        }
+        if (lastIndex != Constants.PAGE_SIZE && pages[lastPage] != null)
+            pages[lastPage].zeroesFrom(lastIndex);
+        size.set(length);
+    }
+
+    @Override
     public void flush() throws IOException {
         // do nothing
     }

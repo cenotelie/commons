@@ -40,6 +40,14 @@ public abstract class StorageBackend implements AutoCloseable {
     public abstract long getSize();
 
     /**
+     * Truncates this storage system to the specified length
+     *
+     * @param length The length to truncate to
+     * @throws IOException When an IO error occurred
+     */
+    public abstract void truncate(long length) throws IOException;
+
+    /**
      * Flushes any outstanding changes to this storage system
      *
      * @throws IOException When an IO error occurred

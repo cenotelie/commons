@@ -21,6 +21,7 @@ import fr.cenotelie.commons.storage.Constants;
 import fr.cenotelie.commons.storage.StorageEndpoint;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * Represents a page of data for an in-memory storage system
@@ -60,6 +61,15 @@ class InMemoryPage extends StorageEndpoint {
      */
     public long getLocation() {
         return location;
+    }
+
+    /**
+     * Zeroes the end of this page from the specified index forward
+     *
+     * @param index The starting index within this page
+     */
+    public void zeroesFrom(int index) {
+        Arrays.fill(buffer.array(), index, Constants.PAGE_SIZE - index, (byte) 0);
     }
 
     @Override

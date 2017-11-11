@@ -200,7 +200,7 @@ public class StorageAccess implements AutoCloseable {
      * @param length A number of bytes
      * @return true if the bytes are within the bounds
      */
-    private boolean isWithinAccessBounds(int length) {
+    public boolean isWithinAccessBounds(int length) {
         return (index >= location && index + length <= location + this.length);
     }
 

@@ -17,9 +17,11 @@
 
 package fr.cenotelie.commons.storage.wal;
 
+import fr.cenotelie.commons.storage.StorageAccess;
 import fr.cenotelie.commons.storage.StorageBackend;
 import fr.cenotelie.commons.storage.files.RawFile;
 
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -27,13 +29,13 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Laurent Wouters
  */
-public class WriteAheadLog {
+public class WriteAheadLog implements AutoCloseable {
     /**
      * The backend storage that is guarded by this WAL
      */
     private final StorageBackend backend;
     /**
-     * The raw file for the log itself
+     * The storage for the log itself
      */
     private final StorageBackend log;
     /**
@@ -43,18 +45,13 @@ public class WriteAheadLog {
 
 
     /**
-     * The transactions that currently appears in the log
-     */
-    private LoggedTransaction[] loggedTransactions;
-
-
-    /**
      * Initializes this log
      *
      * @param backend The backend storage that is guarded by this WAL
-     * @param log     The raw file for the log itself
+     * @param log     The storage for the log itself
+     * @throws IOException when an error occurred while accessing storage
      */
-    public WriteAheadLog(RawFile backend, RawFile log) {
+    public WriteAheadLog(RawFile backend, RawFile log) throws IOException {
         this.backend = backend;
         this.log = log;
         this.sequencer = new AtomicLong(0);
@@ -63,14 +60,32 @@ public class WriteAheadLog {
 
     /**
      * Reloads this log
+     *
+     * @throws IOException when an error occurred while accessing storage
      */
-    private void reload() {
-        long index = 0;
-        while (index < log.getSize()) {
-
+    private void reload() throws IOException {
+        long size = log.getSize();
+        if (size == 0)
+            // nothing to do
+            return;
+        try (StorageAccess access = new StorageAccess(backend, 0, (int) size, false)) {
+            while (access.getIndex() < size) {
+                try {
+                    // load the data for this transaction
+                    LogTransactionData data = new LogTransactionData(access, false);
+                    // apply to the backend storage
+                    data.applyTo(backend);
+                } catch (IndexOutOfBoundsException exception) {
+                    // stop here
+                    break;
+                }
+            }
         }
+        backend.flush();
+        // truncate the log
+        log.truncate(0);
+        log.flush();
     }
-
 
     /**
      * Starts a new transaction
@@ -103,5 +118,10 @@ public class WriteAheadLog {
      */
     Page acquirePage(long endMark, long location, boolean writable) {
         return null;
+    }
+
+    @Override
+    public void close() throws Exception {
+        //
     }
 }

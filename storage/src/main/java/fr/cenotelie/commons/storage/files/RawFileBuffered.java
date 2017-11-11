@@ -175,6 +175,31 @@ public class RawFileBuffered extends RawFile {
     }
 
     @Override
+    public void truncate(long length) throws IOException {
+        while (true) {
+            int s = state.get();
+            if (s == STATE_CLOSED)
+                throw new Error("The file is closed");
+            if (!state.compareAndSet(STATE_READY, STATE_FLUSHING))
+                continue;
+            try {
+                channel.truncate(length);
+                // TODO: clean the loaded pages here
+            } finally {
+                while (true) {
+                    long old = size.get();
+                    if (old <= length)
+                        break;
+                    if (size.compareAndSet(old, length))
+                        break;
+                }
+                state.set(STATE_READY);
+            }
+            break;
+        }
+    }
+
+    @Override
     public void flush() {
         while (true) {
             int s = state.get();
