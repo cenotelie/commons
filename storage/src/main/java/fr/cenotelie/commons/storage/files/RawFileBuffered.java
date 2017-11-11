@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Represents a single file for storage
+ * Represents a single file for storage with buffered reading and writing
  * This structure is thread-safe in the way it manages its inner data.
  * However, it does not ensure that multiple thread do not overlap while reading and writing to locations.
  *
