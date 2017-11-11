@@ -59,7 +59,14 @@ public class InMemoryStore extends StorageBackend {
     }
 
     @Override
-    public void truncate(long length) {
+    public boolean truncate(long length) {
+        while (true) {
+            long currentSize = size.get();
+            if (length >= currentSize)
+                return false;
+            if (size.compareAndSet(currentSize, length))
+                break;
+        }
         int lastPage = (int) (length >>> Constants.PAGE_INDEX_LENGTH);
         int lastIndex = (int) (length & Constants.INDEX_MASK_LOWER);
         if (lastIndex == 0) {
@@ -68,14 +75,14 @@ public class InMemoryStore extends StorageBackend {
         }
         if (lastPage >= pages.length)
             // too small
-            return;
+            return false;
         for (int i = pages.length - 1; i != lastPage; i--) {
             // drop this page
             pages[i] = null;
         }
         if (lastIndex != Constants.PAGE_SIZE && pages[lastPage] != null)
             pages[lastPage].zeroesFrom(lastIndex);
-        size.set(length);
+        return true;
     }
 
     @Override

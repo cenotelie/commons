@@ -45,17 +45,13 @@ public class RawFileBuffered extends RawFile {
      */
     private static final int STATE_READY = 0;
     /**
-     * The backend is flushing
+     * The backend is currently busy with an operation
      */
-    private static final int STATE_FLUSHING = 1;
-    /**
-     * The backend is reclaiming some block
-     */
-    private static final int STATE_RECLAIMING = 2;
+    private static final int STATE_BUSY = 1;
     /**
      * The file is now closed
      */
-    private static final int STATE_CLOSED = 3;
+    private static final int STATE_CLOSED = -1;
 
     /**
      * The accessed file
@@ -103,7 +99,7 @@ public class RawFileBuffered extends RawFile {
         this.channel = newChannel(file, writable);
         this.blocks = new RawFileBlockTS[FILE_MAX_LOADED_BLOCKS];
         for (int i = 0; i != FILE_MAX_LOADED_BLOCKS; i++)
-            this.blocks[i] = new RawFileBlockTS();
+            this.blocks[i] = new RawFileBlockTS(this);
         this.blockCount = new AtomicInteger(0);
         this.size = new AtomicLong(initSize());
         this.time = new AtomicLong(Long.MIN_VALUE + 1);
@@ -175,45 +171,62 @@ public class RawFileBuffered extends RawFile {
     }
 
     @Override
-    public void truncate(long length) throws IOException {
+    public boolean truncate(long length) throws IOException {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
-                throw new Error("The file is closed");
-            if (!state.compareAndSet(STATE_READY, STATE_FLUSHING))
+                throw new IOException("The file is closed");
+            if (!state.compareAndSet(STATE_READY, STATE_BUSY))
                 continue;
             try {
-                channel.truncate(length);
-                // TODO: clean the loaded pages here
-            } finally {
+                doTruncate(length);
                 while (true) {
                     long old = size.get();
                     if (old <= length)
-                        break;
+                        return false;
                     if (size.compareAndSet(old, length))
-                        break;
+                        return true;
                 }
+            } finally {
                 state.set(STATE_READY);
             }
-            break;
+        }
+    }
+
+    /**
+     * Does the job of truncating this file
+     *
+     * @param length The length to truncate to
+     * @throws IOException When an IO error occurred
+     */
+    private void doTruncate(long length) throws IOException {
+        channel.truncate(length);
+        for (int i = 0; i != blockCount.get(); i++) {
+            if (blocks[i].location + Constants.PAGE_SIZE > length) {
+                // the page ends after the length to truncate to => must zero this page
+                if (blocks[i].location >= length)
+                    // the block is fully after the limit => fully zero it
+                    blocks[i].zeroesFrom(0);
+                else
+                    // the limit is within this block => zeroes from the limit forward
+                    blocks[i].zeroesFrom((int) (length - blocks[i].location));
+            }
         }
     }
 
     @Override
-    public void flush() {
+    public void flush() throws IOException {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
-                throw new Error("The file is closed");
-            if (!state.compareAndSet(STATE_READY, STATE_FLUSHING))
+                throw new IOException("The file is closed");
+            if (!state.compareAndSet(STATE_READY, STATE_BUSY))
                 continue;
-            for (int i = 0; i != blockCount.get(); i++) {
-                blocks[i].flush(channel);
-            }
             try {
+                long currentSize = size.get();
+                for (int i = 0; i != blockCount.get(); i++)
+                    blocks[i].flush(channel, currentSize);
                 channel.force(true);
-            } catch (IOException exception) {
-                throw new Error("Failed to write back to " + file.getAbsolutePath(), exception);
             } finally {
                 state.set(STATE_READY);
             }
@@ -223,7 +236,11 @@ public class RawFileBuffered extends RawFile {
 
     @Override
     public StorageEndpoint acquireEndpointAt(long index) {
-        return getBlockFor(index);
+        try {
+            return getBlockFor(index);
+        } catch (IOException exception) {
+            throw new RuntimeException(exception);
+        }
     }
 
     @Override
@@ -252,8 +269,9 @@ public class RawFileBuffered extends RawFile {
      *
      * @param index The requested index in this file
      * @return The corresponding block
+     * @throws IOException When an IO error occurred
      */
-    private RawFileBlockTS getBlockFor(long index) {
+    private RawFileBlockTS getBlockFor(long index) throws IOException {
         long targetLocation = index & Constants.INDEX_MASK_UPPER;
         if (blockCount.get() < FILE_MAX_LOADED_BLOCKS)
             return getBlockWhenNotFull(targetLocation);
@@ -266,8 +284,9 @@ public class RawFileBuffered extends RawFile {
      *
      * @param targetLocation The location of the requested block in this file
      * @return The corresponding block
+     * @throws IOException When an IO error occurred
      */
-    private RawFileBlockTS getBlockWhenNotFull(long targetLocation) {
+    private RawFileBlockTS getBlockWhenNotFull(long targetLocation) throws IOException {
         // try to allocate one of the free block
         int count = blockCount.get();
         while (count < FILE_MAX_LOADED_BLOCKS) {
@@ -311,8 +330,9 @@ public class RawFileBuffered extends RawFile {
      *
      * @param targetLocation The location of the requested block in this file
      * @return The corresponding block
+     * @throws IOException When an IO error occurred
      */
-    private RawFileBlockTS getBlockWhenFull(long targetLocation) {
+    private RawFileBlockTS getBlockWhenFull(long targetLocation) throws IOException {
         for (int i = 0; i != FILE_MAX_LOADED_BLOCKS; i++) {
             // is this the block we are looking for?
             if (blocks[i].getLocation() == targetLocation && blocks[i].use(targetLocation, tick())) {
@@ -329,13 +349,14 @@ public class RawFileBuffered extends RawFile {
      *
      * @param targetLocation The location of the requested block in this file
      * @return The corresponding block
+     * @throws IOException When an IO error occurred
      */
-    private RawFileBlockTS getBlockWhenNotFound(long targetLocation) {
+    private RawFileBlockTS getBlockWhenNotFound(long targetLocation) throws IOException {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
-                throw new Error("The file is closed");
-            if (state.compareAndSet(STATE_READY, STATE_RECLAIMING))
+                throw new IOException("The file is closed");
+            if (state.compareAndSet(STATE_READY, STATE_BUSY))
                 break;
         }
 
@@ -362,18 +383,41 @@ public class RawFileBuffered extends RawFile {
             }
             // we did not find the block, try to reclaim the oldest one
             RawFileBlockTS target = blocks[oldestIndex];
-            if (target.getLastHit() == oldestTime // the time did not change
-                    && target.getLocation() == oldestLocation // still the same location
-                    && target.reclaim(targetLocation, channel, size.get(), tick()) // try to reclaim
-                    ) {
-                // update the file data
-                extendSizeTo(Math.max(size.get(), targetLocation + Constants.PAGE_SIZE));
-                if (target.use(targetLocation, tick())) {
-                    // we got the block
-                    state.set(STATE_READY);
-                    return target;
+            try {
+                if (target.getLastHit() == oldestTime // the time did not change
+                        && target.getLocation() == oldestLocation // still the same location
+                        && target.reclaim(targetLocation, channel, size.get(), tick()) // try to reclaim
+                        ) {
+                    // update the file data
+                    extendSizeTo(Math.max(size.get(), targetLocation + Constants.PAGE_SIZE));
+                    if (target.use(targetLocation, tick())) {
+                        // we got the block
+                        state.set(STATE_READY);
+                        return target;
+                    }
                 }
+            } catch (IOException exception) {
+                state.set(STATE_READY);
+                throw exception;
             }
+        }
+    }
+
+    /**
+     * When a thread wrote up to an index
+     *
+     * @param index The maximum index written to
+     */
+    void onWriteUpTo(long index) {
+        while (true) {
+            long current = size.get();
+            if (current > index)
+                // not the furthest => exit
+                return;
+            if (size.compareAndSet(current, index))
+                // succeeded to update => exit
+                return;
+            // start over
         }
     }
 }

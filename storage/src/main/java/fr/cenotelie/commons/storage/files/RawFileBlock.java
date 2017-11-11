@@ -33,6 +33,10 @@ import java.util.Arrays;
  */
 class RawFileBlock extends StorageEndpoint {
     /**
+     * The parent file
+     */
+    protected final RawFileBuffered parent;
+    /**
      * The associated buffer
      */
     protected ByteBuffer buffer;
@@ -69,8 +73,11 @@ class RawFileBlock extends StorageEndpoint {
 
     /**
      * Initializes this structure
+     *
+     * @param parent The parent file
      */
-    public RawFileBlock() {
+    public RawFileBlock(RawFileBuffered parent) {
+        this.parent = parent;
         this.buffer = null;
         this.location = -1;
         this.lastHit = Long.MIN_VALUE;
@@ -90,12 +97,30 @@ class RawFileBlock extends StorageEndpoint {
      * Loads this block using the specified file channel
      *
      * @param channel The file channel to read from
+     * @param length  The number of bytes to read
      * @throws IOException When an IO error occurs
      */
-    protected void load(FileChannel channel) throws IOException {
+    protected void load(FileChannel channel, int length) throws IOException {
+        if (length == Constants.PAGE_SIZE) {
+            loadBuffer(buffer, channel);
+        } else {
+            ByteBuffer temp = ByteBuffer.allocate(length);
+            loadBuffer(temp, channel);
+            System.arraycopy(temp.array(), 0, buffer.array(), 0, length);
+        }
+    }
+
+    /**
+     * Loads the specified buffer with data from a file channel
+     *
+     * @param buffer  The byte buffer to load
+     * @param channel The file channel to read from
+     * @throws IOException When an IO error occurs
+     */
+    private void loadBuffer(ByteBuffer buffer, FileChannel channel) throws IOException {
         int total = 0;
         buffer.position(0);
-        while (total < Constants.PAGE_SIZE) {
+        while (total < buffer.limit()) {
             int read = channel.read(buffer, location + total);
             if (read == -1)
                 throw new IOException("Unexpected end of stream");
@@ -107,37 +132,45 @@ class RawFileBlock extends StorageEndpoint {
      * Serializes this block to the underlying file channel
      *
      * @param channel The originating file channel
+     * @param length  The number of bytes to write
      * @throws IOException When an IO error occurs
      */
-    protected void serialize(FileChannel channel) throws IOException {
-        if (isDirty) {
-            buffer.position(0);
-            int total = 0;
-            while (total < Constants.PAGE_SIZE) {
-                int written = channel.write(buffer, location + total);
-                total += written;
-            }
-            isDirty = false;
+    protected void serialize(FileChannel channel, int length) throws IOException {
+        if (!isDirty)
+            return;
+        if (length == Constants.PAGE_SIZE) {
+            serializeBuffer(buffer, channel);
+        } else {
+            ByteBuffer temp = ByteBuffer.allocate(length);
+            System.arraycopy(buffer.array(), 0, temp.array(), 0, length);
+            serializeBuffer(temp, channel);
+        }
+        isDirty = false;
+    }
+
+    /**
+     * Serializes the specified buffer to a file channel
+     *
+     * @param buffer  The byte buffer to serialize
+     * @param channel The file channel to write to
+     * @throws IOException When an IO error occurs
+     */
+    protected void serializeBuffer(ByteBuffer buffer, FileChannel channel) throws IOException {
+        buffer.position(0);
+        int total = 0;
+        while (total < buffer.limit()) {
+            int written = channel.write(buffer, location + total);
+            total += written;
         }
     }
 
     /**
-     * Arrays of empty data used for zeroing the content of a buffer
+     * Zeroes the end of this page from the specified index forward
+     *
+     * @param index The starting index within this page
      */
-    private static final byte[] ZEROES = new byte[256];
-
-    /**
-     * Zeroes the content of the buffer
-     */
-    protected void zeroes() {
-        if (buffer.hasArray()) {
-            Arrays.fill(buffer.array(), (byte) 0);
-            return;
-        }
-        buffer.position(0);
-        for (int i = 0; i != Constants.PAGE_SIZE; i += ZEROES.length) {
-            buffer.put(ZEROES);
-        }
+    public void zeroesFrom(int index) {
+        Arrays.fill(buffer.array(), index, Constants.PAGE_SIZE - index, (byte) 0);
     }
 
     @Override
@@ -201,6 +234,7 @@ class RawFileBlock extends StorageEndpoint {
     @Override
     public void writeByte(long index, byte value) {
         buffer.put((int) (index & Constants.INDEX_MASK_LOWER), value);
+        parent.onWriteUpTo(index + 1);
         isDirty = true;
     }
 
@@ -213,42 +247,49 @@ class RawFileBlock extends StorageEndpoint {
     public void writeBytes(long index, byte[] buffer, int start, int length) {
         this.buffer.position((int) (index & Constants.INDEX_MASK_LOWER));
         this.buffer.put(buffer, start, length);
+        parent.onWriteUpTo(index + length);
         isDirty = true;
     }
 
     @Override
     public void writeChar(long index, char value) {
         buffer.putChar((int) (index & Constants.INDEX_MASK_LOWER), value);
+        parent.onWriteUpTo(index + 2);
         isDirty = true;
     }
 
     @Override
     public void writeShort(long index, short value) {
         buffer.putShort((int) (index & Constants.INDEX_MASK_LOWER), value);
+        parent.onWriteUpTo(index + 2);
         isDirty = true;
     }
 
     @Override
     public void writeInt(long index, int value) {
         buffer.putInt((int) (index & Constants.INDEX_MASK_LOWER), value);
+        parent.onWriteUpTo(index + 4);
         isDirty = true;
     }
 
     @Override
     public void writeLong(long index, long value) {
         buffer.putLong((int) (index & Constants.INDEX_MASK_LOWER), value);
+        parent.onWriteUpTo(index + 8);
         isDirty = true;
     }
 
     @Override
     public void writeFloat(long index, float value) {
         buffer.putFloat((int) (index & Constants.INDEX_MASK_LOWER), value);
+        parent.onWriteUpTo(index + 4);
         isDirty = true;
     }
 
     @Override
     public void writeDouble(long index, double value) {
         buffer.putDouble((int) (index & Constants.INDEX_MASK_LOWER), value);
+        parent.onWriteUpTo(index + 8);
         isDirty = true;
     }
 }

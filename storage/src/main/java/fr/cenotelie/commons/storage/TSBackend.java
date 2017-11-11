@@ -56,6 +56,17 @@ public class TSBackend extends StorageBackend {
     }
 
     @Override
+    public boolean truncate(long length) throws IOException {
+        try (StorageAccess access = access(length, (int) backend.getSize(), true)) {
+
+        }
+        if (length >= backend.getSize())
+            return false;
+
+        backend.truncate(length);
+    }
+
+    @Override
     public void flush() throws IOException {
         backend.flush();
     }
@@ -71,20 +82,26 @@ public class TSBackend extends StorageBackend {
     }
 
     @Override
-    public void close() throws IOException {
-        backend.close();
+    public StorageAccess access(long location, int length, boolean writable) {
+        if (location > Integer.MAX_VALUE)
+            throw new IndexOutOfBoundsException("Location must be less than Integer.MAX_VALUE");
+        return accessManager.get((int) location, length, backend.isWritable() && writable);
     }
 
     /**
-     * Accesses the content of this file through an access element
-     * An access must be within the boundaries of a block.
+     * Gets an access to the associated backend for the specified span
      *
-     * @param index    The index within this file of the reserved area for the access
-     * @param length   The length of the reserved area for the access
-     * @param writable Whether the access shall allow writing
-     * @return The access element
+     * @param location The location of the span within the backend
+     * @param length   The length of the allowed span
+     * @param writable Whether the access allows writing
+     * @return The new access, or null if it cannot be obtained
      */
-    public StorageAccess access(int index, int length, boolean writable) {
-        return accessManager.get(index, length, backend.isWritable() && writable);
+    public StorageAccess access(int location, int length, boolean writable) {
+        return accessManager.get(location, length, backend.isWritable() && writable);
+    }
+
+    @Override
+    public void close() throws IOException {
+        backend.close();
     }
 }

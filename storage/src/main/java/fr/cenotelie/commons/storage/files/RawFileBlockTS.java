@@ -119,8 +119,11 @@ class RawFileBlockTS extends RawFileBlock {
 
     /**
      * Initializes this structure
+     *
+     * @param parent The parent file
      */
-    public RawFileBlockTS() {
+    public RawFileBlockTS(RawFileBuffered parent) {
+        super(parent);
         this.state = new AtomicInteger(BLOCK_STATE_FREE);
     }
 
@@ -132,8 +135,9 @@ class RawFileBlockTS extends RawFileBlock {
      * @param fileSize The current size of the file
      * @param time     The current time
      * @return The reservation status
+     * @throws IOException When an IO error occurred
      */
-    public int reserve(long location, FileChannel channel, long fileSize, long time) {
+    public int reserve(long location, FileChannel channel, long fileSize, long time) throws IOException {
         while (true) {
             int current = state.get();
             if (current >= BLOCK_STATE_READY) {
@@ -155,8 +159,11 @@ class RawFileBlockTS extends RawFileBlock {
                     // woops, too late
                     continue;
                 // the block was free and is now reserved
-                doSetup(location, channel, fileSize, time);
-                state.compareAndSet(BLOCK_STATE_RESERVED, BLOCK_STATE_READY);
+                try {
+                    doSetup(location, channel, fileSize, time);
+                } finally {
+                    state.compareAndSet(BLOCK_STATE_RESERVED, BLOCK_STATE_READY);
+                }
                 return RESERVE_RESULT_OK;
             }
         }
@@ -169,23 +176,18 @@ class RawFileBlockTS extends RawFileBlock {
      * @param channel  The originating file channel
      * @param fileSize The current size of the file
      * @param time     The current time
+     * @throws IOException When an IO error occurred
      */
-    private void doSetup(long location, FileChannel channel, long fileSize, long time) {
+    private void doSetup(long location, FileChannel channel, long fileSize, long time) throws IOException {
         this.location = location;
         if (this.buffer == null)
             this.buffer = ByteBuffer.allocate(Constants.PAGE_SIZE);
+        else
+            zeroesFrom(0);
         this.isDirty = false;
-        if (this.location < fileSize) {
-            try {
-                load(channel);
-            } catch (IOException exception) {
-                state.set(BLOCK_STATE_READY);
-                throw new Error("Failed to read block at 0x" + Long.toHexString(location), exception);
-            }
-        } else {
-            zeroes();
-        }
         touch(time);
+        if (this.location < fileSize)
+            load(channel, (this.location + Constants.PAGE_SIZE) <= fileSize ? Constants.PAGE_SIZE : (int) (fileSize - this.location));
     }
 
     /**
@@ -258,27 +260,36 @@ class RawFileBlockTS extends RawFileBlock {
      * @param fileSize The current size of the file
      * @param time     The current time
      * @return Whether the block was reclaimed
+     * @throws IOException When an IO error occurred
      */
-    public boolean reclaim(long location, FileChannel channel, long fileSize, long time) {
+    public boolean reclaim(long location, FileChannel channel, long fileSize, long time) throws IOException {
         if (!state.compareAndSet(BLOCK_STATE_READY, BLOCK_STATE_RECLAIMING))
             return false;
-        try {
-            serialize(channel);
-        } catch (IOException exception) {
-            state.set(BLOCK_STATE_READY);
-            throw new Error("Failed to write block at 0x" + Long.toHexString(location), exception);
+        if (isDirty) {
+            // write to the channel
+            try {
+                serialize(channel, (this.location + Constants.PAGE_SIZE) <= fileSize ? Constants.PAGE_SIZE : (int) (fileSize - this.location));
+            } catch (IOException exception) {
+                state.set(BLOCK_STATE_READY);
+                throw exception;
+            }
         }
-        doSetup(location, channel, fileSize, time);
-        state.set(BLOCK_STATE_READY);
+        try {
+            doSetup(location, channel, fileSize, time);
+        } finally {
+            state.set(BLOCK_STATE_READY);
+        }
         return true;
     }
 
     /**
      * Flushes any outstanding changes to the backend file
      *
-     * @param channel The originating file channel
+     * @param channel  The originating file channel
+     * @param fileSize The current size of the file
+     * @throws IOException When an IO error occurred
      */
-    public void flush(FileChannel channel) {
+    public void flush(FileChannel channel, long fileSize) throws IOException {
         if (!isDirty)
             // not dirty at this time, do nothing
             return;
@@ -287,9 +298,7 @@ class RawFileBlockTS extends RawFileBlock {
                 break;
         }
         try {
-            serialize(channel);
-        } catch (IOException exception) {
-            throw new Error("Failed to write block at 0x" + Long.toHexString(location), exception);
+            serialize(channel, (this.location + Constants.PAGE_SIZE) <= fileSize ? Constants.PAGE_SIZE : (int) (fileSize - this.location));
         } finally {
             state.set(BLOCK_STATE_READY);
         }
