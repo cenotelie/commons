@@ -83,6 +83,14 @@ public abstract class RawFileTest {
         }
         // check the total size
         Assert.assertEquals(totalLength, backend.getSize());
+        // re-read immediately
+        try (StorageAccess access = backend.access(0, totalLength, false)) {
+            for (int i = 0; i != valueCount; i++) {
+                int value = access.readInt();
+                Assert.assertEquals(i, value);
+            }
+        }
+        // flush and close
         backend.flush();
         Assert.assertEquals(totalLength, backend.getSize());
         backend.close();
