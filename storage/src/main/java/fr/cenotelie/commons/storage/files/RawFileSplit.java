@@ -191,12 +191,51 @@ public class RawFileSplit extends RawFile {
                 break;
         }
         try {
-            // TODO: truncate here
-
-
-            return false;
+            return doTruncate(length);
         } finally {
             state.set(STATE_READY);
+        }
+    }
+
+    /**
+     * Truncates this storage system to the specified length
+     *
+     * @param length The length to truncate to
+     * @return Whether the operation had an effect
+     * @throws IOException When an IO error occurred
+     */
+    private boolean doTruncate(long length) throws IOException {
+        int fileIndex = (int) (length / fileMaxSize);
+        long rest = length % fileMaxSize;
+        int count = filesCount.get();
+        if (fileIndex >= count)
+            return false;
+        for (int i = fileIndex + 1; i != count; i++) {
+            // close the file
+            if (files[i] != null)
+                files[i].close();
+        }
+        for (int i = fileIndex + 1; i != count; i++) {
+            // delete the file
+            File target = new File(directory, fileName(i));
+            if (target.exists() && !target.delete())
+                throw new IOException("Failed to delete file " + target.getAbsolutePath());
+        }
+        // truncate the last file
+        if (rest == 0) {
+            // delete
+            if (files[fileIndex] != null)
+                files[fileIndex].close();
+            File target = new File(directory, fileName(fileIndex));
+            if (target.exists() && !target.delete())
+                throw new IOException("Failed to delete file " + target.getAbsolutePath());
+            return true;
+        } else {
+            // truncate to rest
+            if (files[fileIndex] == null)
+                files[fileIndex] = factory.newStorage(new File(directory, fileName(fileIndex)), writable);
+            boolean deletedSomeFiles = fileIndex + 1 != count;
+            return deletedSomeFiles || files[fileIndex].truncate(rest);
         }
     }
 
