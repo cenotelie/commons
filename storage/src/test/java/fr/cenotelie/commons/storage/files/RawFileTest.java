@@ -70,7 +70,50 @@ public abstract class RawFileTest {
      * @throws IOException When an IO error occurred
      */
     @Test
-    public void testBasicWriteAndReread() throws IOException {
+    public void testBasicWriteAndRereadPageAligned() throws IOException {
+        RawFile backend = newBackend(true);
+        // we will read and write 2 and a half page to ensure that we trigger the split file mechanism
+        int totalLength = Constants.PAGE_SIZE * 3;
+        // the number of integer values to read and write
+        int valueCount = totalLength / 4;
+        try (StorageAccess access = backend.access(0, totalLength, true)) {
+            for (int i = 0; i != valueCount; i++) {
+                access.writeInt(i);
+            }
+        }
+        // check the total size
+        Assert.assertEquals(totalLength, backend.getSize());
+        // re-read immediately
+        try (StorageAccess access = backend.access(0, totalLength, false)) {
+            for (int i = 0; i != valueCount; i++) {
+                int value = access.readInt();
+                Assert.assertEquals(i, value);
+            }
+        }
+        // flush and close
+        backend.flush();
+        Assert.assertEquals(totalLength, backend.getSize());
+        backend.close();
+
+        // reopen an re-read in read-only
+        backend = reopen(backend, false);
+        Assert.assertEquals(totalLength, backend.getSize());
+        try (StorageAccess access = backend.access(0, totalLength, false)) {
+            for (int i = 0; i != valueCount; i++) {
+                int value = access.readInt();
+                Assert.assertEquals(i, value);
+            }
+        }
+        backend.close();
+    }
+
+    /**
+     * Basic test of writing and re-reading
+     *
+     * @throws IOException When an IO error occurred
+     */
+    @Test
+    public void testBasicWriteAndRereadPageUnaligned() throws IOException {
         RawFile backend = newBackend(true);
         // we will read and write 2 and a half page to ensure that we trigger the split file mechanism
         int totalLength = Constants.PAGE_SIZE * 2 + Constants.PAGE_SIZE / 2;
@@ -113,7 +156,46 @@ public abstract class RawFileTest {
      * @throws IOException When an IO error occurred
      */
     @Test
-    public void testTruncate() throws IOException {
+    public void testTruncatePageAligned() throws IOException {
+        RawFile backend = newBackend(true);
+        // we will read and write 2 and a half page to ensure that we trigger the split file mechanism
+        int totalLength = Constants.PAGE_SIZE * 3;
+        // the number of integer values to read and write
+        int valueCount = totalLength / 4;
+        try (StorageAccess access = backend.access(0, totalLength, true)) {
+            for (int i = 0; i != valueCount; i++) {
+                access.writeInt(i);
+            }
+        }
+        // check the total size
+        Assert.assertEquals(totalLength, backend.getSize());
+        // flush, truncate and close
+        backend.flush();
+        totalLength = Constants.PAGE_SIZE;
+        valueCount = totalLength / 4;
+        backend.truncate(totalLength);
+        Assert.assertEquals(totalLength, backend.getSize());
+        backend.close();
+
+        // reopen an re-read in read-only
+        backend = reopen(backend, false);
+        Assert.assertEquals(totalLength, backend.getSize());
+        try (StorageAccess access = backend.access(0, totalLength, false)) {
+            for (int i = 0; i != valueCount; i++) {
+                int value = access.readInt();
+                Assert.assertEquals(i, value);
+            }
+        }
+        backend.close();
+    }
+
+    /**
+     * Basic test of writing and re-reading
+     *
+     * @throws IOException When an IO error occurred
+     */
+    @Test
+    public void testTruncatePageUnaligned() throws IOException {
         RawFile backend = newBackend(true);
         // we will read and write 2 and a half page to ensure that we trigger the split file mechanism
         int totalLength = Constants.PAGE_SIZE * 2 + Constants.PAGE_SIZE / 2;
