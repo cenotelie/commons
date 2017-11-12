@@ -23,6 +23,7 @@ import fr.cenotelie.commons.storage.StorageEndpoint;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -32,6 +33,20 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class InMemoryStore extends StorageBackend {
     /**
+     * The backend is ready for IO
+     */
+    private static final int STATE_READY = 0;
+    /**
+     * The backend is currently busy with an operation
+     */
+    private static final int STATE_BUSY = 1;
+    /**
+     * The backend is now closed
+     */
+    private static final int STATE_CLOSED = -1;
+
+
+    /**
      * The size of this store
      */
     private final AtomicLong size;
@@ -39,6 +54,10 @@ public class InMemoryStore extends StorageBackend {
      * The pages
      */
     private volatile InMemoryPage[] pages;
+    /**
+     * The current state of this storage
+     */
+    private final AtomicInteger state;
 
     /**
      * Initializes this store
@@ -46,6 +65,7 @@ public class InMemoryStore extends StorageBackend {
     public InMemoryStore() {
         this.size = new AtomicLong(0);
         this.pages = new InMemoryPage[8];
+        this.state = new AtomicInteger(STATE_READY);
     }
 
     @Override
@@ -59,30 +79,41 @@ public class InMemoryStore extends StorageBackend {
     }
 
     @Override
-    public boolean truncate(long length) {
+    public boolean truncate(long length) throws IOException {
         while (true) {
-            long currentSize = size.get();
-            if (length >= currentSize)
-                return false;
-            if (size.compareAndSet(currentSize, length))
+            int s = state.get();
+            if (s == STATE_CLOSED)
+                throw new IOException("The file is closed");
+            if (state.compareAndSet(STATE_READY, STATE_BUSY))
                 break;
         }
-        int lastPage = (int) (length >>> Constants.PAGE_INDEX_LENGTH);
-        int lastIndex = (int) (length & Constants.INDEX_MASK_LOWER);
-        if (lastIndex == 0) {
-            lastPage--;
-            lastIndex = Constants.PAGE_SIZE;
+        try {
+            while (true) {
+                long currentSize = size.get();
+                if (length >= currentSize)
+                    return false;
+                if (size.compareAndSet(currentSize, length))
+                    break;
+            }
+            int lastPage = (int) (length >>> Constants.PAGE_INDEX_LENGTH);
+            int lastIndex = (int) (length & Constants.INDEX_MASK_LOWER);
+            if (lastIndex == 0) {
+                lastPage--;
+                lastIndex = Constants.PAGE_SIZE;
+            }
+            if (lastPage >= pages.length)
+                // too small
+                return false;
+            for (int i = pages.length - 1; i != lastPage; i--) {
+                // drop this page
+                pages[i] = null;
+            }
+            if (lastIndex != Constants.PAGE_SIZE && pages[lastPage] != null)
+                pages[lastPage].zeroesFrom(lastIndex);
+            return true;
+        } finally {
+            state.set(STATE_READY);
         }
-        if (lastPage >= pages.length)
-            // too small
-            return false;
-        for (int i = pages.length - 1; i != lastPage; i--) {
-            // drop this page
-            pages[i] = null;
-        }
-        if (lastIndex != Constants.PAGE_SIZE && pages[lastPage] != null)
-            pages[lastPage].zeroesFrom(lastIndex);
-        return true;
     }
 
     @Override
@@ -91,14 +122,25 @@ public class InMemoryStore extends StorageBackend {
     }
 
     @Override
-    public synchronized StorageEndpoint acquireEndpointAt(long index) {
-        int requested = (int) (index >>> Constants.PAGE_INDEX_LENGTH);
-        while (requested >= pages.length) {
-            pages = Arrays.copyOf(pages, pages.length * 2);
+    public StorageEndpoint acquireEndpointAt(long index) {
+        while (true) {
+            int s = state.get();
+            if (s == STATE_CLOSED)
+                throw new RuntimeException(new IOException("The file is closed"));
+            if (state.compareAndSet(STATE_READY, STATE_BUSY))
+                break;
         }
-        if (pages[requested] == null)
-            pages[requested] = new InMemoryPage(this, requested << Constants.PAGE_INDEX_LENGTH);
-        return pages[requested];
+        try {
+            int requested = (int) (index >>> Constants.PAGE_INDEX_LENGTH);
+            while (requested >= pages.length) {
+                pages = Arrays.copyOf(pages, pages.length * 2);
+            }
+            if (pages[requested] == null)
+                pages[requested] = new InMemoryPage(this, requested << Constants.PAGE_INDEX_LENGTH);
+            return pages[requested];
+        } finally {
+            state.set(STATE_READY);
+        }
     }
 
     @Override
@@ -107,8 +149,19 @@ public class InMemoryStore extends StorageBackend {
     }
 
     @Override
-    public void close() {
-        pages = null;
+    public void close() throws IOException {
+        while (true) {
+            int s = state.get();
+            if (s == STATE_CLOSED)
+                throw new IOException("The file is closed");
+            if (state.compareAndSet(STATE_READY, STATE_BUSY))
+                break;
+        }
+        try {
+            pages = null;
+        } finally {
+            state.set(STATE_CLOSED);
+        }
     }
 
     /**

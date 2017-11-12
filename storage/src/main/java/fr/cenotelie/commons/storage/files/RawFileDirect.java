@@ -270,7 +270,7 @@ public class RawFileDirect extends RawFile {
      */
     private final File file;
     /**
-     * Whether the access is writable
+     * Whether the file is writable
      */
     private final boolean writable;
     /**
