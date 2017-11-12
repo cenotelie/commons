@@ -212,8 +212,10 @@ public class RawFileSplit extends RawFile {
             return false;
         for (int i = fileIndex + 1; i != count; i++) {
             // close the file
-            if (files[i] != null)
+            if (files[i] != null) {
                 files[i].close();
+                files[i] = null;
+            }
         }
         for (int i = fileIndex + 1; i != count; i++) {
             // delete the file
@@ -224,8 +226,10 @@ public class RawFileSplit extends RawFile {
         // truncate the last file
         if (rest == 0) {
             // delete
-            if (files[fileIndex] != null)
+            if (files[fileIndex] != null) {
                 files[fileIndex].close();
+                files[fileIndex] = null;
+            }
             File target = new File(directory, fileName(fileIndex));
             filesCount.set(fileIndex);
             if (target.exists() && !target.delete())
@@ -237,7 +241,8 @@ public class RawFileSplit extends RawFile {
             if (files[fileIndex] == null)
                 files[fileIndex] = factory.newStorage(new File(directory, fileName(fileIndex)), writable);
             boolean deletedSomeFiles = fileIndex + 1 != count;
-            return deletedSomeFiles || files[fileIndex].truncate(rest);
+            boolean truncated = files[fileIndex].truncate(rest);
+            return deletedSomeFiles || truncated;
         }
     }
 
