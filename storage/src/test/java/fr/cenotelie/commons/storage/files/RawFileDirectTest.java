@@ -25,14 +25,14 @@ import java.io.IOException;
  *
  * @author Laurent Wouters
  */
-public class RawFileBufferedTest extends RawFileTest {
+public class RawFileDirectTest extends RawFileTest {
     @Override
     protected RawFile newBackend(boolean writable) throws IOException {
-        return new RawFileBuffered(File.createTempFile("test", ".bin"), writable);
+        return new RawFileDirect(File.createTempFile("test", ".bin"), writable);
     }
 
     @Override
     protected RawFile reopen(RawFile old, boolean writable) throws IOException {
-        return new RawFileBuffered(old.getSystemFile(), writable);
+        return new RawFileDirect(old.getSystemFile(), writable);
     }
 }

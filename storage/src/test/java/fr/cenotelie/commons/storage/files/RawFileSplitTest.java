@@ -17,22 +17,56 @@
 
 package fr.cenotelie.commons.storage.files;
 
+import fr.cenotelie.commons.storage.Constants;
+
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Test suite for a raw file storage system
  *
  * @author Laurent Wouters
  */
-public class RawFileBufferedTest extends RawFileTest {
+public class RawFileSplitTest extends RawFileTest {
+    /**
+     * Maximum size of split files
+     */
+    private static final int MAX_SIZE = Constants.PAGE_SIZE * 2;
+
     @Override
     protected RawFile newBackend(boolean writable) throws IOException {
-        return new RawFileBuffered(File.createTempFile("test", ".bin"), writable);
+        Path directory = Files.createTempDirectory("test");
+        return new RawFileSplit(
+                directory.toFile(),
+                "test",
+                ".bin",
+                new RawFileFactory() {
+                    @Override
+                    public RawFile newStorage(File file, boolean writable) throws IOException {
+                        return new RawFileDirect(file, writable);
+                    }
+                },
+                writable,
+                MAX_SIZE
+        );
     }
 
     @Override
     protected RawFile reopen(RawFile old, boolean writable) throws IOException {
-        return new RawFileBuffered(old.getSystemFile(), writable);
+        return new RawFileSplit(
+                old.getSystemFile(),
+                "test",
+                ".bin",
+                new RawFileFactory() {
+                    @Override
+                    public RawFile newStorage(File file, boolean writable) throws IOException {
+                        return new RawFileDirect(file, writable);
+                    }
+                },
+                writable,
+                MAX_SIZE
+        );
     }
 }
