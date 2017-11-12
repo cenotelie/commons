@@ -123,7 +123,7 @@ public class RawFileSplit extends RawFile {
      * @return The size of the buffer
      */
     private int bufferSize(int count) {
-        int size = 1;
+        int size = 2; // minimum buffer size
         while (size < count) {
             size = size << 1;
         }
@@ -227,11 +227,13 @@ public class RawFileSplit extends RawFile {
             if (files[fileIndex] != null)
                 files[fileIndex].close();
             File target = new File(directory, fileName(fileIndex));
+            filesCount.set(fileIndex);
             if (target.exists() && !target.delete())
                 throw new IOException("Failed to delete file " + target.getAbsolutePath());
             return true;
         } else {
             // truncate to rest
+            filesCount.set(fileIndex + 1);
             if (files[fileIndex] == null)
                 files[fileIndex] = factory.newStorage(new File(directory, fileName(fileIndex)), writable);
             boolean deletedSomeFiles = fileIndex + 1 != count;
@@ -290,6 +292,8 @@ public class RawFileSplit extends RawFile {
             files = Arrays.copyOf(files, bufferSize(fileIndex + 1));
         if (files[fileIndex] == null)
             files[fileIndex] = factory.newStorage(new File(directory, fileName(fileIndex)), writable);
+        if (filesCount.get() < fileIndex + 1)
+            filesCount.set(fileIndex + 1);
         return new RawFileSplitEndpointProxy(
                 files[fileIndex],
                 files[fileIndex].acquireEndpointAt(rest),
