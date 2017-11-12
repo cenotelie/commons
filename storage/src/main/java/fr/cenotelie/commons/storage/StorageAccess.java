@@ -209,7 +209,8 @@ public class StorageAccess implements AutoCloseable {
      */
     private void updateEndpoint() {
         try {
-            backend.releaseEndpoint(endpoint);
+            if (endpoint != null)
+                backend.releaseEndpoint(endpoint);
             endpoint = backend.acquireEndpointAt(index);
         } catch (Throwable throwable) {
             endpoint = null;

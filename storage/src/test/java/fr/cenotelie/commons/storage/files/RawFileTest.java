@@ -17,6 +17,8 @@
 
 package fr.cenotelie.commons.storage.files;
 
+import fr.cenotelie.commons.storage.Constants;
+import fr.cenotelie.commons.storage.StorageAccess;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -59,6 +61,41 @@ public abstract class RawFileTest {
         backend.close();
         backend = reopen(backend, true);
         Assert.assertEquals("The backend is not empty", 0, backend.getSize());
+        backend.close();
+    }
+
+    /**
+     * Basic test of writing and re-reading
+     *
+     * @throws IOException When an IO error occurred
+     */
+    @Test
+    public void testBasicWriteAndReread() throws IOException {
+        RawFile backend = newBackend(true);
+        // we will read and write 2 and a half page to ensure that we trigger the split file mechanism
+        int totalLength = Constants.PAGE_SIZE * 2 + Constants.PAGE_SIZE / 2;
+        // the number of integer values to read and write
+        int valueCount = totalLength / 4;
+        try (StorageAccess access = backend.access(0, totalLength, true)) {
+            for (int i = 0; i != valueCount; i++) {
+                access.writeInt(i);
+            }
+        }
+        // check the total size
+        Assert.assertEquals(totalLength, backend.getSize());
+        backend.flush();
+        Assert.assertEquals(totalLength, backend.getSize());
+        backend.close();
+
+        // reopen an re-read in read-only
+        backend = reopen(backend, false);
+        Assert.assertEquals(totalLength, backend.getSize());
+        try (StorageAccess access = backend.access(0, totalLength, false)) {
+            for (int i = 0; i != valueCount; i++) {
+                int value = access.readInt();
+                Assert.assertEquals(i, value);
+            }
+        }
         backend.close();
     }
 }

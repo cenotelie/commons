@@ -117,20 +117,6 @@ public class RawFileBuffered extends RawFile {
     }
 
     /**
-     * Extends the size of this file to the specified one
-     *
-     * @param newSize The new size
-     */
-    private void extendSizeTo(long newSize) {
-        while (true) {
-            long current = size.get();
-            long target = Math.max(current, newSize);
-            if (size.compareAndSet(current, target))
-                return;
-        }
-    }
-
-    /**
      * Ticks the time of this file
      *
      * @return The new time
@@ -309,9 +295,7 @@ public class RawFileBuffered extends RawFile {
                     break;
                 case RawFileBlockTS.RESERVE_RESULT_OK:
                     // reserved by this thread for the location
-                    // update the file data
                     blockCount.incrementAndGet();
-                    extendSizeTo(Math.max(size.get(), targetLocation + Constants.PAGE_SIZE));
                     if (target.use(targetLocation, tick()))
                         return target;
                     break;
@@ -388,8 +372,6 @@ public class RawFileBuffered extends RawFile {
                         && target.getLocation() == oldestLocation // still the same location
                         && target.reclaim(targetLocation, channel, size.get(), tick()) // try to reclaim
                         ) {
-                    // update the file data
-                    extendSizeTo(Math.max(size.get(), targetLocation + Constants.PAGE_SIZE));
                     if (target.use(targetLocation, tick())) {
                         // we got the block
                         state.set(STATE_READY);
