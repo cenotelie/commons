@@ -50,9 +50,19 @@ class PageBuffered extends Page {
      * @param backend The backend storage system
      */
     public void load(RawFile backend) {
-        try (StorageEndpoint endpoint = backend.acquireEndpointAt(location)) {
+        /*try (StorageEndpoint endpoint = backend.acquireEndpointAt(location)) {
             endpoint.readBytes(location, buffer.array(), 0, Constants.PAGE_SIZE);
-        }
+        }*/
+    }
+
+    @Override
+    public long getIndexLowerBound() {
+        return 0;
+    }
+
+    @Override
+    public long getIndexUpperBound() {
+        return 0;
     }
 
     @Override
@@ -79,6 +89,11 @@ class PageBuffered extends Page {
     }
 
     @Override
+    public short readShort(long index) {
+        return 0;
+    }
+
+    @Override
     public int readInt(long index) {
         return buffer.getInt((int) (index & Constants.INDEX_MASK_LOWER));
     }
@@ -96,5 +111,10 @@ class PageBuffered extends Page {
     @Override
     public double readDouble(long index) {
         return buffer.getDouble((int) (index & Constants.INDEX_MASK_LOWER));
+    }
+
+    @Override
+    public void writeShort(long index, short value) {
+
     }
 }

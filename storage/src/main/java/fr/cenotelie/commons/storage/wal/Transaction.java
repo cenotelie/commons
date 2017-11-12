@@ -106,7 +106,8 @@ public class Transaction implements AutoCloseable {
     public StorageAccess access(long index, int length, boolean writable) {
         writable = this.writable & writable;
         Page page = acquirePage(index, writable);
-        return new StorageAccess(page, index, length, writable);
+        //return new StorageAccess(page, index, length, writable);
+        return null;
     }
 
     /**

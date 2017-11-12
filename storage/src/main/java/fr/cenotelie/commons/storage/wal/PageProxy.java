@@ -42,6 +42,16 @@ class PageProxy extends Page {
     }
 
     @Override
+    public long getIndexLowerBound() {
+        return 0;
+    }
+
+    @Override
+    public long getIndexUpperBound() {
+        return 0;
+    }
+
+    @Override
     public byte readByte(long index) {
         return endpoint.readByte(index);
     }
@@ -62,6 +72,11 @@ class PageProxy extends Page {
     }
 
     @Override
+    public short readShort(long index) {
+        return 0;
+    }
+
+    @Override
     public int readInt(long index) {
         return endpoint.readInt(index);
     }
@@ -79,5 +94,10 @@ class PageProxy extends Page {
     @Override
     public double readDouble(long index) {
         return endpoint.readDouble(index);
+    }
+
+    @Override
+    public void writeShort(long index, short value) {
+
     }
 }
