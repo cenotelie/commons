@@ -19,7 +19,10 @@ package fr.cenotelie.commons.storage.wal;
 
 import fr.cenotelie.commons.storage.Constants;
 import fr.cenotelie.commons.storage.StorageAccess;
+import fr.cenotelie.commons.storage.StorageBackend;
+import fr.cenotelie.commons.storage.StorageEndpoint;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -28,6 +31,46 @@ import java.util.Arrays;
  * @author Laurent Wouters
  */
 public class Transaction implements AutoCloseable {
+    /**
+     * Represents a backend to use for providing access through this transaction
+     */
+    private class Backend extends StorageBackend {
+        @Override
+        public boolean isWritable() {
+            return Transaction.this.writable;
+        }
+
+        @Override
+        public long getSize() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean truncate(long length) throws IOException {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void flush() throws IOException {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public StorageEndpoint acquireEndpointAt(long index) {
+            return Transaction.this.acquirePage(index);
+        }
+
+        @Override
+        public void releaseEndpoint(StorageEndpoint endpoint) {
+            // do nothing here, the pages are returned at the end of the transaction
+        }
+
+        @Override
+        public void close() throws IOException {
+            throw new UnsupportedOperationException();
+        }
+    }
+
     /**
      * The parent write-ahead log
      */
@@ -40,6 +83,10 @@ public class Transaction implements AutoCloseable {
      * The sequence number of the last transaction known to this one
      */
     final long endMark;
+    /**
+     * The backend to use for providing access through this transaction
+     */
+    private final StorageBackend backend;
     /**
      * Whether this transaction allows writing
      */
@@ -69,6 +116,7 @@ public class Transaction implements AutoCloseable {
         this.parent = parent;
         this.sequenceNumber = sequenceNumber;
         this.endMark = endMark;
+        this.backend = new Backend();
         this.writable = writable;
         this.pageLocations = new long[8];
         this.pages = new Page[8];
@@ -104,29 +152,22 @@ public class Transaction implements AutoCloseable {
      * @return The access element
      */
     public StorageAccess access(long index, int length, boolean writable) {
-        writable = this.writable & writable;
-        Page page = acquirePage(index, writable);
-        //return new StorageAccess(page, index, length, writable);
-        return null;
+        TransactionAccess access = parent.acquireAccess();
+        access.init(backend, index, length, this.writable & writable);
+        return access;
     }
 
     /**
      * Acquires a page of the backend storage system
      *
      * @param location The location of the page to acquire
-     * @param writable Whether the page shall be writable
      * @return The acquired page
      */
-    private Page acquirePage(long location, boolean writable) {
+    private Page acquirePage(long location) {
         location = location & (~Constants.INDEX_MASK_LOWER);
         for (int i = 0; i != pagesCount; i++) {
-            if (pageLocations[i] == location) {
-                if (!writable || pages[i].isWritable())
-                    return pages[i];
-                // swap for a writable page
-                pages[i] = parent.acquirePage(endMark, location, true);
+            if (pageLocations[i] == location)
                 return pages[i];
-            }
         }
         // not in the cache
         if (pagesCount >= pages.length) {

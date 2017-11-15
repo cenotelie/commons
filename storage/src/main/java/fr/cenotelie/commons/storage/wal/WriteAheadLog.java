@@ -26,6 +26,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Implements a write-ahead log that guard the access to another backend storage system
+ * A write-ahead log provides the following guarantees:
+ * - Transactions are Atomic
+ * - Transactions are Isolated (with snapshot isolation)
+ * - Transactions are Durable
  *
  * @author Laurent Wouters
  */
@@ -42,7 +46,15 @@ public class WriteAheadLog implements AutoCloseable {
      * The next identifier for transactions
      */
     private final AtomicLong sequencer;
+    /**
+     * The identifier of the last committed transaction
+     */
+    private final AtomicLong lastCommitted;
 
+    /**
+     * The index of transaction data currently in the log
+     */
+    private TransactionData[] index;
 
     /**
      * Initializes this log
@@ -55,6 +67,7 @@ public class WriteAheadLog implements AutoCloseable {
         this.backend = backend;
         this.log = log;
         this.sequencer = new AtomicLong(0);
+        this.lastCommitted = new AtomicLong(-1);
         reload();
     }
 
@@ -72,7 +85,7 @@ public class WriteAheadLog implements AutoCloseable {
             while (access.getIndex() < size) {
                 try {
                     // load the data for this transaction
-                    LogTransactionData data = new LogTransactionData(access, false);
+                    TransactionData data = new TransactionData(access, false);
                     // apply to the backend storage
                     data.applyTo(backend);
                 } catch (IndexOutOfBoundsException exception) {
@@ -118,6 +131,24 @@ public class WriteAheadLog implements AutoCloseable {
      */
     Page acquirePage(long endMark, long location, boolean writable) {
         return null;
+    }
+
+    /**
+     * Acquires an access for a transaction
+     *
+     * @return An access to be initialized
+     */
+    TransactionAccess acquireAccess() {
+        return null;
+    }
+
+    /**
+     * When an access for a transaction has ended
+     *
+     * @param access The access that ended
+     */
+    void onAccessEnd(TransactionAccess access) {
+
     }
 
     @Override

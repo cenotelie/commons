@@ -100,7 +100,7 @@ public class StorageAccess implements AutoCloseable {
      * @param length   The length of the allowed span
      * @param writable Whether the access allows writing
      */
-    void setup(StorageBackend backend, long location, int length, boolean writable) {
+    protected void setup(StorageBackend backend, long location, int length, boolean writable) {
         this.backend = backend;
         this.endpoint = null;
         this.endpointBoundMin = Long.MAX_VALUE;
@@ -832,6 +832,9 @@ public class StorageAccess implements AutoCloseable {
                 endpointBoundMin = Long.MAX_VALUE;
                 endpointBoundMax = Long.MIN_VALUE;
             }
+        } else {
+            backend = null;
+            endpoint = null;
         }
     }
 

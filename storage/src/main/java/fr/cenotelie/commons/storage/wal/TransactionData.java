@@ -25,7 +25,7 @@ import fr.cenotelie.commons.storage.StorageBackend;
  *
  * @author Laurent Wouters
  */
-class LogTransactionData {
+class TransactionData {
     /**
      * Data about a touched page
      */
@@ -82,7 +82,7 @@ class LogTransactionData {
             if (editsOffsets == null)
                 return;
             for (int i = 0; i != editsCount; i++) {
-                try (StorageAccess access = new StorageAccess(backend, location + editsOffsets[i], editsContent[i].length, true)) {
+                try (StorageAccess access = backend.access(location + editsOffsets[i], editsContent[i].length, true)) {
                     access.writeBytes(editsContent[i]);
                 }
             }
@@ -108,7 +108,7 @@ class LogTransactionData {
      * @param access        The access to use for loading
      * @param loadIndexOnly Whether to load indices only
      */
-    public LogTransactionData(StorageAccess access, boolean loadIndexOnly) {
+    public TransactionData(StorageAccess access, boolean loadIndexOnly) {
         long start = access.getIndex();
         logLocation = access.getLocation() + start;
         sequenceNumber = access.readLong();
@@ -117,6 +117,15 @@ class LogTransactionData {
         for (int i = 0; i != count; i++) {
             pages[i] = new Page(access, loadIndexOnly, start);
         }
+    }
+
+    /**
+     * Gets the sequence number of this transaction
+     *
+     * @return The sequence number of this transaction
+     */
+    public long getSequenceNumber() {
+        return sequenceNumber;
     }
 
     /**
