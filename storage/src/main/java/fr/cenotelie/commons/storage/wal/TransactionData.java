@@ -21,7 +21,7 @@ import fr.cenotelie.commons.storage.StorageAccess;
 import fr.cenotelie.commons.storage.StorageBackend;
 
 /**
- * Represents the data about a transaction in a log
+ * Represents the data about a transaction as written in a log
  *
  * @author Laurent Wouters
  */
@@ -98,6 +98,10 @@ class TransactionData {
      */
     private final long sequenceNumber;
     /**
+     * Timestamp for this transaction
+     */
+    private final long timestamp;
+    /**
      * The data for the pages
      */
     private final Page[] pages;
@@ -112,6 +116,7 @@ class TransactionData {
         long start = access.getIndex();
         logLocation = access.getLocation() + start;
         sequenceNumber = access.readLong();
+        timestamp = access.readLong();
         int count = access.readInt();
         pages = new Page[count];
         for (int i = 0; i != count; i++) {
@@ -126,6 +131,15 @@ class TransactionData {
      */
     public long getSequenceNumber() {
         return sequenceNumber;
+    }
+
+    /**
+     * Gets the timestamp for this transaction
+     *
+     * @return The timestamp for this transaction
+     */
+    public long getTimestamp() {
+        return timestamp;
     }
 
     /**

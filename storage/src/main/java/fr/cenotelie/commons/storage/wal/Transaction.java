@@ -24,13 +24,37 @@ import fr.cenotelie.commons.storage.StorageEndpoint;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Date;
 
 /**
  * Represents a user transaction for a write-ahead log that can be used to perform reading and writing
+ * A transaction is expected to be used by one thread only.
+ * A transaction MUST be closed
  *
  * @author Laurent Wouters
  */
 public class Transaction implements AutoCloseable {
+    /**
+     * This transaction is currently running
+     */
+    public static final int STATE_RUNNING = 0;
+    /**
+     * This transaction has been aborted
+     */
+    public static final int STATE_ABORTED = 1;
+    /**
+     * This transaction is currently being committed to the log
+     */
+    public static final int STATE_COMMITTING = 2;
+    /**
+     * This transaction has been successfully committed
+     */
+    public static final int STATE_COMMITTED = 3;
+    /**
+     * This transaction has been rejected by the log (probably due to concurrent writing)
+     */
+    public static final int STATE_REJECTED = 4;
+
     /**
      * Represents a backend to use for providing access through this transaction
      */
@@ -78,23 +102,31 @@ public class Transaction implements AutoCloseable {
     /**
      * The sequence number for this transaction
      */
-    final long sequenceNumber;
+    private final long sequenceNumber;
     /**
      * The sequence number of the last transaction known to this one
      */
-    final long endMark;
+    private final long endMark;
     /**
-     * The backend to use for providing access through this transaction
+     * The timestamp for this transaction
      */
-    private final StorageBackend backend;
+    private final long timestamp;
     /**
      * Whether this transaction allows writing
      */
     private final boolean writable;
     /**
-     * The location of the touched pages
+     * Whether this transaction should commit when being closed
      */
-    private long[] pageLocations;
+    private final boolean autocommit;
+    /**
+     * The backend to use for providing access through this transaction
+     */
+    private final StorageBackend backend;
+    /**
+     * The current state of this transaction
+     */
+    private int state;
     /**
      * The cached pages
      */
@@ -111,26 +143,46 @@ public class Transaction implements AutoCloseable {
      * @param sequenceNumber The sequence number for this transaction
      * @param endMark        The sequence number of the last transaction known to this one
      * @param writable       Whether this transaction allows writing
+     * @param autocommit     Whether this transaction should commit when being closed
      */
-    Transaction(WriteAheadLog parent, long sequenceNumber, long endMark, boolean writable) {
+    Transaction(WriteAheadLog parent, long sequenceNumber, long endMark, boolean writable, boolean autocommit) {
         this.parent = parent;
         this.sequenceNumber = sequenceNumber;
         this.endMark = endMark;
-        this.backend = new Backend();
+        this.timestamp = (new Date()).getTime();
         this.writable = writable;
-        this.pageLocations = new long[8];
+        this.autocommit = autocommit;
+        this.backend = new Backend();
+        this.state = STATE_RUNNING;
         this.pages = new Page[8];
         this.pagesCount = 0;
     }
 
     /**
-     * Closes this transaction and commit the edits (if any) made within this transaction to the write-ahead log
+     * Gets the sequence number of this transaction
      *
-     * @throws ConcurrentWriting when a concurrent transaction already committed conflicting changes to the log
+     * @return The sequence number of this transaction
      */
-    @Override
-    public void close() throws ConcurrentWriting {
-        parent.onTransactionEnd(this);
+    public long getSequenceNumber() {
+        return sequenceNumber;
+    }
+
+    /**
+     * Gets the sequence number of the last transaction known to this one
+     *
+     * @return The sequence number of the last transaction known to this one
+     */
+    public long getEndMark() {
+        return endMark;
+    }
+
+    /**
+     * Gets the timestamp of this transaction
+     *
+     * @return The timestamp of this transaction
+     */
+    public long getTimestamp() {
+        return timestamp;
     }
 
     /**
@@ -143,6 +195,69 @@ public class Transaction implements AutoCloseable {
     }
 
     /**
+     * Gets whether this transaction should commit when being closed
+     *
+     * @return Whether this transaction should commit when being closed
+     */
+    public boolean isAutocommit() {
+        return autocommit;
+    }
+
+    /**
+     * Gets the current state of this transaction
+     *
+     * @return The current state of this transaction
+     */
+    public int getState() {
+        return state;
+    }
+
+    /**
+     * Commits this transaction to the parent log
+     *
+     * @throws ConcurrentWriting when a concurrent transaction already committed conflicting changes to the log
+     */
+    public void commit() throws ConcurrentWriting {
+        if (state != STATE_RUNNING)
+            throw new Error("Bad state");
+        state = STATE_COMMITTING;
+        try {
+            parent.doTransactionCommit(this);
+            state = STATE_COMMITTED;
+        } catch (ConcurrentWriting exception) {
+            state = STATE_REJECTED;
+            throw exception;
+        }
+    }
+
+    /**
+     * Aborts this transaction
+     */
+    public void abort() {
+        if (state != STATE_RUNNING)
+            throw new Error("Bad state");
+        state = STATE_ABORTED;
+    }
+
+    /**
+     * Closes this transaction and commit the edits (if any) made within this transaction to the write-ahead log
+     *
+     * @throws ConcurrentWriting when a concurrent transaction already committed conflicting changes to the log
+     */
+    @Override
+    public void close() throws ConcurrentWriting {
+        if (state == STATE_RUNNING) {
+            if (autocommit)
+                commit();
+            else
+                state = STATE_ABORTED; // abort this transaction
+        }
+        for (int i = 0; i != pagesCount; i++)
+            parent.onReleasePage(pages[i]);
+        parent.onTransactionEnd(this);
+    }
+
+    /**
      * Accesses the content of the backend storage system through an access element
      * An access must be within the boundaries of a page.
      *
@@ -152,6 +267,8 @@ public class Transaction implements AutoCloseable {
      * @return The access element
      */
     public StorageAccess access(long index, int length, boolean writable) {
+        if (state != STATE_RUNNING)
+            throw new Error("Bad state");
         TransactionAccess access = parent.acquireAccess();
         access.init(backend, index, length, this.writable & writable);
         return access;
@@ -166,16 +283,13 @@ public class Transaction implements AutoCloseable {
     private Page acquirePage(long location) {
         location = location & (~Constants.INDEX_MASK_LOWER);
         for (int i = 0; i != pagesCount; i++) {
-            if (pageLocations[i] == location)
+            if (pages[i].getLocation() == location)
                 return pages[i];
         }
         // not in the cache
-        if (pagesCount >= pages.length) {
-            pageLocations = Arrays.copyOf(pageLocations, pageLocations.length * 2);
+        if (pagesCount >= pages.length)
             pages = Arrays.copyOf(pages, pages.length * 2);
-        }
-        pageLocations[pagesCount] = location;
-        pages[pagesCount] = parent.acquirePage(endMark, location, writable);
+        pages[pagesCount] = parent.acquirePage(endMark, location);
         return pages[pagesCount++];
     }
 }

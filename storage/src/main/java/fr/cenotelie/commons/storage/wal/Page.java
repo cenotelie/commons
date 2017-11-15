@@ -18,10 +18,13 @@
 package fr.cenotelie.commons.storage.wal;
 
 import fr.cenotelie.commons.storage.Constants;
+import fr.cenotelie.commons.storage.StorageAccess;
+import fr.cenotelie.commons.storage.StorageBackend;
 import fr.cenotelie.commons.storage.StorageEndpoint;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Represents a page of data protected by a write-ahead log as seen by a transaction
@@ -30,13 +33,34 @@ import java.util.Arrays;
  */
 class Page extends StorageEndpoint {
     /**
+     * The page is free, i.e. not assigned to any location
+     */
+    private static final int STATE_FREE = 0;
+    /**
+     * The page is reserved, i.e. is going to contain data but is not ready yet
+     */
+    private static final int STATE_RESERVED = 1;
+    /**
+     * The page exists and is ready for IO
+     */
+    private static final int STATE_READY = 3;
+
+    /**
+     * The state of this page
+     */
+    private final AtomicInteger state;
+    /**
      * The page's current content as seen by the transaction using this page
      */
-    private final ByteBuffer buffer;
+    private ByteBuffer buffer;
     /**
      * The location of the page within the backing system
      */
     private long location;
+    /**
+     * The sequence number of the last transaction
+     */
+    private long endMark;
     /**
      * The edits, if any
      */
@@ -46,7 +70,7 @@ class Page extends StorageEndpoint {
      * Initializes this page
      */
     public Page() {
-        this.buffer = ByteBuffer.allocate(Constants.PAGE_SIZE);
+        this.state = new AtomicInteger(STATE_FREE);
     }
 
     /**
@@ -59,12 +83,80 @@ class Page extends StorageEndpoint {
     }
 
     /**
+     * Gets the sequence number of the last transaction
+     *
+     * @return The sequence number of the last transaction
+     */
+    public long getEndMark() {
+        return endMark;
+    }
+
+    /**
      * Gets whether this page has been touched by the current transaction
      *
      * @return Whether this page has been touched by the current transaction
      */
     public boolean isDirty() {
         return edits != null;
+    }
+
+    /**
+     * Tries to reserve this page
+     *
+     * @return Whether the reservation was successful
+     */
+    public boolean reserve() {
+        return state.compareAndSet(STATE_FREE, STATE_RESERVED);
+    }
+
+    /**
+     * Loads the base content of this page from the backend
+     *
+     * @param backend  The backend to load from
+     * @param location The location in the backend to load from
+     */
+    public void loadBase(StorageBackend backend, long location) {
+        if (buffer == null)
+            buffer = ByteBuffer.allocate(Constants.PAGE_SIZE);
+        int length = Constants.PAGE_SIZE;
+        if (location + Constants.PAGE_SIZE > backend.getSize())
+            length = (int) (backend.getSize() - location);
+        try (StorageAccess access = backend.access(location, length, false)) {
+            access.readBytes(buffer.array(), 0, length);
+        }
+        if (length < Constants.PAGE_SIZE)
+            Arrays.fill(buffer.array(), length, Constants.PAGE_SIZE - length, (byte) 0);
+    }
+
+    /**
+     * Loads an edit made to this page
+     *
+     * @param offset  The offset of the edit within this page
+     * @param content The edit's content
+     */
+    public void loadEdit(int offset, byte[] content) {
+        buffer.position(offset);
+        buffer.put(content);
+    }
+
+    /**
+     * Once reserved, setups this page so that it is ready
+     *
+     * @param location The location of the page within the backing system
+     * @param endMark  The sequence number of the last transaction
+     */
+    public void makeReady(long location, long endMark) {
+        this.location = location;
+        this.endMark = endMark;
+        buffer.position(0);
+        state.set(STATE_READY);
+    }
+
+    /**
+     * Releases this page
+     */
+    public void release() {
+        state.set(STATE_FREE);
     }
 
     /**
