@@ -139,30 +139,6 @@ public class RawFileDirect extends RawFile {
         }
 
         @Override
-        public float readFloat(long index) {
-            synchronized (access) {
-                try {
-                    access.seek(index);
-                    return access.readFloat();
-                } catch (IOException exception) {
-                    throw new RuntimeException(exception);
-                }
-            }
-        }
-
-        @Override
-        public double readDouble(long index) {
-            synchronized (access) {
-                try {
-                    access.seek(index);
-                    return access.readDouble();
-                } catch (IOException exception) {
-                    throw new RuntimeException(exception);
-                }
-            }
-        }
-
-        @Override
         public void writeByte(long index, byte value) {
             synchronized (access) {
                 try {
@@ -233,30 +209,6 @@ public class RawFileDirect extends RawFile {
                 try {
                     access.seek(index);
                     access.writeLong(value);
-                } catch (IOException exception) {
-                    throw new RuntimeException(exception);
-                }
-            }
-        }
-
-        @Override
-        public void writeFloat(long index, float value) {
-            synchronized (access) {
-                try {
-                    access.seek(index);
-                    access.writeFloat(value);
-                } catch (IOException exception) {
-                    throw new RuntimeException(exception);
-                }
-            }
-        }
-
-        @Override
-        public void writeDouble(long index, double value) {
-            synchronized (access) {
-                try {
-                    access.seek(index);
-                    access.writeDouble(value);
                 } catch (IOException exception) {
                     throw new RuntimeException(exception);
                 }

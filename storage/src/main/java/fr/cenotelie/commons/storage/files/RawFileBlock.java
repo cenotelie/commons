@@ -17,6 +17,7 @@
 
 package fr.cenotelie.commons.storage.files;
 
+import fr.cenotelie.commons.storage.ByteUtils;
 import fr.cenotelie.commons.storage.Constants;
 import fr.cenotelie.commons.storage.StorageEndpoint;
 
@@ -170,47 +171,25 @@ class RawFileBlock extends StorageEndpoint {
     @Override
     public char readChar(long index) {
         int i = (int) (index & Constants.INDEX_MASK_LOWER);
-        return (char) (((buffer[i] & 0xFF) << 8)
-                | (buffer[i + 1] & 0xFF));
+        return ByteUtils.getChar(buffer, i);
     }
 
     @Override
     public short readShort(long index) {
         int i = (int) (index & Constants.INDEX_MASK_LOWER);
-        return (short) (((buffer[i] & 0xFF) << 8)
-                | (buffer[i + 1] & 0xFF));
+        return ByteUtils.getShort(buffer, i);
     }
 
     @Override
     public int readInt(long index) {
         int i = (int) (index & Constants.INDEX_MASK_LOWER);
-        return (((buffer[i] & 0xFF) << 24)
-                | ((buffer[i + 1] & 0xFF) << 16)
-                | ((buffer[i + 2] & 0xFF) << 8)
-                | (buffer[i + 3] & 0xFF));
+        return ByteUtils.getInt(buffer, i);
     }
 
     @Override
     public long readLong(long index) {
         int i = (int) (index & Constants.INDEX_MASK_LOWER);
-        return (((long) buffer[i] & 0xFF) << 56
-                | ((long) buffer[i + 1] & 0xFF) << 48
-                | ((long) buffer[i + 2] & 0xFF) << 40
-                | ((long) buffer[i + 3] & 0xFF) << 32
-                | ((long) buffer[i + 4] & 0xFF) << 24
-                | ((long) buffer[i + 5] & 0xFF) << 16
-                | ((long) buffer[i + 6] & 0xFF) << 8
-                | ((long) buffer[i + 7] & 0xFF));
-    }
-
-    @Override
-    public float readFloat(long index) {
-        return Float.intBitsToFloat(readInt(index));
-    }
-
-    @Override
-    public double readDouble(long index) {
-        return Double.longBitsToDouble(readLong(index));
+        return ByteUtils.getLong(buffer, i);
     }
 
     @Override
@@ -236,8 +215,7 @@ class RawFileBlock extends StorageEndpoint {
     @Override
     public void writeChar(long index, char value) {
         int i = (int) (index & Constants.INDEX_MASK_LOWER);
-        buffer[i] = (byte) (value >>> 8 & 0xFF);
-        buffer[i + 1] = (byte) (value & 0xFF);
+        ByteUtils.setChar(buffer, i, value);
         parent.onWriteUpTo(index + 2);
         isDirty = true;
     }
@@ -245,8 +223,7 @@ class RawFileBlock extends StorageEndpoint {
     @Override
     public void writeShort(long index, short value) {
         int i = (int) (index & Constants.INDEX_MASK_LOWER);
-        buffer[i] = (byte) (value >>> 8 & 0xFF);
-        buffer[i + 1] = (byte) (value & 0xFF);
+        ByteUtils.setShort(buffer, i, value);
         parent.onWriteUpTo(index + 2);
         isDirty = true;
     }
@@ -254,10 +231,7 @@ class RawFileBlock extends StorageEndpoint {
     @Override
     public void writeInt(long index, int value) {
         int i = (int) (index & Constants.INDEX_MASK_LOWER);
-        buffer[i] = (byte) (value >>> 24 & 0xFF);
-        buffer[i + 1] = (byte) (value >>> 16 & 0xFF);
-        buffer[i + 2] = (byte) (value >>> 8 & 0xFF);
-        buffer[i + 3] = (byte) (value & 0xFF);
+        ByteUtils.setInt(buffer, i, value);
         parent.onWriteUpTo(index + 4);
         isDirty = true;
     }
@@ -265,25 +239,8 @@ class RawFileBlock extends StorageEndpoint {
     @Override
     public void writeLong(long index, long value) {
         int i = (int) (index & Constants.INDEX_MASK_LOWER);
-        buffer[i] = (byte) (value >>> 56 & 0xFF);
-        buffer[i + 1] = (byte) (value >>> 48 & 0xFF);
-        buffer[i + 2] = (byte) (value >>> 40 & 0xFF);
-        buffer[i + 3] = (byte) (value >>> 32 & 0xFF);
-        buffer[i + 4] = (byte) (value >>> 24 & 0xFF);
-        buffer[i + 5] = (byte) (value >>> 16 & 0xFF);
-        buffer[i + 6] = (byte) (value >>> 8 & 0xFF);
-        buffer[i + 7] = (byte) (value & 0xFF);
+        ByteUtils.setLong(buffer, i, value);
         parent.onWriteUpTo(index + 8);
         isDirty = true;
-    }
-
-    @Override
-    public void writeFloat(long index, float value) {
-        writeInt(index, Float.floatToIntBits(value));
-    }
-
-    @Override
-    public void writeDouble(long index, double value) {
-        writeLong(index, Double.doubleToLongBits(value));
     }
 }

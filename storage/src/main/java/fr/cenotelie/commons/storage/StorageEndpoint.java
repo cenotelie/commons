@@ -103,7 +103,9 @@ public abstract class StorageEndpoint {
      * @param index The index within this element for this operation
      * @return The float
      */
-    public abstract float readFloat(long index);
+    public float readFloat(long index) {
+        return Float.intBitsToFloat(readInt(index));
+    }
 
     /**
      * Reads a single double at the current index
@@ -111,7 +113,9 @@ public abstract class StorageEndpoint {
      * @param index The index within this element for this operation
      * @return The double
      */
-    public abstract double readDouble(long index);
+    public double readDouble(long index) {
+        return Double.longBitsToDouble(readLong(index));
+    }
 
     /**
      * Writes a single byte at the current index
@@ -177,7 +181,9 @@ public abstract class StorageEndpoint {
      * @param index The index within this element for this operation
      * @param value The float to write
      */
-    public abstract void writeFloat(long index, float value);
+    public void writeFloat(long index, float value) {
+        writeInt(index, Float.floatToIntBits(value));
+    }
 
     /**
      * Writes a single double at the current index
@@ -185,5 +191,7 @@ public abstract class StorageEndpoint {
      * @param index The index within this element for this operation
      * @param value The double to write
      */
-    public abstract void writeDouble(long index, double value);
+    public void writeDouble(long index, double value) {
+        writeLong(index, Double.doubleToLongBits(value));
+    }
 }

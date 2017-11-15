@@ -331,7 +331,7 @@ public class StorageAccess implements AutoCloseable {
         updateEndpoint();
         byte b1 = endpoint.readByte(index);
         index++;
-        return (char) (b0 << 8 | b1 & 0xFF);
+        return ByteUtils.getChar(b0, b1);
     }
 
     /**
@@ -355,7 +355,7 @@ public class StorageAccess implements AutoCloseable {
         updateEndpoint();
         byte b1 = endpoint.readByte(index);
         index++;
-        return (short) (b0 << 8 | b1 & 0xFF);
+        return ByteUtils.getShort(b0, b1);
     }
 
     /**
@@ -388,10 +388,7 @@ public class StorageAccess implements AutoCloseable {
             updateEndpoint();
         byte b3 = endpoint.readByte(index);
         index++;
-        return b0 << 24
-                | (b1 & 255) << 16
-                | (b2 & 255) << 8
-                | b3 & 255;
+        return ByteUtils.getInt(b0, b1, b2, b3);
     }
 
     /**
@@ -440,14 +437,7 @@ public class StorageAccess implements AutoCloseable {
             updateEndpoint();
         byte b7 = endpoint.readByte(index);
         index++;
-        return (long) b0 << 56
-                | ((long) b1 & 255L) << 48
-                | ((long) b2 & 255L) << 40
-                | ((long) b3 & 255L) << 32
-                | ((long) b4 & 255L) << 24
-                | ((long) b5 & 255L) << 16
-                | ((long) b6 & 255L) << 8
-                | (long) b7 & 255L;
+        return ByteUtils.getLong(b0, b1, b2, b3, b4, b5, b6, b7);
     }
 
     /**
@@ -456,34 +446,7 @@ public class StorageAccess implements AutoCloseable {
      * @return The float
      */
     public float readFloat() {
-        if (!isWithinAccessBounds(4))
-            throw new IndexOutOfBoundsException("Cannot read the specified amount of data at this index");
-        if (index < endpointBoundMin || index >= endpointBoundMax)
-            updateEndpoint();
-        if (index + 4 <= endpointBoundMax) {
-            // fast track for access within the current endpoint
-            float value = endpoint.readFloat(index);
-            index += 4;
-            return value;
-        }
-        byte b0 = endpoint.readByte(index);
-        index++;
-        if (index >= endpointBoundMax)
-            updateEndpoint();
-        byte b1 = endpoint.readByte(index);
-        index++;
-        if (index >= endpointBoundMax)
-            updateEndpoint();
-        byte b2 = endpoint.readByte(index);
-        index++;
-        if (index >= endpointBoundMax)
-            updateEndpoint();
-        byte b3 = endpoint.readByte(index);
-        index++;
-        return Float.intBitsToFloat(b0 << 24
-                | (b1 & 255) << 16
-                | (b2 & 255) << 8
-                | b3 & 255);
+        return Float.floatToIntBits(readInt());
     }
 
     /**
@@ -492,54 +455,7 @@ public class StorageAccess implements AutoCloseable {
      * @return The double
      */
     public double readDouble() {
-        if (!isWithinAccessBounds(8))
-            throw new IndexOutOfBoundsException("Cannot read the specified amount of data at this index");
-        if (index < endpointBoundMin || index >= endpointBoundMax)
-            updateEndpoint();
-        if (index + 8 <= endpointBoundMax) {
-            // fast track for access within the current endpoint
-            double value = endpoint.readDouble(index);
-            index += 8;
-            return value;
-        }
-        byte b0 = endpoint.readByte(index);
-        index++;
-        if (index >= endpointBoundMax)
-            updateEndpoint();
-        byte b1 = endpoint.readByte(index);
-        index++;
-        if (index >= endpointBoundMax)
-            updateEndpoint();
-        byte b2 = endpoint.readByte(index);
-        index++;
-        if (index >= endpointBoundMax)
-            updateEndpoint();
-        byte b3 = endpoint.readByte(index);
-        index++;
-        if (index >= endpointBoundMax)
-            updateEndpoint();
-        byte b4 = endpoint.readByte(index);
-        index++;
-        if (index >= endpointBoundMax)
-            updateEndpoint();
-        byte b5 = endpoint.readByte(index);
-        index++;
-        if (index >= endpointBoundMax)
-            updateEndpoint();
-        byte b6 = endpoint.readByte(index);
-        index++;
-        if (index >= endpointBoundMax)
-            updateEndpoint();
-        byte b7 = endpoint.readByte(index);
-        index++;
-        return Double.longBitsToDouble((long) b0 << 56
-                | ((long) b1 & 255L) << 48
-                | ((long) b2 & 255L) << 40
-                | ((long) b3 & 255L) << 32
-                | ((long) b4 & 255L) << 24
-                | ((long) b5 & 255L) << 16
-                | ((long) b6 & 255L) << 8
-                | (long) b7 & 255L);
+        return Double.longBitsToDouble(readLong());
     }
 
     /**
@@ -642,10 +558,10 @@ public class StorageAccess implements AutoCloseable {
             index += 2;
             return;
         }
-        endpoint.writeByte(index, (byte) (value >> 8));
+        endpoint.writeByte(index, (byte) (value >>> 8 & 0xFF));
         index++;
         updateEndpoint();
-        endpoint.writeByte(index, (byte) value);
+        endpoint.writeByte(index, (byte) (value & 0xFF));
         index++;
     }
 
@@ -665,10 +581,10 @@ public class StorageAccess implements AutoCloseable {
             index += 2;
             return;
         }
-        endpoint.writeByte(index, (byte) (value >> 8));
+        endpoint.writeByte(index, (byte) (value >>> 8 & 0xFF));
         index++;
         updateEndpoint();
-        endpoint.writeByte(index, (byte) value);
+        endpoint.writeByte(index, (byte) (value & 0xFF));
         index++;
     }
 
@@ -688,16 +604,16 @@ public class StorageAccess implements AutoCloseable {
             index += 4;
             return;
         }
-        endpoint.writeByte(index, (byte) (value >> 24));
+        endpoint.writeByte(index, (byte) (value >>> 24 & 0xFF));
         index++;
         updateEndpoint();
-        endpoint.writeByte(index, (byte) (value >> 16));
+        endpoint.writeByte(index, (byte) (value >>> 16 & 0xFF));
         index++;
         updateEndpoint();
-        endpoint.writeByte(index, (byte) (value >> 8));
+        endpoint.writeByte(index, (byte) (value >>> 8 & 0xFF));
         index++;
         updateEndpoint();
-        endpoint.writeByte(index, (byte) value);
+        endpoint.writeByte(index, (byte) (value & 0xFF));
         index++;
     }
 
@@ -717,28 +633,28 @@ public class StorageAccess implements AutoCloseable {
             index += 8;
             return;
         }
-        endpoint.writeByte(index, (byte) (value >> 56));
+        endpoint.writeByte(index, (byte) (value >>> 56 & 0xFF));
         index++;
         updateEndpoint();
-        endpoint.writeByte(index, (byte) (value >> 48));
+        endpoint.writeByte(index, (byte) (value >>> 48 & 0xFF));
         index++;
         updateEndpoint();
-        endpoint.writeByte(index, (byte) (value >> 40));
+        endpoint.writeByte(index, (byte) (value >>> 40 & 0xFF));
         index++;
         updateEndpoint();
-        endpoint.writeByte(index, (byte) (value >> 32));
+        endpoint.writeByte(index, (byte) (value >>> 32 & 0xFF));
         index++;
         updateEndpoint();
-        endpoint.writeByte(index, (byte) (value >> 24));
+        endpoint.writeByte(index, (byte) (value >>> 24 & 0xFF));
         index++;
         updateEndpoint();
-        endpoint.writeByte(index, (byte) (value >> 16));
+        endpoint.writeByte(index, (byte) (value >>> 16 & 0xFF));
         index++;
         updateEndpoint();
-        endpoint.writeByte(index, (byte) (value >> 8));
+        endpoint.writeByte(index, (byte) (value >>> 8 & 0xFF));
         index++;
         updateEndpoint();
-        endpoint.writeByte(index, (byte) value);
+        endpoint.writeByte(index, (byte) (value & 0xFF));
         index++;
     }
 
@@ -748,28 +664,7 @@ public class StorageAccess implements AutoCloseable {
      * @param value The float to write
      */
     public void writeFloat(float value) {
-        if (!writable || !isWithinAccessBounds(4))
-            throw new IndexOutOfBoundsException("Cannot write the specified amount of data at this index");
-        if (index < endpointBoundMin || index >= endpointBoundMax)
-            updateEndpoint();
-        if (index + 4 <= endpointBoundMax) {
-            // fast track for access within the current endpoint
-            endpoint.writeFloat(index, value);
-            index += 4;
-            return;
-        }
-        int valueInt = Float.floatToIntBits(value);
-        endpoint.writeByte(index, (byte) (valueInt >> 24));
-        index++;
-        updateEndpoint();
-        endpoint.writeByte(index, (byte) (valueInt >> 16));
-        index++;
-        updateEndpoint();
-        endpoint.writeByte(index, (byte) (valueInt >> 8));
-        index++;
-        updateEndpoint();
-        endpoint.writeByte(index, (byte) valueInt);
-        index++;
+        writeInt(Float.floatToIntBits(value));
     }
 
     /**
@@ -778,40 +673,7 @@ public class StorageAccess implements AutoCloseable {
      * @param value The double to write
      */
     public void writeDouble(double value) {
-        if (!writable || !isWithinAccessBounds(8))
-            throw new IndexOutOfBoundsException("Cannot write the specified amount of data at this index");
-        if (index < endpointBoundMin || index >= endpointBoundMax)
-            updateEndpoint();
-        if (index + 8 <= endpointBoundMax) {
-            // fast track for access within the current endpoint
-            endpoint.writeDouble(index, value);
-            index += 8;
-            return;
-        }
-        long valueLong = Double.doubleToLongBits(value);
-        endpoint.writeByte(index, (byte) (valueLong >> 56));
-        index++;
-        updateEndpoint();
-        endpoint.writeByte(index, (byte) (valueLong >> 48));
-        index++;
-        updateEndpoint();
-        endpoint.writeByte(index, (byte) (valueLong >> 40));
-        index++;
-        updateEndpoint();
-        endpoint.writeByte(index, (byte) (valueLong >> 32));
-        index++;
-        updateEndpoint();
-        endpoint.writeByte(index, (byte) (valueLong >> 24));
-        index++;
-        updateEndpoint();
-        endpoint.writeByte(index, (byte) (valueLong >> 16));
-        index++;
-        updateEndpoint();
-        endpoint.writeByte(index, (byte) (valueLong >> 8));
-        index++;
-        updateEndpoint();
-        endpoint.writeByte(index, (byte) valueLong);
-        index++;
+        writeLong(Double.doubleToLongBits(value));
     }
 
     @Override

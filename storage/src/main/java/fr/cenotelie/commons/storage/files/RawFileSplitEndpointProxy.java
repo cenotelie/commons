@@ -113,16 +113,6 @@ class RawFileSplitEndpointProxy extends StorageEndpoint {
     }
 
     @Override
-    public float readFloat(long index) {
-        return endpoint.readFloat(index - offset);
-    }
-
-    @Override
-    public double readDouble(long index) {
-        return endpoint.readDouble(index - offset);
-    }
-
-    @Override
     public void writeByte(long index, byte value) {
         endpoint.writeByte(index - offset, value);
     }
@@ -155,15 +145,5 @@ class RawFileSplitEndpointProxy extends StorageEndpoint {
     @Override
     public void writeLong(long index, long value) {
         endpoint.writeLong(index - offset, value);
-    }
-
-    @Override
-    public void writeFloat(long index, float value) {
-        endpoint.writeFloat(index - offset, value);
-    }
-
-    @Override
-    public void writeDouble(long index, double value) {
-        endpoint.writeDouble(index - offset, value);
     }
 }
