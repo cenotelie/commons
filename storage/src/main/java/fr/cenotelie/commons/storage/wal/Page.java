@@ -199,37 +199,37 @@ class Page extends StorageEndpoint {
     @Override
     public char readChar(long index) {
         int i = (int) (index & Constants.INDEX_MASK_LOWER);
-        return (char) (((int) buffer[i] << 8)
-                | ((int) buffer[i + 1]));
+        return (char) (((buffer[i] & 0xFF) << 8)
+                | (buffer[i + 1] & 0xFF));
     }
 
     @Override
     public short readShort(long index) {
         int i = (int) (index & Constants.INDEX_MASK_LOWER);
-        return (short) (((int) buffer[i] << 8)
-                | ((int) buffer[i + 1]));
+        return (short) (((buffer[i] & 0xFF) << 8)
+                | (buffer[i + 1] & 0xFF));
     }
 
     @Override
     public int readInt(long index) {
         int i = (int) (index & Constants.INDEX_MASK_LOWER);
-        return (((int) buffer[i] << 24)
-                | ((int) buffer[i + 1] << 16)
-                | ((int) buffer[i + 2] << 8)
-                | ((int) buffer[i + 3]));
+        return (((buffer[i] & 0xFF) << 24)
+                | ((buffer[i + 1] & 0xFF) << 16)
+                | ((buffer[i + 2] & 0xFF) << 8)
+                | (buffer[i + 3] & 0xFF));
     }
 
     @Override
     public long readLong(long index) {
         int i = (int) (index & Constants.INDEX_MASK_LOWER);
-        return (((long) buffer[i] << 56)
-                | ((long) buffer[i + 1] << 48)
-                | ((long) buffer[i + 2] << 40)
-                | ((long) buffer[i + 3] << 32)
-                | ((long) buffer[i + 4] << 24)
-                | ((long) buffer[i + 5] << 16)
-                | ((long) buffer[i + 6] << 8)
-                | ((long) buffer[i + 7]));
+        return (((long) buffer[i] & 0xFF) << 56
+                | ((long) buffer[i + 1] & 0xFF) << 48
+                | ((long) buffer[i + 2] & 0xFF) << 40
+                | ((long) buffer[i + 3] & 0xFF) << 32
+                | ((long) buffer[i + 4] & 0xFF) << 24
+                | ((long) buffer[i + 5] & 0xFF) << 16
+                | ((long) buffer[i + 6] & 0xFF) << 8
+                | ((long) buffer[i + 7] & 0xFF));
     }
 
     @Override
