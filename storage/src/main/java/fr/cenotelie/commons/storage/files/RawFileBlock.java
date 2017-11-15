@@ -17,9 +17,9 @@
 
 package fr.cenotelie.commons.storage.files;
 
-import fr.cenotelie.commons.storage.ByteUtils;
 import fr.cenotelie.commons.storage.Constants;
 import fr.cenotelie.commons.storage.StorageEndpoint;
+import fr.cenotelie.commons.utils.ByteUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

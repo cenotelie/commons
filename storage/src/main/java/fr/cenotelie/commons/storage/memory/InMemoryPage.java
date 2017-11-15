@@ -17,9 +17,9 @@
 
 package fr.cenotelie.commons.storage.memory;
 
-import fr.cenotelie.commons.storage.ByteUtils;
 import fr.cenotelie.commons.storage.Constants;
 import fr.cenotelie.commons.storage.StorageEndpoint;
+import fr.cenotelie.commons.utils.ByteUtils;
 
 import java.util.Arrays;
 

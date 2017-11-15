@@ -15,7 +15,7 @@
  * If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-package fr.cenotelie.commons.storage;
+package fr.cenotelie.commons.utils;
 
 /**
  * Utility class for byte manipulation

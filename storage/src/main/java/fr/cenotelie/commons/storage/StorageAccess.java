@@ -17,6 +17,8 @@
 
 package fr.cenotelie.commons.storage;
 
+import fr.cenotelie.commons.utils.ByteUtils;
+
 /**
  * Base API for a controlled access to a storage backend element
  * The access defines a span within the backend element that can be accessed.
