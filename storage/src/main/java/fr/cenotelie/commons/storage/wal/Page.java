@@ -22,7 +22,6 @@ import fr.cenotelie.commons.storage.StorageAccess;
 import fr.cenotelie.commons.storage.StorageBackend;
 import fr.cenotelie.commons.storage.StorageEndpoint;
 
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -52,7 +51,7 @@ class Page extends StorageEndpoint {
     /**
      * The page's current content as seen by the transaction using this page
      */
-    private ByteBuffer buffer;
+    private byte[] buffer;
     /**
      * The location of the page within the backing system
      */
@@ -117,15 +116,15 @@ class Page extends StorageEndpoint {
      */
     public void loadBase(StorageBackend backend, long location) {
         if (buffer == null)
-            buffer = ByteBuffer.allocate(Constants.PAGE_SIZE);
+            buffer = new byte[Constants.PAGE_SIZE];
         int length = Constants.PAGE_SIZE;
         if (location + Constants.PAGE_SIZE > backend.getSize())
             length = (int) (backend.getSize() - location);
         try (StorageAccess access = backend.access(location, length, false)) {
-            access.readBytes(buffer.array(), 0, length);
+            access.readBytes(buffer, 0, length);
         }
         if (length < Constants.PAGE_SIZE)
-            Arrays.fill(buffer.array(), length, Constants.PAGE_SIZE - length, (byte) 0);
+            Arrays.fill(buffer, length, Constants.PAGE_SIZE - length, (byte) 0);
     }
 
     /**
@@ -135,8 +134,7 @@ class Page extends StorageEndpoint {
      * @param content The edit's content
      */
     public void loadEdit(int offset, byte[] content) {
-        buffer.position(offset);
-        buffer.put(content);
+        System.arraycopy(content, 0, buffer, offset, content.length);
     }
 
     /**
@@ -148,7 +146,6 @@ class Page extends StorageEndpoint {
     public void makeReady(long location, long endMark) {
         this.location = location;
         this.endMark = endMark;
-        buffer.position(0);
         state.set(STATE_READY);
     }
 
@@ -183,7 +180,7 @@ class Page extends StorageEndpoint {
 
     @Override
     public byte readByte(long index) {
-        return buffer.get((int) (index & Constants.INDEX_MASK_LOWER));
+        return buffer[(int) (index & Constants.INDEX_MASK_LOWER)];
     }
 
     @Override
@@ -194,118 +191,128 @@ class Page extends StorageEndpoint {
     }
 
     @Override
-    public synchronized void readBytes(long index, byte[] buffer, int start, int length) {
-        this.buffer.position((int) (index & Constants.INDEX_MASK_LOWER));
-        this.buffer.get(buffer, start, length);
+    public void readBytes(long index, byte[] buffer, int start, int length) {
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        System.arraycopy(this.buffer, i, buffer, start, length);
     }
 
     @Override
     public char readChar(long index) {
-        return buffer.getChar((int) (index & Constants.INDEX_MASK_LOWER));
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        return (char) (((int) buffer[i] << 8)
+                | ((int) buffer[i + 1]));
     }
 
     @Override
     public short readShort(long index) {
-        return buffer.getShort((int) (index & Constants.INDEX_MASK_LOWER));
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        return (short) (((int) buffer[i] << 8)
+                | ((int) buffer[i + 1]));
     }
 
     @Override
     public int readInt(long index) {
-        return buffer.getInt((int) (index & Constants.INDEX_MASK_LOWER));
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        return (((int) buffer[i] << 24)
+                | ((int) buffer[i + 1] << 16)
+                | ((int) buffer[i + 2] << 8)
+                | ((int) buffer[i + 3]));
     }
 
     @Override
     public long readLong(long index) {
-        return buffer.getLong((int) (index & Constants.INDEX_MASK_LOWER));
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        return (((long) buffer[i] << 56)
+                | ((long) buffer[i + 1] << 48)
+                | ((long) buffer[i + 2] << 40)
+                | ((long) buffer[i + 3] << 32)
+                | ((long) buffer[i + 4] << 24)
+                | ((long) buffer[i + 5] << 16)
+                | ((long) buffer[i + 6] << 8)
+                | ((long) buffer[i + 7]));
     }
 
     @Override
     public float readFloat(long index) {
-        return buffer.getFloat((int) (index & Constants.INDEX_MASK_LOWER));
+        return Float.intBitsToFloat(readInt(index));
     }
 
     @Override
     public double readDouble(long index) {
-        return buffer.getDouble((int) (index & Constants.INDEX_MASK_LOWER));
+        return Double.longBitsToDouble(readLong(index));
     }
 
     @Override
     public void writeByte(long index, byte value) {
-        int shortIndex = (int) (index & Constants.INDEX_MASK_LOWER);
-        buffer.put(shortIndex, value);
-        addEdit(shortIndex, new byte[]{value});
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        buffer[i] = value;
+        addEdit(i, new byte[]{value});
     }
 
     @Override
     public void writeBytes(long index, byte[] value) {
-        writeBytes(index, value, 0, value.length);
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        System.arraycopy(value, 0, buffer, i, value.length);
+        addEdit(i, value);
     }
 
     @Override
     public void writeBytes(long index, byte[] buffer, int start, int length) {
-        int shortIndex = (int) (index & Constants.INDEX_MASK_LOWER);
-        this.buffer.position(shortIndex);
-        this.buffer.put(buffer, start, length);
-        addEdit(shortIndex, Arrays.copyOfRange(buffer, start, length));
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        System.arraycopy(buffer, start, this.buffer, i, length);
+        if (start == 0 && buffer.length == length)
+            addEdit(i, buffer);
+        else
+            addEdit(i, Arrays.copyOfRange(buffer, start, start + length));
     }
 
     @Override
     public void writeChar(long index, char value) {
-        int shortIndex = (int) (index & Constants.INDEX_MASK_LOWER);
-        buffer.putChar(shortIndex, value);
-        buffer.position(shortIndex);
-        byte[] content = new byte[2];
-        buffer.get(content);
-        addEdit(shortIndex, content);
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        buffer[i] = (byte) (value >>> 8 & 0xFF);
+        buffer[i + 1] = (byte) (value & 0xFF);
+        addEdit(i, Arrays.copyOfRange(buffer, i, i + 2));
     }
 
     @Override
     public void writeShort(long index, short value) {
-        int shortIndex = (int) (index & Constants.INDEX_MASK_LOWER);
-        buffer.putShort(shortIndex, value);
-        buffer.position(shortIndex);
-        byte[] content = new byte[2];
-        buffer.get(content);
-        addEdit(shortIndex, content);
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        buffer[i] = (byte) (value >>> 8 & 0xFF);
+        buffer[i + 1] = (byte) (value & 0xFF);
+        addEdit(i, Arrays.copyOfRange(buffer, i, i + 2));
     }
 
     @Override
     public void writeInt(long index, int value) {
-        int shortIndex = (int) (index & Constants.INDEX_MASK_LOWER);
-        buffer.putInt(shortIndex, value);
-        buffer.position(shortIndex);
-        byte[] content = new byte[4];
-        buffer.get(content);
-        addEdit(shortIndex, content);
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        buffer[i] = (byte) (value >>> 24 & 0xFF);
+        buffer[i + 1] = (byte) (value >>> 16 & 0xFF);
+        buffer[i + 2] = (byte) (value >>> 8 & 0xFF);
+        buffer[i + 3] = (byte) (value & 0xFF);
+        addEdit(i, Arrays.copyOfRange(buffer, i, i + 4));
     }
 
     @Override
     public void writeLong(long index, long value) {
-        int shortIndex = (int) (index & Constants.INDEX_MASK_LOWER);
-        buffer.putLong(shortIndex, value);
-        buffer.position(shortIndex);
-        byte[] content = new byte[8];
-        buffer.get(content);
-        addEdit(shortIndex, content);
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        buffer[i] = (byte) (value >>> 56 & 0xFF);
+        buffer[i + 1] = (byte) (value >>> 48 & 0xFF);
+        buffer[i + 2] = (byte) (value >>> 40 & 0xFF);
+        buffer[i + 3] = (byte) (value >>> 32 & 0xFF);
+        buffer[i + 4] = (byte) (value >>> 24 & 0xFF);
+        buffer[i + 5] = (byte) (value >>> 16 & 0xFF);
+        buffer[i + 6] = (byte) (value >>> 8 & 0xFF);
+        buffer[i + 7] = (byte) (value & 0xFF);
+        addEdit(i, Arrays.copyOfRange(buffer, i, i + 8));
     }
 
     @Override
     public void writeFloat(long index, float value) {
-        int shortIndex = (int) (index & Constants.INDEX_MASK_LOWER);
-        buffer.putFloat(shortIndex, value);
-        buffer.position(shortIndex);
-        byte[] content = new byte[4];
-        buffer.get(content);
-        addEdit(shortIndex, content);
+        writeInt(index, Float.floatToIntBits(value));
     }
 
     @Override
     public void writeDouble(long index, double value) {
-        int shortIndex = (int) (index & Constants.INDEX_MASK_LOWER);
-        buffer.putDouble(shortIndex, value);
-        buffer.position(shortIndex);
-        byte[] content = new byte[8];
-        buffer.get(content);
-        addEdit(shortIndex, content);
+        writeLong(index, Double.doubleToLongBits(value));
     }
 }

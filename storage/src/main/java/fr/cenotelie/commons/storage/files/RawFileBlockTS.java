@@ -20,7 +20,6 @@ package fr.cenotelie.commons.storage.files;
 import fr.cenotelie.commons.storage.Constants;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -181,7 +180,7 @@ class RawFileBlockTS extends RawFileBlock {
     private void doSetup(long location, FileChannel channel, long fileSize, long time) throws IOException {
         this.location = location;
         if (this.buffer == null)
-            this.buffer = ByteBuffer.allocate(Constants.PAGE_SIZE);
+            this.buffer = new byte[Constants.PAGE_SIZE];
         else
             zeroesFrom(0);
         this.isDirty = false;

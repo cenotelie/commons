@@ -20,7 +20,6 @@ package fr.cenotelie.commons.storage.memory;
 import fr.cenotelie.commons.storage.Constants;
 import fr.cenotelie.commons.storage.StorageEndpoint;
 
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 /**
@@ -40,7 +39,7 @@ class InMemoryPage extends StorageEndpoint {
     /**
      * The page's content
      */
-    private final ByteBuffer buffer;
+    private final byte[] buffer;
 
     /**
      * Initializes this page
@@ -51,7 +50,7 @@ class InMemoryPage extends StorageEndpoint {
     public InMemoryPage(InMemoryStore store, long location) {
         this.store = store;
         this.location = location;
-        this.buffer = ByteBuffer.allocate(Constants.PAGE_SIZE);
+        this.buffer = new byte[Constants.PAGE_SIZE];
     }
 
     /**
@@ -69,7 +68,7 @@ class InMemoryPage extends StorageEndpoint {
      * @param index The starting index within this page
      */
     public void zeroesFrom(int index) {
-        Arrays.fill(buffer.array(), index, Constants.PAGE_SIZE - index, (byte) 0);
+        Arrays.fill(buffer, index, Constants.PAGE_SIZE - index, (byte) 0);
     }
 
     @Override
@@ -84,7 +83,7 @@ class InMemoryPage extends StorageEndpoint {
 
     @Override
     public byte readByte(long index) {
-        return buffer.get((int) (index & Constants.INDEX_MASK_LOWER));
+        return buffer[(int) (index & Constants.INDEX_MASK_LOWER)];
     }
 
     @Override
@@ -95,93 +94,122 @@ class InMemoryPage extends StorageEndpoint {
     }
 
     @Override
-    public synchronized void readBytes(long index, byte[] buffer, int start, int length) {
-        this.buffer.position((int) (index & Constants.INDEX_MASK_LOWER));
-        this.buffer.get(buffer, start, length);
+    public void readBytes(long index, byte[] buffer, int start, int length) {
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        System.arraycopy(this.buffer, i, buffer, start, length);
     }
 
     @Override
     public char readChar(long index) {
-        return buffer.getChar((int) (index & Constants.INDEX_MASK_LOWER));
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        return (char) (((int) buffer[i] << 8)
+                | ((int) buffer[i + 1]));
     }
 
     @Override
     public short readShort(long index) {
-        return buffer.getShort((int) (index & Constants.INDEX_MASK_LOWER));
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        return (short) (((int) buffer[i] << 8)
+                | ((int) buffer[i + 1]));
     }
 
     @Override
     public int readInt(long index) {
-        return buffer.getInt((int) (index & Constants.INDEX_MASK_LOWER));
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        return (((int) buffer[i] << 24)
+                | ((int) buffer[i + 1] << 16)
+                | ((int) buffer[i + 2] << 8)
+                | ((int) buffer[i + 3]));
     }
 
     @Override
     public long readLong(long index) {
-        return buffer.getLong((int) (index & Constants.INDEX_MASK_LOWER));
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        return (((long) buffer[i] << 56)
+                | ((long) buffer[i + 1] << 48)
+                | ((long) buffer[i + 2] << 40)
+                | ((long) buffer[i + 3] << 32)
+                | ((long) buffer[i + 4] << 24)
+                | ((long) buffer[i + 5] << 16)
+                | ((long) buffer[i + 6] << 8)
+                | ((long) buffer[i + 7]));
     }
 
     @Override
     public float readFloat(long index) {
-        return buffer.getFloat((int) (index & Constants.INDEX_MASK_LOWER));
+        return Float.intBitsToFloat(readInt(index));
     }
 
     @Override
     public double readDouble(long index) {
-        return buffer.getDouble((int) (index & Constants.INDEX_MASK_LOWER));
+        return Double.longBitsToDouble(readLong(index));
     }
 
     @Override
     public void writeByte(long index, byte value) {
-        buffer.put((int) (index & Constants.INDEX_MASK_LOWER), value);
+        buffer[(int) (index & Constants.INDEX_MASK_LOWER)] = value;
         store.onWriteUpTo(index + 1);
     }
 
     @Override
     public void writeBytes(long index, byte[] value) {
         writeBytes(index, value, 0, value.length);
-        store.onWriteUpTo(index + value.length);
     }
 
     @Override
     public void writeBytes(long index, byte[] buffer, int start, int length) {
-        this.buffer.position((int) (index & Constants.INDEX_MASK_LOWER));
-        this.buffer.put(buffer, start, length);
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        System.arraycopy(buffer, start, this.buffer, i, length);
         store.onWriteUpTo(index + length);
     }
 
     @Override
     public void writeChar(long index, char value) {
-        buffer.putChar((int) (index & Constants.INDEX_MASK_LOWER), value);
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        buffer[i] = (byte) (value >>> 8 & 0xFF);
+        buffer[i + 1] = (byte) (value & 0xFF);
         store.onWriteUpTo(index + 2);
     }
 
     @Override
     public void writeShort(long index, short value) {
-        buffer.putShort((int) (index & Constants.INDEX_MASK_LOWER), value);
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        buffer[i] = (byte) (value >>> 8 & 0xFF);
+        buffer[i + 1] = (byte) (value & 0xFF);
         store.onWriteUpTo(index + 2);
     }
 
     @Override
     public void writeInt(long index, int value) {
-        buffer.putInt((int) (index & Constants.INDEX_MASK_LOWER), value);
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        buffer[i] = (byte) (value >>> 24 & 0xFF);
+        buffer[i + 1] = (byte) (value >>> 16 & 0xFF);
+        buffer[i + 2] = (byte) (value >>> 8 & 0xFF);
+        buffer[i + 3] = (byte) (value & 0xFF);
         store.onWriteUpTo(index + 4);
     }
 
     @Override
     public void writeLong(long index, long value) {
-        buffer.putLong((int) (index & Constants.INDEX_MASK_LOWER), value);
+        int i = (int) (index & Constants.INDEX_MASK_LOWER);
+        buffer[i] = (byte) (value >>> 56 & 0xFF);
+        buffer[i + 1] = (byte) (value >>> 48 & 0xFF);
+        buffer[i + 2] = (byte) (value >>> 40 & 0xFF);
+        buffer[i + 3] = (byte) (value >>> 32 & 0xFF);
+        buffer[i + 4] = (byte) (value >>> 24 & 0xFF);
+        buffer[i + 5] = (byte) (value >>> 16 & 0xFF);
+        buffer[i + 6] = (byte) (value >>> 8 & 0xFF);
+        buffer[i + 7] = (byte) (value & 0xFF);
         store.onWriteUpTo(index + 8);
     }
 
     @Override
     public void writeFloat(long index, float value) {
-        buffer.putFloat((int) (index & Constants.INDEX_MASK_LOWER), value);
-        store.onWriteUpTo(index + 4);
+        writeInt(index, Float.floatToIntBits(value));
     }
 
     @Override
     public void writeDouble(long index, double value) {
-        buffer.putDouble((int) (index & Constants.INDEX_MASK_LOWER), value);
-        store.onWriteUpTo(index + 8);
+        writeLong(index, Double.doubleToLongBits(value));
     }
 }
