@@ -83,7 +83,7 @@ public class WriteAheadLog implements AutoCloseable {
     /**
      * The identifier of the last committed transaction
      */
-    private final AtomicLong lastCommitted;
+    private volatile long lastCommitted;
     /**
      * The current state of the log
      */
@@ -120,7 +120,7 @@ public class WriteAheadLog implements AutoCloseable {
         this.backend = backend;
         this.log = log;
         this.sequencer = new AtomicLong(0);
-        this.lastCommitted = new AtomicLong(-1);
+        this.lastCommitted = -1;
         this.state = new AtomicInteger(STATE_CLOSED);
         reload();
         this.state.set(STATE_READY);
@@ -184,7 +184,7 @@ public class WriteAheadLog implements AutoCloseable {
             if (s == STATE_READY && state.compareAndSet(s, STATE_BUSY))
                 break;
         }
-        Transaction transaction = new Transaction(this, sequencer.getAndIncrement(), lastCommitted.get(), writable, autocommit);
+        Transaction transaction = new Transaction(this, lastCommitted, writable, autocommit);
         // register this transaction
         if (transactionsCount.get() >= transactions.length)
             transactions = Arrays.copyOf(transactions, transactions.length * 2);
@@ -209,7 +209,7 @@ public class WriteAheadLog implements AutoCloseable {
                 break;
         }
 
-        LogTransactionData data = transaction.getLogData();
+        LogTransactionData data = transaction.getLogData(sequencer.getAndIncrement());
         if (data == null) {
             // the transaction did not touch anything
             state.set(STATE_READY);
@@ -247,6 +247,7 @@ public class WriteAheadLog implements AutoCloseable {
         if (last == -1)
             index = Arrays.copyOf(index, index.length * 2);
         index[last] = data;
+        lastCommitted = data.getSequenceNumber();
 
         // return in a ready state
         state.set(STATE_READY);
@@ -296,7 +297,7 @@ public class WriteAheadLog implements AutoCloseable {
                     return pages[i];
                 }
                 // oops, not a candidate, release this page
-                pages[i].release(pages[i].getEndMark());
+                pages[i].release();
             }
         }
         // no candidate for reuse
@@ -353,6 +354,44 @@ public class WriteAheadLog implements AutoCloseable {
         }
         // no candidate for reuse
         return new TransactionAccess();
+    }
+
+    /**
+     * Executes a checkpoint
+     */
+    private void doCheckpoint() {
+        while (true) {
+            int s = state.get();
+            if (s == STATE_CLOSED)
+                throw new Error("Log is closed");
+            if (s == STATE_READY && state.compareAndSet(s, STATE_BUSY))
+                break;
+        }
+
+        // find the lowest end mark for the running transactions
+        long minEndMark = Long.MAX_VALUE;
+        int tCount = transactionsCount.get();
+        for (int i = 0; i != tCount; i++) {
+            minEndMark = Math.min(minEndMark, transactions[i].getEndMark());
+        }
+        // find the index of the last first transaction in the log that cannot be committed
+        // because there is a running transaction that does not know it
+        int first = -1;
+        for (int i = 0; i != index.length; i++) {
+            if (index[i].getSequenceNumber() > minEndMark) {
+                first = i;
+                break;
+            }
+        }
+        if (first <= 0) {
+            // nothing to do
+            state.set(STATE_CLOSED);
+            return;
+        }
+
+        // apply the stored transactions
+
+        state.set(STATE_CLOSED);
     }
 
     @Override

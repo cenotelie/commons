@@ -100,10 +100,6 @@ public class Transaction implements AutoCloseable {
      */
     private final WriteAheadLog parent;
     /**
-     * The sequence number for this transaction
-     */
-    private final long sequenceNumber;
-    /**
      * The sequence number of the last transaction known to this one
      */
     private final long endMark;
@@ -135,19 +131,21 @@ public class Transaction implements AutoCloseable {
      * The number of cached pages
      */
     private int pagesCount;
+    /**
+     * The sequence number attributed to this transaction
+     */
+    private long sequenceNumber;
 
     /**
      * Initializes this transaction
      *
-     * @param parent         The parent write-ahead log
-     * @param sequenceNumber The sequence number for this transaction
-     * @param endMark        The sequence number of the last transaction known to this one
-     * @param writable       Whether this transaction allows writing
-     * @param autocommit     Whether this transaction should commit when being closed
+     * @param parent     The parent write-ahead log
+     * @param endMark    The sequence number of the last transaction known to this one
+     * @param writable   Whether this transaction allows writing
+     * @param autocommit Whether this transaction should commit when being closed
      */
-    Transaction(WriteAheadLog parent, long sequenceNumber, long endMark, boolean writable, boolean autocommit) {
+    Transaction(WriteAheadLog parent, long endMark, boolean writable, boolean autocommit) {
         this.parent = parent;
-        this.sequenceNumber = sequenceNumber;
         this.endMark = endMark;
         this.timestamp = (new Date()).getTime();
         this.writable = writable;
@@ -156,15 +154,7 @@ public class Transaction implements AutoCloseable {
         this.state = STATE_RUNNING;
         this.pages = new Page[8];
         this.pagesCount = 0;
-    }
-
-    /**
-     * Gets the sequence number of this transaction
-     *
-     * @return The sequence number of this transaction
-     */
-    public long getSequenceNumber() {
-        return sequenceNumber;
+        this.sequenceNumber = -1;
     }
 
     /**
@@ -235,9 +225,11 @@ public class Transaction implements AutoCloseable {
     /**
      * Gets the log data for indexing this transaction
      *
+     * @param sequenceNumber The sequence number attributed to this transaction
      * @return The log data, or null if no page is dirty
      */
-    LogTransactionData getLogData() {
+    LogTransactionData getLogData(long sequenceNumber) {
+        this.sequenceNumber = sequenceNumber;
         int dirtyPagesCount = 0;
         for (int i = 0; i != pagesCount; i++) {
             if (pages[i].isDirty())
@@ -277,8 +269,12 @@ public class Transaction implements AutoCloseable {
             else
                 state = STATE_ABORTED; // abort this transaction
         }
-        for (int i = 0; i != pagesCount; i++)
-            pages[i].release(sequenceNumber);
+        for (int i = 0; i != pagesCount; i++) {
+            if (sequenceNumber == -1)
+                pages[i].release();
+            else
+                pages[i].release(sequenceNumber);
+        }
         parent.onTransactionEnd(this);
     }
 

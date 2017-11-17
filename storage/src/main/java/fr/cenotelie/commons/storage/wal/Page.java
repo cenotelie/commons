@@ -307,6 +307,13 @@ class Page extends StorageEndpoint {
 
     /**
      * Releases this page
+     */
+    public void release() {
+        state.set(STATE_FREE);
+    }
+
+    /**
+     * Releases this page
      * At the end, whether there were edits or not, this page is at the state of the releasing transaction and is clean.
      *
      * @param sequenceNumber The sequence number of the releasing transaction
