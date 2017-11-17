@@ -253,7 +253,7 @@ public class Transaction implements AutoCloseable {
                 state = STATE_ABORTED; // abort this transaction
         }
         for (int i = 0; i != pagesCount; i++)
-            parent.onReleasePage(pages[i]);
+            pages[i].release();
         parent.onTransactionEnd(this);
     }
 
@@ -289,7 +289,7 @@ public class Transaction implements AutoCloseable {
         // not in the cache
         if (pagesCount >= pages.length)
             pages = Arrays.copyOf(pages, pages.length * 2);
-        pages[pagesCount] = parent.acquirePage(endMark, location);
+        pages[pagesCount] = parent.acquirePage(location, endMark);
         return pages[pagesCount++];
     }
 }

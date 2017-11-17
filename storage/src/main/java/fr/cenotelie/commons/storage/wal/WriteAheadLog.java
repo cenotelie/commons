@@ -38,6 +38,15 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class WriteAheadLog implements AutoCloseable {
     /**
+     * The size of the pool for pages
+     */
+    private static final int POOL_PAGES_SIZE = 1024;
+    /**
+     * The size of the pool for accesses
+     */
+    private static final int POOL_ACCESSES_SIZE = 1024;
+
+    /**
      * The backend is ready for IO
      */
     private static final int STATE_READY = 0;
@@ -70,6 +79,15 @@ public class WriteAheadLog implements AutoCloseable {
      * The current state of the log
      */
     private final AtomicInteger state;
+    /**
+     * The pool of pages
+     */
+    private final Page[] pages;
+    /**
+     * The pool of accesses
+     */
+    private final TransactionAccess[] accesses;
+
 
     /**
      * The index of transaction data currently in the log
@@ -91,6 +109,12 @@ public class WriteAheadLog implements AutoCloseable {
         this.state = new AtomicInteger(STATE_CLOSED);
         reload();
         this.state.set(STATE_READY);
+        this.pages = new Page[POOL_PAGES_SIZE];
+        this.accesses = new TransactionAccess[POOL_ACCESSES_SIZE];
+        for (int i = 0; i != POOL_PAGES_SIZE; i++)
+            this.pages[i] = new Page();
+        for (int i = 0; i != POOL_ACCESSES_SIZE; i++)
+            this.accesses[i] = new TransactionAccess();
     }
 
     /**
@@ -169,21 +193,63 @@ public class WriteAheadLog implements AutoCloseable {
     /**
      * Acquires a page of the backend storage system
      *
-     * @param endMark  The sequence number of the last transaction known to the current one
      * @param location The location in the backend storage system of the requested page
+     * @param endMark  The sequence number of the last transaction known to the current one
      * @return The requested page
      */
-    Page acquirePage(long endMark, long location) {
-        return null;
+    Page acquirePage(long location, long endMark) {
+        if (state.get() == STATE_CLOSED)
+            throw new Error("Log is closed");
+        for (int i = 0; i != POOL_PAGES_SIZE; i++) {
+            if (pages[i].reserve()) {
+                // this page is reserved
+                if (pages[i].getLocation() == location && pages[i].getEndMark() <= endMark && !pages[i].isDirty()) {
+                    // it is a candidate for reuse
+                    updatePageTo(pages[i], endMark);
+                    return pages[i];
+                }
+                // oops, not a candidate, release this page
+                pages[i].release();
+            }
+        }
+        // no candidate for reuse
+        for (int i = 0; i != POOL_PAGES_SIZE; i++) {
+            if (pages[i].reserve()) {
+                // reserved a free page
+                loadPage(pages[i], location, endMark);
+                return pages[i];
+            }
+        }
+        // no free page?
+        // create a new page
+        Page page = new Page();
+        page.reserve();
+        loadPage(page, location, endMark);
+        return page;
     }
 
     /**
-     * When a page is no longer required
+     * Loads and initializes a page at the specified location up to the specified end mark
      *
-     * @param page The page that is being released
+     * @param page     The page to load and initialize
+     * @param location The page's location in the backend
+     * @param endMark  The sequence number of the last transaction known to the current one
      */
-    void onReleasePage(Page page) {
+    private void loadPage(Page page, long location, long endMark) {
+        page.loadBase(backend, location);
+        // TODO: apply edits in the log
+        page.makeReady(location, endMark);
+    }
 
+    /**
+     * Updates a page at the specified location up to the specified end mark
+     *
+     * @param page    The page to update initialize
+     * @param endMark The sequence number of the last transaction known to the current one
+     */
+    private void updatePageTo(Page page, long endMark) {
+        // TODO: apply edits in the log
+        page.makeReady(page.getLocation(), endMark);
     }
 
     /**
@@ -192,20 +258,17 @@ public class WriteAheadLog implements AutoCloseable {
      * @return An access to be initialized
      */
     TransactionAccess acquireAccess() {
-        return null;
-    }
-
-    /**
-     * When an access for a transaction has ended
-     *
-     * @param access The access that ended
-     */
-    void onAccessEnd(TransactionAccess access) {
-
+        if (state.get() == STATE_CLOSED)
+            throw new Error("Log is closed");
+        for (int i = 0; i != POOL_PAGES_SIZE; i++) {
+            if (accesses[i].reserve())
+                return accesses[i];
+        }
+        // no candidate for reuse
+        return new TransactionAccess();
     }
 
     @Override
     public void close() throws IOException {
-        //
     }
 }

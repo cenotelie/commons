@@ -20,6 +20,8 @@ package fr.cenotelie.commons.storage.wal;
 import fr.cenotelie.commons.storage.StorageAccess;
 import fr.cenotelie.commons.storage.StorageBackend;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * Represents an access emitted by a transaction
  *
@@ -27,24 +29,38 @@ import fr.cenotelie.commons.storage.StorageBackend;
  */
 class TransactionAccess extends StorageAccess {
     /**
-     * The parent write-ahead log
+     * The page is free, i.e. not assigned to any location
      */
-    private final WriteAheadLog log;
+    private static final int STATE_FREE = 0;
     /**
-     * The identifier of this access for the parent log
+     * The page is reserved, i.e. is going to contain data but is not ready yet
      */
-    final int identifier;
+    private static final int STATE_RESERVED = 1;
+    /**
+     * The page exists and is ready for IO
+     */
+    private static final int STATE_READY = 3;
+
+    /**
+     * The state of this page
+     */
+    private final AtomicInteger state;
 
     /**
      * Initializes this access
-     *
-     * @param log        The parent write-ahead log
-     * @param identifier The identifier of this access for the parent log
      */
-    public TransactionAccess(WriteAheadLog log, int identifier) {
+    public TransactionAccess() {
         super();
-        this.log = log;
-        this.identifier = identifier;
+        this.state = new AtomicInteger(STATE_FREE);
+    }
+
+    /**
+     * Tries to reserve this page
+     *
+     * @return Whether the reservation was successful
+     */
+    public boolean reserve() {
+        return state.compareAndSet(STATE_FREE, STATE_RESERVED);
     }
 
     /**
@@ -56,12 +72,13 @@ class TransactionAccess extends StorageAccess {
      * @param writable Whether the access allows writing
      */
     public void init(StorageBackend backend, long location, int length, boolean writable) {
-        this.setup(backend, location, length, writable);
+        setup(backend, location, length, writable);
+        state.set(STATE_READY);
     }
 
     @Override
     public void close() {
         releaseOnClose();
-        log.onAccessEnd(this);
+        state.set(STATE_FREE);
     }
 }
