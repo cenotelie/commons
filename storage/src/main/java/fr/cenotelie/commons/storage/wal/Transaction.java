@@ -222,12 +222,37 @@ public class Transaction implements AutoCloseable {
             throw new Error("Bad state");
         state = STATE_COMMITTING;
         try {
+            for (int i = 0; i != pagesCount; i++)
+                pages[i].compact();
             parent.doTransactionCommit(this);
             state = STATE_COMMITTED;
         } catch (ConcurrentWriting exception) {
             state = STATE_REJECTED;
             throw exception;
         }
+    }
+
+    /**
+     * Gets the log data for indexing this transaction
+     *
+     * @return The log data, or null if no page is dirty
+     */
+    LogTransactionData getLogData() {
+        int dirtyPagesCount = 0;
+        for (int i = 0; i != pagesCount; i++) {
+            if (pages[i].isDirty())
+                dirtyPagesCount++;
+        }
+        if (dirtyPagesCount == 0)
+            return null;
+        LogTransactionPageData[] pageData = new LogTransactionPageData[dirtyPagesCount];
+        int index = 0;
+        for (int i = 0; i != pagesCount; i++) {
+            if (pages[i].isDirty()) {
+                pageData[index++] = pages[i].getLogData();
+            }
+        }
+        return new LogTransactionData(sequenceNumber, timestamp, pageData);
     }
 
     /**
@@ -253,7 +278,7 @@ public class Transaction implements AutoCloseable {
                 state = STATE_ABORTED; // abort this transaction
         }
         for (int i = 0; i != pagesCount; i++)
-            pages[i].release();
+            pages[i].release(sequenceNumber);
         parent.onTransactionEnd(this);
     }
 

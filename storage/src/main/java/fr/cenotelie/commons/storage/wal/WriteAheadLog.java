@@ -50,6 +50,10 @@ public class WriteAheadLog implements AutoCloseable {
      * The size of the buffer for concurrently running transactions
      */
     private static final int TRANSACTIONS_BUFFER = 16;
+    /**
+     * The size of the index
+     */
+    private static final int INDEX_SIZE = 1024;
 
     /**
      * The backend is ready for IO
@@ -103,7 +107,7 @@ public class WriteAheadLog implements AutoCloseable {
     /**
      * The index of transaction data currently in the log
      */
-    private TransactionData[] index;
+    private LogTransactionData[] index;
 
     /**
      * Initializes this log
@@ -128,6 +132,7 @@ public class WriteAheadLog implements AutoCloseable {
             this.accesses[i] = new TransactionAccess();
         this.transactions = new Transaction[TRANSACTIONS_BUFFER];
         this.transactionsCount = new AtomicInteger(0);
+        this.index = new LogTransactionData[INDEX_SIZE];
     }
 
     /**
@@ -145,7 +150,7 @@ public class WriteAheadLog implements AutoCloseable {
             while (access.getIndex() < size) {
                 try {
                     // load the data for this transaction
-                    TransactionData data = new TransactionData(access, false);
+                    LogTransactionData data = new LogTransactionData(access);
                     Logging.get().warning("WAL: Recovered transaction " + data.getSequenceNumber() + ", started at " + dateFormat.format(new Date(data.getTimestamp())));
                     // apply to the backend storage
                     data.applyTo(backend);
@@ -196,7 +201,55 @@ public class WriteAheadLog implements AutoCloseable {
      * @throws ConcurrentWriting when a concurrent transaction already committed conflicting changes to the log
      */
     void doTransactionCommit(Transaction transaction) throws ConcurrentWriting {
+        while (true) {
+            int s = state.get();
+            if (s == STATE_CLOSED)
+                return;
+            if (s == STATE_READY && state.compareAndSet(s, STATE_BUSY))
+                break;
+        }
 
+        LogTransactionData data = transaction.getLogData();
+        if (data == null) {
+            // the transaction did not touch anything
+            state.set(STATE_READY);
+            return;
+        }
+
+        // look for conflicts in the log
+        int last = -1;
+        for (int i = 0; i != index.length; i++) {
+            if (index[i] == null) {
+                // index ends here
+                last = i;
+                break;
+            }
+            if (index[i].getSequenceNumber() <= transaction.getEndMark())
+                // this transaction is known to the committing one
+                continue;
+            // examine this transaction for concurrent edits
+            if (data.intersects(index[i]))
+                throw new ConcurrentWriting(index[i]);
+        }
+
+        // no conflict, write this transaction to the log
+        data.logLocation = log.getSize();
+        try (StorageAccess access = log.access(data.logLocation, data.getLength(), true)) {
+            data.writeTo(access);
+        }
+        try {
+            log.flush();
+        } catch (IOException exception) {
+            state.set(STATE_READY);
+            throw new RuntimeException(exception);
+        }
+        // adds to the index
+        if (last == -1)
+            index = Arrays.copyOf(index, index.length * 2);
+        index[last] = data;
+
+        // return in a ready state
+        state.set(STATE_READY);
     }
 
     /**
@@ -237,13 +290,13 @@ public class WriteAheadLog implements AutoCloseable {
         for (int i = 0; i != POOL_PAGES_SIZE; i++) {
             if (pages[i].reserve()) {
                 // this page is reserved
-                if (pages[i].getLocation() == location && pages[i].getEndMark() <= endMark && !pages[i].isDirty()) {
+                if (pages[i].getLocation() == location && pages[i].getEndMark() <= endMark) {
                     // it is a candidate for reuse
                     updatePageTo(pages[i], endMark);
                     return pages[i];
                 }
                 // oops, not a candidate, release this page
-                pages[i].release();
+                pages[i].release(pages[i].getEndMark());
             }
         }
         // no candidate for reuse

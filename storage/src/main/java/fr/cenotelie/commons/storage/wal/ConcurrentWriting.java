@@ -26,4 +26,26 @@ import java.io.IOException;
  * @author Laurent Wouters
  */
 public class ConcurrentWriting extends IOException {
+    /**
+     * The first conflicting transaction found
+     */
+    private final LogTransactionData conflicting;
+
+    /**
+     * Gets the first conflicting transaction found
+     *
+     * @return The first conflicting transaction found
+     */
+    public LogTransactionData getConflicting() {
+        return conflicting;
+    }
+
+    /**
+     * Initializes this exception
+     *
+     * @param conflicting The first conflicting transaction found
+     */
+    public ConcurrentWriting(LogTransactionData conflicting) {
+        this.conflicting = conflicting;
+    }
 }

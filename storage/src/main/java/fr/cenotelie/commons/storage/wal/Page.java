@@ -33,6 +33,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 class Page extends StorageEndpoint {
     /**
+     * The initial size of the edits buffers
+     */
+    private static final int EDITS_BUFFER_SIZE = 8;
+    /**
      * The page is free, i.e. not assigned to any location
      */
     private static final int STATE_FREE = 0;
@@ -62,9 +66,17 @@ class Page extends StorageEndpoint {
      */
     private long endMark;
     /**
-     * The edits, if any
+     * The starting indices of the stored edits
      */
-    private PageEdits edits;
+    private int[] editIndex;
+    /**
+     * The content of the stored edits
+     */
+    private byte[][] editContent;
+    /**
+     * The number of edits
+     */
+    private int editCount;
 
     /**
      * Initializes this page
@@ -97,7 +109,7 @@ class Page extends StorageEndpoint {
      * @return Whether this page has been touched by the current transaction
      */
     public boolean isDirty() {
-        return edits != null;
+        return editCount > 0;
     }
 
     /**
@@ -151,9 +163,159 @@ class Page extends StorageEndpoint {
     }
 
     /**
-     * Releases this page
+     * Compacts the edits contained in this page, if any
      */
-    public void release() {
+    public void compact() {
+        if (editCount <= 1)
+            return;
+        int[] fragmentBegin = new int[EDITS_BUFFER_SIZE];
+        int[] fragmentLength = new int[EDITS_BUFFER_SIZE];
+        int fragmentCount = 0;
+        boolean compacted = false;
+
+        for (int i = 0; i != editCount; i++) {
+            int start = editIndex[i];
+            int length = editContent[i].length;
+            boolean handled = false;
+            for (int j = 0; j != fragmentCount; j++) {
+                if (start > fragmentBegin[j] + fragmentLength[j])
+                    // this edit is strictly after the current fragment (not adjacent)
+                    continue;
+                if (start == fragmentBegin[j] + fragmentLength[j]) {
+                    // this edit is right after the current fragment => extend this fragment
+                    // TODO: continue here
+
+                    compacted = true;
+                    handled = true;
+                    break;
+                }
+                if (fragmentBegin[j] > start + length) {
+                    // this edit is completely before the current fragment, we must insert it here
+                    if (fragmentCount == fragmentBegin.length) {
+                        fragmentBegin = Arrays.copyOf(fragmentBegin, fragmentBegin.length * 2);
+                        fragmentLength = Arrays.copyOf(fragmentLength, fragmentLength.length * 2);
+                    }
+                    // shift the fragments to the right
+                    for (int k = fragmentCount - 1; k != j - 1; k--) {
+                        fragmentBegin[k + 1] = fragmentBegin[k];
+                        fragmentLength[k + 1] = fragmentLength[k];
+                    }
+                    // insert the edit as a new fragment here
+                    fragmentBegin[j] = start;
+                    fragmentLength[j] = length;
+                    fragmentCount++;
+                    handled = true;
+                    break;
+                }
+                if (fragmentBegin[j] <= start + length) {
+                    // this edit is just before (adjacent) to the current fragment, or the current fragment starts within the edit
+                    // since we are here this edit is guaranteed to be strictly after the preceding fragment, if any
+                    // so we can extend the current fragment to the left
+                    fragmentBegin[j] = start;
+                    // then check whether to extend this fragment to the right
+                    int endFragment = fragmentBegin[j] + fragmentLength[j];
+                    int endEdit = start + length;
+                    if (endEdit > endFragment) {
+                        // the edit ends after the modified fragment
+                        // first, the new length of the fragment is the length of the edit
+                        fragmentLength[j] = length;
+                        // then, look for candidate fragments to be merged within this one
+                        for (int k = j + 1; k != fragmentCount; k++) {
+                            if (fragmentBegin[k] > fragmentBegin[j] + fragmentLength[j])
+                                // strictly after (not adjacent)
+                                break;
+                            // merge the fragment k
+                            // TODO: continue here
+                        }
+                    } else {
+                        // the edit ends within, or just before the modified fragment
+                        fragmentLength[j] = endFragment - start;
+                    }
+                    handled = true;
+                    compacted = true;
+                    break;
+                }
+            }
+            if (!handled) {
+                // add a new fragment at the end
+                if (fragmentCount == fragmentBegin.length) {
+                    fragmentBegin = Arrays.copyOf(fragmentBegin, fragmentBegin.length * 2);
+                    fragmentLength = Arrays.copyOf(fragmentLength, fragmentLength.length * 2);
+                }
+                fragmentBegin[fragmentCount] = start;
+                fragmentLength[fragmentCount] = length;
+                fragmentCount++;
+            }
+        }
+
+        if (!compacted)
+            // we achieved nothing ...
+            return;
+
+        // initializes the new edits
+        byte[][] newEditContent = new byte[fragmentCount][];
+        for (int i = 0; i != fragmentCount; i++)
+            newEditContent[i] = new byte[fragmentLength[i]];
+        // apply the current edits to the new ones
+        for (int i = 0; i != editCount; i++) {
+            for (int j = 0; j != fragmentCount; j++) {
+                if (editIndex[i] > fragmentBegin[j] + fragmentLength[j])
+                    // this edit is strictly after the current fragment (not adjacent)
+                    continue;
+                // we are within the current fragment by construction
+                System.arraycopy(
+                        editContent[i],
+                        0,
+                        newEditContent[j],
+                        editIndex[i] - fragmentBegin[j],
+                        editContent[i].length
+                );
+                break;
+            }
+        }
+        // commit
+        editIndex = fragmentBegin;
+        editContent = newEditContent;
+        editCount = fragmentCount;
+    }
+
+    /**
+     * Gets the log data for this page
+     *
+     * @return The log data
+     */
+    public LogTransactionPageData getLogData() {
+        if (editCount == 0)
+            return null;
+        return new LogTransactionPageData(location, editIndex, editContent);
+    }
+
+    /**
+     * Applies the edits of this page to the specified backend
+     *
+     * @param backend The backend
+     */
+    public void applyEditsTo(StorageBackend backend) {
+        if (editCount == 0)
+            return;
+        for (int i = 0; i != editCount; i++) {
+            try (StorageAccess access = backend.access(location + editIndex[i], editContent[i].length, true)) {
+                access.writeBytes(editContent[i]);
+            }
+        }
+    }
+
+    /**
+     * Releases this page
+     * At the end, whether there were edits or not, this page is at the state of the releasing transaction and is clean.
+     *
+     * @param sequenceNumber The sequence number of the releasing transaction
+     */
+    public void release(long sequenceNumber) {
+        editIndex = null;
+        editContent = null;
+        editCount = 0;
+        this.endMark = sequenceNumber;
         state.set(STATE_FREE);
     }
 
@@ -164,9 +326,16 @@ class Page extends StorageEndpoint {
      * @param content The edit's content
      */
     private void addEdit(int index, byte[] content) {
-        if (edits == null)
-            edits = new PageEdits();
-        edits.push(index, content);
+        if (editCount == 0) {
+            editIndex = new int[EDITS_BUFFER_SIZE];
+            editContent = new byte[EDITS_BUFFER_SIZE][];
+        } else if (editCount >= editIndex.length) {
+            editIndex = Arrays.copyOf(editIndex, editIndex.length * 2);
+            editContent = Arrays.copyOf(editContent, editContent.length * 2);
+        }
+        editIndex[editCount] = index;
+        editContent[editCount] = content;
+        editCount++;
     }
 
     @Override
