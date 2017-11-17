@@ -23,6 +23,7 @@ import fr.cenotelie.commons.utils.logging.Logging;
 
 import java.io.IOException;
 import java.text.DateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -45,6 +46,10 @@ public class WriteAheadLog implements AutoCloseable {
      * The size of the pool for accesses
      */
     private static final int POOL_ACCESSES_SIZE = 1024;
+    /**
+     * The size of the buffer for concurrently running transactions
+     */
+    private static final int TRANSACTIONS_BUFFER = 16;
 
     /**
      * The backend is ready for IO
@@ -87,8 +92,14 @@ public class WriteAheadLog implements AutoCloseable {
      * The pool of accesses
      */
     private final TransactionAccess[] accesses;
-
-
+    /**
+     * The currently running transactions
+     */
+    private volatile Transaction[] transactions;
+    /**
+     * The number of running transactions
+     */
+    private final AtomicInteger transactionsCount;
     /**
      * The index of transaction data currently in the log
      */
@@ -115,6 +126,8 @@ public class WriteAheadLog implements AutoCloseable {
             this.pages[i] = new Page();
         for (int i = 0; i != POOL_ACCESSES_SIZE; i++)
             this.accesses[i] = new TransactionAccess();
+        this.transactions = new Transaction[TRANSACTIONS_BUFFER];
+        this.transactionsCount = new AtomicInteger(0);
     }
 
     /**
@@ -167,6 +180,11 @@ public class WriteAheadLog implements AutoCloseable {
                 break;
         }
         Transaction transaction = new Transaction(this, sequencer.getAndIncrement(), lastCommitted.get(), writable, autocommit);
+        // register this transaction
+        if (transactionsCount.get() >= transactions.length)
+            transactions = Arrays.copyOf(transactions, transactions.length * 2);
+        transactions[transactionsCount.getAndIncrement()] = transaction;
+        // return in a ready state
         state.set(STATE_READY);
         return transaction;
     }
@@ -182,12 +200,28 @@ public class WriteAheadLog implements AutoCloseable {
     }
 
     /**
-     * When the transaction ended, commit the edits (if any) to the log
+     * When the transaction ended
+     * Unregisters this transaction
      *
      * @param transaction The transaction that ended
      */
     void onTransactionEnd(Transaction transaction) {
-
+        while (true) {
+            int s = state.get();
+            if (s == STATE_CLOSED)
+                return;
+            if (s == STATE_READY && state.compareAndSet(s, STATE_BUSY))
+                break;
+        }
+        for (int i = 0; i != transactions.length; i++) {
+            if (transactions[i] == transaction) {
+                transactions[i] = null;
+                break;
+            }
+        }
+        transactionsCount.decrementAndGet();
+        // return in a ready state
+        state.set(STATE_READY);
     }
 
     /**
@@ -270,5 +304,15 @@ public class WriteAheadLog implements AutoCloseable {
 
     @Override
     public void close() throws IOException {
+        while (true) {
+            int s = state.get();
+            if (s == STATE_CLOSED)
+                throw new Error("Log is closed");
+            if (s == STATE_READY && state.compareAndSet(s, STATE_BUSY))
+                break;
+        }
+        if (transactionsCount.get() > 0)
+            Logging.get().warning("WAL: " + transactionsCount.get() + " transaction(s) still running will be aborted.");
+        state.set(STATE_CLOSED);
     }
 }
