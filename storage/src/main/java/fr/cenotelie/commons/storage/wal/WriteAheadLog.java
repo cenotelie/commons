@@ -224,7 +224,7 @@ public class WriteAheadLog implements AutoCloseable {
                 last = i;
                 break;
             }
-            if (index[i].getSequenceNumber() <= transaction.getEndMark())
+            if (index[i].getSequenceNumber() > transaction.getEndMark())
                 // this transaction is known to the committing one
                 continue;
             // examine this transaction for concurrent edits
