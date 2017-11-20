@@ -17,6 +17,7 @@
 
 package fr.cenotelie.commons.storage.wal;
 
+import fr.cenotelie.commons.storage.StorageAccess;
 import fr.cenotelie.commons.storage.memory.InMemoryStore;
 import org.junit.Test;
 
@@ -35,7 +36,11 @@ public class WriteAheadLogTest {
         InMemoryStore log = new InMemoryStore();
         WriteAheadLog wal = new WriteAheadLog(base, log);
 
-
+        try (Transaction transaction = wal.newTransaction(true)) {
+            try (StorageAccess access = transaction.access(0, 4, true)) {
+                access.writeInt(0xFFFFFFFF);
+            }
+        }
 
         wal.close();
     }

@@ -56,17 +56,26 @@ public class WriteAheadLog implements AutoCloseable {
     private static final int INDEX_SIZE = 1024;
 
     /**
+     * The backend is now closed
+     */
+    private static final int STATE_CLOSED = -1;
+    /**
      * The backend is ready for IO
      */
     private static final int STATE_READY = 0;
     /**
-     * The backend is currently busy with an operation
+     * State flag for locking access to the transactions register
      */
-    private static final int STATE_BUSY = 1;
+    private static final int STATE_FLAG_TRANSACTIONS_LOCK = 1;
     /**
-     * The backend is now closed
+     * State flag for locking access to the index register
      */
-    private static final int STATE_CLOSED = -1;
+    private static final int STATE_FLAG_INDEX_LOCK = 2;
+    /**
+     * The flag for locking access to the backend for writing
+     */
+    private static final int STATE_FLAG_BACKEND_LOCK = 4;
+
 
     /**
      * The backend storage that is guarded by this WAL
@@ -76,14 +85,6 @@ public class WriteAheadLog implements AutoCloseable {
      * The storage for the log itself
      */
     private final StorageBackend log;
-    /**
-     * The next identifier for transactions
-     */
-    private final AtomicLong sequencer;
-    /**
-     * The identifier of the last committed transaction
-     */
-    private volatile long lastCommitted;
     /**
      * The current state of the log
      */
@@ -103,11 +104,23 @@ public class WriteAheadLog implements AutoCloseable {
     /**
      * The number of running transactions
      */
-    private final AtomicInteger transactionsCount;
+    private volatile int transactionsCount;
     /**
      * The index of transaction data currently in the log
      */
-    private LogTransactionData[] index;
+    private volatile LogTransactionData[] index;
+    /**
+     * The number of transaction data in the index
+     */
+    private volatile int indexLength;
+    /**
+     * The identifier of the last committed transaction
+     */
+    private volatile long indexLastCommitted;
+    /**
+     * The next identifier for transactions
+     */
+    private final AtomicLong indexSequencer;
 
     /**
      * Initializes this log
@@ -119,8 +132,6 @@ public class WriteAheadLog implements AutoCloseable {
     public WriteAheadLog(StorageBackend backend, StorageBackend log) throws IOException {
         this.backend = backend;
         this.log = log;
-        this.sequencer = new AtomicLong(0);
-        this.lastCommitted = -1;
         this.state = new AtomicInteger(STATE_CLOSED);
         reload();
         this.state.set(STATE_READY);
@@ -131,8 +142,11 @@ public class WriteAheadLog implements AutoCloseable {
         for (int i = 0; i != POOL_ACCESSES_SIZE; i++)
             this.accesses[i] = new TransactionAccess();
         this.transactions = new Transaction[TRANSACTIONS_BUFFER];
-        this.transactionsCount = new AtomicInteger(0);
+        this.transactionsCount = 0;
         this.index = new LogTransactionData[INDEX_SIZE];
+        this.indexLength = 0;
+        this.indexLastCommitted = -1;
+        this.indexSequencer = new AtomicLong(0);
     }
 
     /**
@@ -169,6 +183,114 @@ public class WriteAheadLog implements AutoCloseable {
     }
 
     /**
+     * Locks a resource in this log
+     *
+     * @param flag The flag used for locking the resource
+     */
+    private void stateLock(int flag) {
+        while (true) {
+            int s = state.get();
+            if (s == STATE_CLOSED)
+                throw new Error("Log is closed");
+            if ((s & flag) != 0)
+                // flag is already used
+                continue;
+            if (state.compareAndSet(s, s | flag))
+                break;
+        }
+    }
+
+    /**
+     * Releases the lock on a resource in this log
+     *
+     * @param flag The flag used for locking the resource
+     */
+    private void stateRelease(int flag) {
+        while (true) {
+            int s = state.get();
+            int target = s & (~flag);
+            if (state.compareAndSet(s, target))
+                break;
+        }
+    }
+
+    /**
+     * Locks the backend for writing back
+     */
+    private void stateLockBackendWriting() {
+        while (true) {
+            int s = state.get();
+            if (s == STATE_CLOSED)
+                throw new Error("Log is closed");
+            if ((s & STATE_FLAG_BACKEND_LOCK) == STATE_FLAG_BACKEND_LOCK)
+                // another thread is already writing
+                continue;
+            if ((s & 0x0000FF00) > 0)
+                // some threads are reading
+                continue;
+            if (state.compareAndSet(s, s | STATE_FLAG_BACKEND_LOCK))
+                break;
+        }
+    }
+
+    /**
+     * Releases the lock in the backend for writing
+     */
+    private void stateReleaseBackendWriting() {
+        while (true) {
+            int s = state.get();
+            int target = s & (~STATE_FLAG_BACKEND_LOCK);
+            if (state.compareAndSet(s, target))
+                break;
+        }
+    }
+
+    /**
+     * Begins a reading access to the backend
+     */
+    private void stateBeginBackendReading() {
+        while (true) {
+            int s = state.get();
+            if (s == STATE_CLOSED)
+                throw new Error("Log is closed");
+            int count = (s & 0x0000FF00) >>> 8;
+            if (count == 0xFF)
+                // already 255 reading threads
+                continue;
+            int target = (s & 0xFFFF00FF) | ((count + 1) << 8);
+            if (state.compareAndSet(s, target))
+                break;
+        }
+    }
+
+    /**
+     * Ends a reading access to the backend
+     */
+    private void stateEndBackendReading() {
+        while (true) {
+            int s = state.get();
+            if (s == STATE_CLOSED)
+                throw new Error("Log is closed");
+            int count = (s & 0x0000FF00) >>> 8;
+            int target = (s & 0xFFFF00FF) | ((count - 1) << 8);
+            if (state.compareAndSet(s, target))
+                break;
+        }
+    }
+
+    /**
+     * Starts a new transaction
+     * The transaction must be ended by a call to the transaction's close method.
+     * The transaction will NOT automatically commit when closed, the commit method should be called before closing.
+     *
+     * @param writable Whether the transaction shall support writing
+     * @return The new transaction
+     */
+    public Transaction newTransaction(boolean writable) {
+        return newTransaction(writable, false);
+    }
+
+    /**
      * Starts a new transaction
      * The transaction must be ended by a call to the transaction's close method.
      *
@@ -177,21 +299,26 @@ public class WriteAheadLog implements AutoCloseable {
      * @return The new transaction
      */
     public Transaction newTransaction(boolean writable, boolean autocommit) {
-        while (true) {
-            int s = state.get();
-            if (s == STATE_CLOSED)
-                throw new Error("Log is closed");
-            if (s == STATE_READY && state.compareAndSet(s, STATE_BUSY))
-                break;
+        stateLock(STATE_FLAG_TRANSACTIONS_LOCK);
+        try {
+            Transaction transaction = new Transaction(this, indexLastCommitted, writable, autocommit);
+            // register this transaction
+            if (transactionsCount >= transactions.length) {
+                transactions = Arrays.copyOf(transactions, transactions.length * 2);
+                transactions[transactionsCount] = transaction;
+            } else {
+                for (int i = 0; i != transactions.length; i++) {
+                    if (transactions[i] == null) {
+                        transactions[i] = transaction;
+                        break;
+                    }
+                }
+            }
+            transactionsCount++;
+            return transaction;
+        } finally {
+            stateRelease(STATE_FLAG_TRANSACTIONS_LOCK);
         }
-        Transaction transaction = new Transaction(this, lastCommitted, writable, autocommit);
-        // register this transaction
-        if (transactionsCount.get() >= transactions.length)
-            transactions = Arrays.copyOf(transactions, transactions.length * 2);
-        transactions[transactionsCount.getAndIncrement()] = transaction;
-        // return in a ready state
-        state.set(STATE_READY);
-        return transaction;
     }
 
     /**
@@ -201,56 +328,43 @@ public class WriteAheadLog implements AutoCloseable {
      * @throws ConcurrentWriting when a concurrent transaction already committed conflicting changes to the log
      */
     void doTransactionCommit(Transaction transaction) throws ConcurrentWriting {
-        while (true) {
-            int s = state.get();
-            if (s == STATE_CLOSED)
-                return;
-            if (s == STATE_READY && state.compareAndSet(s, STATE_BUSY))
-                break;
-        }
-
-        LogTransactionData data = transaction.getLogData(sequencer.getAndIncrement());
+        LogTransactionData data = transaction.getLogData(indexSequencer.getAndIncrement());
         if (data == null) {
             // the transaction did not touch anything
-            state.set(STATE_READY);
             return;
         }
 
-        // look for conflicts in the log
-        int last = -1;
-        for (int i = 0; i != index.length; i++) {
-            if (index[i] == null) {
-                // index ends here
-                last = i;
-                break;
-            }
-            if (index[i].getSequenceNumber() > transaction.getEndMark())
-                // this transaction is known to the committing one
-                continue;
-            // examine this transaction for concurrent edits
-            if (data.intersects(index[i]))
-                throw new ConcurrentWriting(index[i]);
-        }
-
-        // no conflict, write this transaction to the log
-        data.logLocation = log.getSize();
-        try (StorageAccess access = log.access(data.logLocation, data.getLength(), true)) {
-            data.writeTo(access);
-        }
+        stateLock(STATE_FLAG_INDEX_LOCK);
         try {
-            log.flush();
-        } catch (IOException exception) {
-            state.set(STATE_READY);
-            throw new RuntimeException(exception);
+            if (indexLastCommitted > transaction.getEndMark()) {
+                // check for concurrent writing from unknown transactions
+                for (int i = 0; i != indexLength; i++) {
+                    if (index[i].getSequenceNumber() > transaction.getEndMark()) {
+                        // this transaction is NOT known to the committing one (after the end-mark)
+                        // examine this transaction for concurrent edits
+                        if (data.intersects(index[i]))
+                            throw new ConcurrentWriting(index[i]);
+                    }
+                }
+            }
+            // no conflict, write this transaction to the log
+            data.logLocation = log.getSize();
+            try (StorageAccess access = log.access(data.logLocation, data.getLength(), true)) {
+                data.writeTo(access);
+            }
+            try {
+                log.flush();
+            } catch (IOException exception) {
+                throw new RuntimeException(exception);
+            }
+            // adds to the index
+            if (indexLength == index.length)
+                index = Arrays.copyOf(index, index.length * 2);
+            index[indexLength++] = data;
+            indexLastCommitted = data.getSequenceNumber();
+        } finally {
+            stateRelease(STATE_FLAG_INDEX_LOCK);
         }
-        // adds to the index
-        if (last == -1)
-            index = Arrays.copyOf(index, index.length * 2);
-        index[last] = data;
-        lastCommitted = data.getSequenceNumber();
-
-        // return in a ready state
-        state.set(STATE_READY);
     }
 
     /**
@@ -260,22 +374,17 @@ public class WriteAheadLog implements AutoCloseable {
      * @param transaction The transaction that ended
      */
     void onTransactionEnd(Transaction transaction) {
-        while (true) {
-            int s = state.get();
-            if (s == STATE_CLOSED)
-                return;
-            if (s == STATE_READY && state.compareAndSet(s, STATE_BUSY))
-                break;
-        }
-        for (int i = 0; i != transactions.length; i++) {
-            if (transactions[i] == transaction) {
-                transactions[i] = null;
-                break;
+        stateLock(STATE_FLAG_TRANSACTIONS_LOCK);
+        try {
+            for (int i = 0; i != transactions.length; i++) {
+                if (transactions[i] == transaction) {
+                    transactions[i] = null;
+                    break;
+                }
             }
+        } finally {
+            stateRelease(STATE_FLAG_TRANSACTIONS_LOCK);
         }
-        transactionsCount.decrementAndGet();
-        // return in a ready state
-        state.set(STATE_READY);
     }
 
     /**
@@ -324,9 +433,19 @@ public class WriteAheadLog implements AutoCloseable {
      * @param endMark  The sequence number of the last transaction known to the current one
      */
     private void loadPage(Page page, long location, long endMark) {
-        page.loadBase(backend, location);
-        // TODO: apply edits in the log
-        page.makeReady(location, endMark);
+        stateBeginBackendReading();
+        try {
+            page.loadBase(backend, location);
+        } finally {
+            stateEndBackendReading();
+        }
+        stateLock(STATE_FLAG_INDEX_LOCK);
+        try {
+            // TODO: apply edits in the log
+            page.makeReady(location, endMark);
+        } finally {
+            stateRelease(STATE_FLAG_INDEX_LOCK);
+        }
     }
 
     /**
@@ -336,8 +455,13 @@ public class WriteAheadLog implements AutoCloseable {
      * @param endMark The sequence number of the last transaction known to the current one
      */
     private void updatePageTo(Page page, long endMark) {
-        // TODO: apply edits in the log
-        page.makeReady(page.getLocation(), endMark);
+        stateLock(STATE_FLAG_INDEX_LOCK);
+        try {
+            // TODO: apply edits in the log
+            page.makeReady(page.getLocation(), endMark);
+        } finally {
+            stateRelease(STATE_FLAG_INDEX_LOCK);
+        }
     }
 
     /**
@@ -348,7 +472,7 @@ public class WriteAheadLog implements AutoCloseable {
     TransactionAccess acquireAccess() {
         if (state.get() == STATE_CLOSED)
             throw new Error("Log is closed");
-        for (int i = 0; i != POOL_PAGES_SIZE; i++) {
+        for (int i = 0; i != POOL_ACCESSES_SIZE; i++) {
             if (accesses[i].reserve())
                 return accesses[i];
         }
@@ -359,19 +483,22 @@ public class WriteAheadLog implements AutoCloseable {
     /**
      * Executes a checkpoint
      */
-    private void doCheckpoint() {
-        while (true) {
-            int s = state.get();
-            if (s == STATE_CLOSED)
-                throw new Error("Log is closed");
-            if (s == STATE_READY && state.compareAndSet(s, STATE_BUSY))
-                break;
+    private void checkpoint() {
+        stateLock(STATE_FLAG_TRANSACTIONS_LOCK | STATE_FLAG_INDEX_LOCK);
+        try {
+            doCheckpoint();
+        } finally {
+            stateRelease(STATE_FLAG_TRANSACTIONS_LOCK | STATE_FLAG_INDEX_LOCK);
         }
+    }
 
+    /**
+     * Executes a checkpoint
+     */
+    private void doCheckpoint() {
         // find the lowest end mark for the running transactions
         long minEndMark = Long.MAX_VALUE;
-        int tCount = transactionsCount.get();
-        for (int i = 0; i != tCount; i++) {
+        for (int i = 0; i != transactionsCount; i++) {
             minEndMark = Math.min(minEndMark, transactions[i].getEndMark());
         }
         // find the index of the last first transaction in the log that cannot be committed
@@ -383,28 +510,23 @@ public class WriteAheadLog implements AutoCloseable {
                 break;
             }
         }
-        if (first <= 0) {
+        if (first <= 0)
             // nothing to do
-            state.set(STATE_CLOSED);
             return;
-        }
-
-        // apply the stored transactions
-
-        state.set(STATE_CLOSED);
+        // TODO: apply the stored transactions
     }
 
     @Override
     public void close() throws IOException {
-        while (true) {
-            int s = state.get();
-            if (s == STATE_CLOSED)
-                throw new Error("Log is closed");
-            if (s == STATE_READY && state.compareAndSet(s, STATE_BUSY))
-                break;
+        stateLock(STATE_FLAG_TRANSACTIONS_LOCK | STATE_FLAG_INDEX_LOCK);
+        try {
+            if (transactionsCount > 0)
+                Logging.get().warning("WAL: " + transactionsCount + " transaction(s) still running will be aborted.");
+            doCheckpoint();
+            backend.close();
+            log.close();
+        } finally {
+            state.set(STATE_CLOSED);
         }
-        if (transactionsCount.get() > 0)
-            Logging.get().warning("WAL: " + transactionsCount.get() + " transaction(s) still running will be aborted.");
-        state.set(STATE_CLOSED);
     }
 }

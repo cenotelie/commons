@@ -133,8 +133,10 @@ class Page extends StorageEndpoint {
         int length = Constants.PAGE_SIZE;
         if (location + Constants.PAGE_SIZE > backend.getSize())
             length = (int) (backend.getSize() - location);
-        try (StorageAccess access = backend.access(location, length, false)) {
-            access.readBytes(buffer, 0, length);
+        if (length > 0) {
+            try (StorageAccess access = backend.access(location, length, false)) {
+                access.readBytes(buffer, 0, length);
+            }
         }
         if (length < Constants.PAGE_SIZE)
             Arrays.fill(buffer, length, Constants.PAGE_SIZE - length, (byte) 0);
