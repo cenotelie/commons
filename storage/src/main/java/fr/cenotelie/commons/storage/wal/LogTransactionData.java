@@ -75,6 +75,17 @@ class LogTransactionData {
     }
 
     /**
+     * Loads the content of the transaction
+     *
+     * @param access The access to use for loading
+     */
+    public void loadContent(StorageAccess access) {
+        access.skip(8 + 8 + 4); // seq number, timestamp and pages count
+        for (int i = 0; i != pages.length; i++)
+            pages[i].loadContent(access);
+    }
+
+    /**
      * Gets the sequence number of this transaction
      *
      * @return The sequence number of this transaction
@@ -122,7 +133,7 @@ class LogTransactionData {
      *
      * @return The length of this data
      */
-    public int getLength() {
+    public int getSerializationLength() {
         int result = 8 + 8 + 4; // seq number, timestamp and pages count
         for (int i = 0; i != pages.length; i++)
             result += pages[i].getSerializationLength();

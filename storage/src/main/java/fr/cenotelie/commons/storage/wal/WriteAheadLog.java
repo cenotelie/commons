@@ -353,7 +353,7 @@ public class WriteAheadLog implements AutoCloseable {
             }
             // no conflict, write this transaction to the log
             data.logLocation = log.getSize();
-            try (StorageAccess access = log.access(data.logLocation, data.getLength(), true)) {
+            try (StorageAccess access = log.access(data.logLocation, data.getSerializationLength(), true)) {
                 data.writeTo(access);
             }
             try {
@@ -467,48 +467,83 @@ public class WriteAheadLog implements AutoCloseable {
         return new TransactionAccess();
     }
 
-    /**
-     * Executes a checkpoint
-     */
-    private void checkpoint() {
-        stateLock(STATE_FLAG_TRANSACTIONS_LOCK | STATE_FLAG_INDEX_LOCK);
-        try {
-            doCheckpoint();
-        } finally {
-            stateRelease(STATE_FLAG_TRANSACTIONS_LOCK | STATE_FLAG_INDEX_LOCK);
-        }
-    }
 
     /**
      * Executes a checkpoint
      */
-    private void doCheckpoint() {
-        // find the lowest end mark for the running transactions
-        long minEndMark = Long.MAX_VALUE;
-        for (int i = 0; i != transactionsCount; i++) {
-            minEndMark = Math.min(minEndMark, transactions[i].getEndMark());
-        }
-        // find the index of the last first transaction in the log that cannot be committed
-        // because there is a running transaction that does not know it
-        int first = -1;
-        for (int i = 0; i != indexLength; i++) {
-            if (index[i].getSequenceNumber() > minEndMark) {
-                first = i;
-                break;
-            }
-        }
-        if (first <= 0)
-            // nothing to do
+    private synchronized void doCheckpoint() {
+        long minEndMark = doCheckpointGetLowestEndMark();
+        int firstUnmovable = doCheckpointGetFirstUnmovableTransaction(minEndMark);
+        if (firstUnmovable == -1)
             return;
-        // TODO: apply the stored transactions
+        for (int i = 0; i != firstUnmovable; i++) {
+            doCheckpointWriteBack(index[i]);
+        }
+    }
+
+    /**
+     * Finds the lowest end mark for the running transactions
+     *
+     * @return The lower end mark
+     */
+    private long doCheckpointGetLowestEndMark() {
+        stateLock(STATE_FLAG_TRANSACTIONS_LOCK);
+        try {
+            long minEndMark = Long.MAX_VALUE;
+            for (int i = 0; i != transactionsCount; i++) {
+                minEndMark = Math.min(minEndMark, transactions[i].getEndMark());
+            }
+            return minEndMark;
+        } finally {
+            stateRelease(STATE_FLAG_TRANSACTIONS_LOCK);
+        }
+    }
+
+    /**
+     * Finds the index of the first transaction in the log that cannot be merged back into the backend
+     *
+     * @param minEndMark The lowest end mark for the running transactions
+     * @return The index of the first transaction in the log that cannot be merged back into the backend
+     */
+    private int doCheckpointGetFirstUnmovableTransaction(long minEndMark) {
+        stateLock(STATE_FLAG_INDEX_LOCK);
+        try {
+            int first = -1;
+            for (int i = 0; i != indexLength; i++) {
+                if (index[i].getSequenceNumber() >= minEndMark) {
+                    first = i;
+                    break;
+                }
+            }
+            return first;
+        } finally {
+            stateRelease(STATE_FLAG_INDEX_LOCK);
+        }
+    }
+
+    /**
+     * Write back the data of a transaction to the backend
+     *
+     * @param transaction The data of a transaction
+     */
+    private void doCheckpointWriteBack(LogTransactionData transaction) {
+        stateLock(STATE_FLAG_INDEX_LOCK);
+        try (StorageAccess access = log.access(transaction.logLocation, transaction.getSerializationLength(), false)) {
+            transaction.loadContent(access);
+        } finally {
+            stateRelease(STATE_FLAG_INDEX_LOCK);
+        }
+        stateLockBackendWriting();
+        try {
+            transaction.applyTo(backend);
+        } finally {
+            stateReleaseBackendWriting();
+        }
     }
 
     @Override
     public void close() throws IOException {
-        stateLock(STATE_FLAG_TRANSACTIONS_LOCK | STATE_FLAG_INDEX_LOCK);
         try {
-            if (transactionsCount > 0)
-                Logging.get().warning("WAL: " + transactionsCount + " transaction(s) still running will be aborted.");
             doCheckpoint();
             backend.close();
             log.close();

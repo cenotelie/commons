@@ -80,6 +80,21 @@ public class LogPageData extends PageEdits {
     }
 
     /**
+     * Loads the content of the edits
+     *
+     * @param access The access to use for loading
+     */
+    public void loadContent(StorageAccess access) {
+        this.editsContent = new byte[editsCount][];
+        access.skip(8 + 4); // skip the location data and number of edits
+        for (int i = 0; i != editsCount; i++) {
+            int length = PageEdits.editLength(edits[i]);
+            access.skip(8); // skip the offset and length
+            this.editsContent[i] = access.readBytes(length);
+        }
+    }
+
+    /**
      * Applies the edits of this page to the specified backend
      *
      * @param backend The backend
