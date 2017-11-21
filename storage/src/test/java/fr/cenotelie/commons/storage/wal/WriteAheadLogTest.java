@@ -19,6 +19,7 @@ package fr.cenotelie.commons.storage.wal;
 
 import fr.cenotelie.commons.storage.StorageAccess;
 import fr.cenotelie.commons.storage.memory.InMemoryStore;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -40,6 +41,14 @@ public class WriteAheadLogTest {
             try (StorageAccess access = transaction.access(0, 4, true)) {
                 access.writeInt(0xFFFFFFFF);
             }
+            transaction.commit();
+        }
+        try (Transaction transaction = wal.newTransaction(false)) {
+            try (StorageAccess access = transaction.access(0, 4, false)) {
+                int value = access.readInt();
+                Assert.assertEquals(0xFFFFFFFF, value);
+            }
+            transaction.commit();
         }
 
         wal.close();

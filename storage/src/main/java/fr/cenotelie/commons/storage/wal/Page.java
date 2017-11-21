@@ -127,7 +127,7 @@ class Page extends StorageEndpoint {
         access.skip(8 + 4); // skip the location data and number of edits
         for (int i = 0; i != data.editsCount; i++) {
             int offset = PageEdits.editIndex(data.edits[i]);
-            int length = PageEdits.editIndex(data.edits[i]);
+            int length = PageEdits.editLength(data.edits[i]);
             access.skip(8); // skip the offset and length
             access.readBytes(buffer, offset, length);
         }

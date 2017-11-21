@@ -383,6 +383,7 @@ public class WriteAheadLog implements AutoCloseable {
             for (int i = 0; i != transactions.length; i++) {
                 if (transactions[i] == transaction) {
                     transactions[i] = null;
+                    transactionsCount--;
                     break;
                 }
             }
@@ -490,7 +491,7 @@ public class WriteAheadLog implements AutoCloseable {
         // find the index of the last first transaction in the log that cannot be committed
         // because there is a running transaction that does not know it
         int first = -1;
-        for (int i = 0; i != index.length; i++) {
+        for (int i = 0; i != indexLength; i++) {
             if (index[i].getSequenceNumber() > minEndMark) {
                 first = i;
                 break;
