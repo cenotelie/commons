@@ -95,8 +95,6 @@ public class LogPageData extends PageEdits {
         editsContent = null;
     }
 
-    public void loadContent()
-
     /**
      * Gets the length of this data in the log
      *

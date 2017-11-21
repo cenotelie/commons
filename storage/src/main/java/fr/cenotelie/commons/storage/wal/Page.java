@@ -118,13 +118,19 @@ class Page extends StorageEndpoint {
     }
 
     /**
-     * Loads an edit made to this page
+     * Loads the edits made by a previous transaction to this page
      *
-     * @param offset  The offset of the edit within this page
-     * @param content The edit's content
+     * @param access The access to use for loading
+     * @param data   The data of the transaction
      */
-    public void loadEdit(int offset, byte[] content) {
-        System.arraycopy(content, 0, buffer, offset, content.length);
+    public void loadEdits(StorageAccess access, LogPageData data) {
+        access.skip(8 + 4); // skip the location data and number of edits
+        for (int i = 0; i != data.editsCount; i++) {
+            int offset = PageEdits.editIndex(data.edits[i]);
+            int length = PageEdits.editIndex(data.edits[i]);
+            access.skip(8); // skip the offset and length
+            access.readBytes(buffer, offset, length);
+        }
     }
 
     /**

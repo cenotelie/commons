@@ -440,7 +440,9 @@ public class WriteAheadLog implements AutoCloseable {
                 LogPageData data = index[i].getPage(location);
                 if (data == null)
                     continue;
-
+                try (StorageAccess access = log.access(index[i].logLocation + data.offset, data.getSerializationLength(), false)) {
+                    page.loadEdits(access, data);
+                }
             }
             page.makeReady(location);
         } finally {
