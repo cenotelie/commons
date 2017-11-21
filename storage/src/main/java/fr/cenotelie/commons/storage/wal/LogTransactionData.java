@@ -41,7 +41,7 @@ class LogTransactionData {
     /**
      * The data for the pages
      */
-    private final LogTransactionPageData[] pages;
+    private final LogPageData[] pages;
 
     /**
      * Initializes this structure
@@ -50,7 +50,7 @@ class LogTransactionData {
      * @param timestamp      Timestamp for this transaction
      * @param pages          The data for the pages
      */
-    public LogTransactionData(long sequenceNumber, long timestamp, LogTransactionPageData[] pages) {
+    public LogTransactionData(long sequenceNumber, long timestamp, LogPageData[] pages) {
         this.sequenceNumber = sequenceNumber;
         this.timestamp = timestamp;
         this.pages = pages;
@@ -67,9 +67,10 @@ class LogTransactionData {
         sequenceNumber = access.readLong();
         timestamp = access.readLong();
         int count = access.readInt();
-        pages = new LogTransactionPageData[count];
+        pages = new LogPageData[count];
         for (int i = 0; i != count; i++) {
-            pages[i] = new LogTransactionPageData(access);
+            long current = access.getIndex();
+            pages[i] = new LogPageData(access, (int) (current - start));
         }
     }
 
@@ -92,12 +93,26 @@ class LogTransactionData {
     }
 
     /**
+     * Gets the data for the specified page, or null of there is none
+     *
+     * @param location The location of the requested page
+     * @return The data for the page, or null if there is none
+     */
+    public LogPageData getPage(long location) {
+        for (int i = 0; i != pages.length; i++) {
+            if (pages[i].location == location)
+                return pages[i];
+        }
+        return null;
+    }
+
+    /**
      * Applies the edits of this transaction to the specified backend
      *
      * @param backend The backend
      */
     public void applyTo(StorageBackend backend) {
-        for (LogTransactionPageData page : pages) {
+        for (LogPageData page : pages) {
             page.applyTo(backend);
         }
     }
@@ -110,7 +125,7 @@ class LogTransactionData {
     public int getLength() {
         int result = 8 + 8 + 4; // seq number, timestamp and pages count
         for (int i = 0; i != pages.length; i++)
-            result += pages[i].getLength();
+            result += pages[i].getSerializationLength();
         return result;
     }
 

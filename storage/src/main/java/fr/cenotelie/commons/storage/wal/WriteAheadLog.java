@@ -322,24 +322,28 @@ public class WriteAheadLog implements AutoCloseable {
     }
 
     /**
-     * Commits the data of this transaction to the log
+     * Gets the next free sequence number
      *
-     * @param transaction The transaction to commit
+     * @return The next free sequence number
+     */
+    long getSequenceNumber() {
+        return indexSequencer.getAndIncrement();
+    }
+
+    /**
+     * Commits the data of a transaction to a log
+     *
+     * @param data    The data of the transaction to commit
+     * @param endMark The end mark for this transaction
      * @throws ConcurrentWriting when a concurrent transaction already committed conflicting changes to the log
      */
-    void doTransactionCommit(Transaction transaction) throws ConcurrentWriting {
-        LogTransactionData data = transaction.getLogData(indexSequencer.getAndIncrement());
-        if (data == null) {
-            // the transaction did not touch anything
-            return;
-        }
-
+    void doTransactionCommit(LogTransactionData data, long endMark) throws ConcurrentWriting {
         stateLock(STATE_FLAG_INDEX_LOCK);
         try {
-            if (indexLastCommitted > transaction.getEndMark()) {
+            if (indexLastCommitted > endMark) {
                 // check for concurrent writing from unknown transactions
                 for (int i = 0; i != indexLength; i++) {
-                    if (index[i].getSequenceNumber() > transaction.getEndMark()) {
+                    if (index[i].getSequenceNumber() > endMark) {
                         // this transaction is NOT known to the committing one (after the end-mark)
                         // examine this transaction for concurrent edits
                         if (data.intersects(index[i]))
@@ -399,19 +403,6 @@ public class WriteAheadLog implements AutoCloseable {
             throw new Error("Log is closed");
         for (int i = 0; i != POOL_PAGES_SIZE; i++) {
             if (pages[i].reserve()) {
-                // this page is reserved
-                if (pages[i].getLocation() == location && pages[i].getEndMark() <= endMark) {
-                    // it is a candidate for reuse
-                    updatePageTo(pages[i], endMark);
-                    return pages[i];
-                }
-                // oops, not a candidate, release this page
-                pages[i].release();
-            }
-        }
-        // no candidate for reuse
-        for (int i = 0; i != POOL_PAGES_SIZE; i++) {
-            if (pages[i].reserve()) {
                 // reserved a free page
                 loadPage(pages[i], location, endMark);
                 return pages[i];
@@ -441,24 +432,17 @@ public class WriteAheadLog implements AutoCloseable {
         }
         stateLock(STATE_FLAG_INDEX_LOCK);
         try {
-            // TODO: apply edits in the log
-            page.makeReady(location, endMark);
-        } finally {
-            stateRelease(STATE_FLAG_INDEX_LOCK);
-        }
-    }
+            for (int i = 0; i != indexLength; i++) {
+                if (index[i].getSequenceNumber() > endMark)
+                    // this transaction is NOT known, stop here
+                    break;
+                // look for a matching page in this transaction
+                LogPageData data = index[i].getPage(location);
+                if (data == null)
+                    continue;
 
-    /**
-     * Updates a page at the specified location up to the specified end mark
-     *
-     * @param page    The page to update initialize
-     * @param endMark The sequence number of the last transaction known to the current one
-     */
-    private void updatePageTo(Page page, long endMark) {
-        stateLock(STATE_FLAG_INDEX_LOCK);
-        try {
-            // TODO: apply edits in the log
-            page.makeReady(page.getLocation(), endMark);
+            }
+            page.makeReady(location);
         } finally {
             stateRelease(STATE_FLAG_INDEX_LOCK);
         }

@@ -17,6 +17,8 @@
 
 package fr.cenotelie.commons.storage;
 
+import fr.cenotelie.commons.utils.ByteUtils;
+
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLongArray;
 
@@ -94,17 +96,6 @@ public class TSAccessManager {
     }
 
     /**
-     * Unsigned promotion of an integer to a long
-     * Replacement for Integer.toUnsignedLong when using JDK 7
-     *
-     * @param i The integer
-     * @return The resulting long
-     */
-    private static long ul(int i) {
-        return (long) i & 0xFFFFFFFFL;
-    }
-
-    /**
      * Gets the key for an access in the specified state
      *
      * @param state The state of an access
@@ -171,7 +162,7 @@ public class TSAccessManager {
      * @return The new state
      */
     private static long stateSetActive(int key) {
-        return ul(key) << 32 | 0x0000000001000000L;
+        return ByteUtils.uLong(key) << 32 | 0x0000000001000000L;
     }
 
     /**
@@ -192,7 +183,7 @@ public class TSAccessManager {
      * @return The equivalent returning state
      */
     private static long stateSetReturning(long state, int currentThreads) {
-        return (state & 0xFFFFFFFF000000FFL) | 0x0000000003000000L | ul(currentThreads) << 8;
+        return (state & 0xFFFFFFFF000000FFL) | 0x0000000003000000L | ByteUtils.uLong(currentThreads) << 8;
     }
 
     /**
@@ -213,7 +204,7 @@ public class TSAccessManager {
      * @return The new state
      */
     private static long stateRemoveThread(long state, int threadIdentifier) {
-        return state & ~(ul(threadIdentifier) << 8);
+        return state & ~(ByteUtils.uLong(threadIdentifier) << 8);
     }
 
     /**
@@ -224,7 +215,7 @@ public class TSAccessManager {
      * @return The new state
      */
     private static long stateSetNextActive(long state, int next) {
-        return (state & 0xFFFFFFFFFFFFFF00L) | ul(next);
+        return (state & 0xFFFFFFFFFFFFFF00L) | ByteUtils.uLong(next);
     }
 
     /**

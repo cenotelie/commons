@@ -186,4 +186,15 @@ public class ByteUtils {
         buffer[i + 6] = (byte) (value >>> 8 & 0xFF);
         buffer[i + 7] = (byte) (value & 0xFF);
     }
+
+    /**
+     * Unsigned promotion of an integer to a long
+     * Replacement for Integer.toUnsignedLong when using JDK 7
+     *
+     * @param i The integer
+     * @return The resulting long
+     */
+    public static long uLong(int i) {
+        return (long) i & 0xFFFFFFFFL;
+    }
 }

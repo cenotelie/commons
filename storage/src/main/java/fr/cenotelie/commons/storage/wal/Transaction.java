@@ -212,9 +212,9 @@ public class Transaction implements AutoCloseable {
             throw new Error("Bad state");
         state = STATE_COMMITTING;
         try {
-            for (int i = 0; i != pagesCount; i++)
-                pages[i].compact();
-            parent.doTransactionCommit(this);
+            LogTransactionData data = getLogData();
+            if (data != null)
+                parent.doTransactionCommit(data, endMark);
             state = STATE_COMMITTED;
         } catch (ConcurrentWriting exception) {
             state = STATE_REJECTED;
@@ -225,11 +225,9 @@ public class Transaction implements AutoCloseable {
     /**
      * Gets the log data for indexing this transaction
      *
-     * @param sequenceNumber The sequence number attributed to this transaction
      * @return The log data, or null if no page is dirty
      */
-    LogTransactionData getLogData(long sequenceNumber) {
-        this.sequenceNumber = sequenceNumber;
+    private LogTransactionData getLogData() {
         int dirtyPagesCount = 0;
         for (int i = 0; i != pagesCount; i++) {
             if (pages[i].isDirty())
@@ -237,11 +235,15 @@ public class Transaction implements AutoCloseable {
         }
         if (dirtyPagesCount == 0)
             return null;
-        LogTransactionPageData[] pageData = new LogTransactionPageData[dirtyPagesCount];
+        LogPageData[] pageData = new LogPageData[dirtyPagesCount];
+        sequenceNumber = parent.getSequenceNumber();
         int index = 0;
+        int offset = 8 + 8 + 4; // seq number, timestamp and pages count
         for (int i = 0; i != pagesCount; i++) {
             if (pages[i].isDirty()) {
-                pageData[index++] = pages[i].getLogData();
+                pageData[index] = pages[i].getLogData(offset);
+                offset += pageData[i].getSerializationLength();
+                index++;
             }
         }
         return new LogTransactionData(sequenceNumber, timestamp, pageData);
@@ -270,10 +272,7 @@ public class Transaction implements AutoCloseable {
                 state = STATE_ABORTED; // abort this transaction
         }
         for (int i = 0; i != pagesCount; i++) {
-            if (sequenceNumber == -1)
-                pages[i].release();
-            else
-                pages[i].release(sequenceNumber);
+            pages[i].release();
         }
         parent.onTransactionEnd(this);
     }
