@@ -32,7 +32,7 @@ import java.io.IOException;
 public class WriteAheadLogTest {
 
     @Test
-    public void test() throws IOException {
+    public void testLinearTransactions() throws IOException {
         InMemoryStore base = new InMemoryStore();
         InMemoryStore log = new InMemoryStore();
         WriteAheadLog wal = new WriteAheadLog(base, log);
@@ -50,6 +50,31 @@ public class WriteAheadLogTest {
             }
             transaction.commit();
         }
+
+        wal.close();
+    }
+
+    @Test
+    public void testConcurrentTransactions() throws IOException {
+        InMemoryStore base = new InMemoryStore();
+        InMemoryStore log = new InMemoryStore();
+        WriteAheadLog wal = new WriteAheadLog(base, log);
+
+        Transaction transaction1 = wal.newTransaction(true);
+        Transaction transaction2 = wal.newTransaction(false);
+
+        try (StorageAccess access = transaction1.access(0, 4, true)) {
+            access.writeInt(0xFFFFFFFF);
+        }
+        transaction1.commit();
+        transaction1.close();
+
+        try (StorageAccess access = transaction2.access(0, 4, false)) {
+            int value = access.readInt();
+            Assert.assertEquals(0, value);
+        }
+        transaction2.commit();
+        transaction2.close();
 
         wal.close();
     }
