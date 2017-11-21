@@ -347,7 +347,7 @@ public class WriteAheadLog implements AutoCloseable {
                         // this transaction is NOT known to the committing one (after the end-mark)
                         // examine this transaction for concurrent edits
                         if (data.intersects(index[i]))
-                            throw new ConcurrentWriting(index[i]);
+                            throw new ConcurrentWriting(index[i].getSequenceNumber(), index[i].getTimestamp());
                     }
                 }
             }

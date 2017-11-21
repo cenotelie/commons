@@ -78,4 +78,34 @@ public class WriteAheadLogTest {
 
         wal.close();
     }
+
+    @Test
+    public void testConcurrentWriting() throws IOException {
+        InMemoryStore base = new InMemoryStore();
+        InMemoryStore log = new InMemoryStore();
+        WriteAheadLog wal = new WriteAheadLog(base, log);
+
+        Transaction transaction1 = wal.newTransaction(true);
+        Transaction transaction2 = wal.newTransaction(true);
+
+        try (StorageAccess access = transaction1.access(0, 4, true)) {
+            access.writeInt(0xFFFFFFFF);
+        }
+        transaction1.commit();
+        transaction1.close();
+
+        try (StorageAccess access = transaction2.access(0, 4, true)) {
+            access.writeInt(0xFFFFFFFE);
+        }
+        boolean catched = false;
+        try {
+            transaction2.commit();
+        } catch (ConcurrentWriting exception) {
+            catched = true;
+        }
+        transaction2.close();
+        Assert.assertTrue(catched);
+
+        wal.close();
+    }
 }

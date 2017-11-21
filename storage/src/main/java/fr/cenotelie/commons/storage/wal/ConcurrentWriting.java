@@ -27,25 +27,40 @@ import java.io.IOException;
  */
 public class ConcurrentWriting extends IOException {
     /**
-     * The first conflicting transaction found
+     * The sequence number of the conflicting transaction
      */
-    private final LogTransactionData conflicting;
+    private final long sequenceNumber;
+    /**
+     * The timestamp of the conflicting transaction
+     */
+    private final long timestamp;
 
     /**
-     * Gets the first conflicting transaction found
+     * Gets the sequence number of the conflicting transaction
      *
-     * @return The first conflicting transaction found
+     * @return The sequence number of the conflicting transaction
      */
-    public LogTransactionData getConflicting() {
-        return conflicting;
+    public long getSequenceNumber() {
+        return sequenceNumber;
+    }
+
+    /**
+     * Gets the timestamp of the conflicting transaction
+     *
+     * @return The timestamp of the conflicting transaction
+     */
+    public long getTimestamp() {
+        return timestamp;
     }
 
     /**
      * Initializes this exception
      *
-     * @param conflicting The first conflicting transaction found
+     * @param sequenceNumber The sequence number of the conflicting transaction
+     * @param timestamp      The timestamp of the conflicting transaction
      */
-    public ConcurrentWriting(LogTransactionData conflicting) {
-        this.conflicting = conflicting;
+    public ConcurrentWriting(long sequenceNumber, long timestamp) {
+        this.sequenceNumber = sequenceNumber;
+        this.timestamp = timestamp;
     }
 }
