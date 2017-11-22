@@ -17,6 +17,8 @@
 
 package fr.cenotelie.commons.storage.files;
 
+import fr.cenotelie.commons.storage.Endpoint;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -29,192 +31,6 @@ import java.io.RandomAccessFile;
  * @author Laurent Wouters
  */
 public class RawFileDirect extends RawFile {
-    /**
-     * The endpoint for a direct file access
-     */
-    private final class Endpoint extends fr.cenotelie.commons.storage.Endpoint {
-        /**
-         * The access to the file
-         */
-        private final RandomAccessFile access;
-
-        /**
-         * Initializes this endpoint
-         *
-         * @param access The access to the file
-         */
-        public Endpoint(RandomAccessFile access) {
-            this.access = access;
-        }
-
-        @Override
-        public long getIndexLowerBound() {
-            return 0;
-        }
-
-        @Override
-        public long getIndexUpperBound() {
-            return Long.MAX_VALUE - 1;
-        }
-
-        @Override
-        public byte readByte(long index) {
-            synchronized (access) {
-                try {
-                    access.seek(index);
-                    return access.readByte();
-                } catch (IOException exception) {
-                    throw new RuntimeException(exception);
-                }
-            }
-        }
-
-        @Override
-        public byte[] readBytes(long index, int length) {
-            byte[] buffer = new byte[length];
-            readBytes(index, buffer, 0, length);
-            return buffer;
-        }
-
-        @Override
-        public void readBytes(long index, byte[] buffer, int start, int length) {
-            synchronized (access) {
-                try {
-                    access.seek(index);
-                    access.read(buffer, start, length);
-                } catch (IOException exception) {
-                    throw new RuntimeException(exception);
-                }
-            }
-        }
-
-        @Override
-        public char readChar(long index) {
-            synchronized (access) {
-                try {
-                    access.seek(index);
-                    return access.readChar();
-                } catch (IOException exception) {
-                    throw new RuntimeException(exception);
-                }
-            }
-        }
-
-        @Override
-        public short readShort(long index) {
-            synchronized (access) {
-                try {
-                    access.seek(index);
-                    return access.readShort();
-                } catch (IOException exception) {
-                    throw new RuntimeException(exception);
-                }
-            }
-        }
-
-        @Override
-        public int readInt(long index) {
-            synchronized (access) {
-                try {
-                    access.seek(index);
-                    return access.readInt();
-                } catch (IOException exception) {
-                    throw new RuntimeException(exception);
-                }
-            }
-        }
-
-        @Override
-        public long readLong(long index) {
-            synchronized (access) {
-                try {
-                    access.seek(index);
-                    return access.readLong();
-                } catch (IOException exception) {
-                    throw new RuntimeException(exception);
-                }
-            }
-        }
-
-        @Override
-        public void writeByte(long index, byte value) {
-            synchronized (access) {
-                try {
-                    access.seek(index);
-                    access.writeByte(value);
-                } catch (IOException exception) {
-                    throw new RuntimeException(exception);
-                }
-            }
-        }
-
-        @Override
-        public void writeBytes(long index, byte[] value) {
-            writeBytes(index, value, 0, value.length);
-        }
-
-        @Override
-        public void writeBytes(long index, byte[] buffer, int start, int length) {
-            synchronized (access) {
-                try {
-                    access.seek(index);
-                    access.write(buffer, start, length);
-                } catch (IOException exception) {
-                    throw new RuntimeException(exception);
-                }
-            }
-        }
-
-        @Override
-        public void writeChar(long index, char value) {
-            synchronized (access) {
-                try {
-                    access.seek(index);
-                    access.writeChar(value);
-                } catch (IOException exception) {
-                    throw new RuntimeException(exception);
-                }
-            }
-        }
-
-        @Override
-        public void writeShort(long index, short value) {
-            synchronized (access) {
-                try {
-                    access.seek(index);
-                    access.writeShort(value);
-                } catch (IOException exception) {
-                    throw new RuntimeException(exception);
-                }
-            }
-        }
-
-        @Override
-        public void writeInt(long index, int value) {
-            synchronized (access) {
-                try {
-                    access.seek(index);
-                    access.writeInt(value);
-                } catch (IOException exception) {
-                    throw new RuntimeException(exception);
-                }
-            }
-        }
-
-        @Override
-        public void writeLong(long index, long value) {
-            synchronized (access) {
-                try {
-                    access.seek(index);
-                    access.writeLong(value);
-                } catch (IOException exception) {
-                    throw new RuntimeException(exception);
-                }
-            }
-        }
-    }
-
-
     /**
      * The accessed file
      */
@@ -230,7 +46,7 @@ public class RawFileDirect extends RawFile {
     /**
      * The endpoint to use
      */
-    private final Endpoint endpoint;
+    private final RawFileDirectEndpoint endpoint;
 
     /**
      * Initializes this data file
@@ -245,7 +61,7 @@ public class RawFileDirect extends RawFile {
             writable = false;
         this.writable = writable;
         this.access = new RandomAccessFile(file, writable ? "rw" : "r");
-        this.endpoint = new Endpoint(access);
+        this.endpoint = new RawFileDirectEndpoint(access);
     }
 
     @Override
@@ -268,8 +84,33 @@ public class RawFileDirect extends RawFile {
     }
 
     @Override
-    public boolean truncate(long length) throws IOException {
-        if (access.length() <= length)
+    public boolean cut(long from, long to) throws IOException {
+        if (from < 0 || from > to)
+            throw new IndexOutOfBoundsException();
+        if (from == to)
+            // 0-length cut => do nothing
+            return false;
+        long currentSize = access.length();
+        if (from >= currentSize)
+            // start after the current size => no effect
+            return false;
+        if (to >= currentSize) {
+            // only cut up to the end ...
+            to = Math.min(to, currentSize);
+            access.setLength(to);
+        }
+        for (long i = from; i != to; i++)
+            access.writeByte(0);
+        return true;
+    }
+
+    @Override
+    public boolean extendTo(long length) throws IOException {
+        if (length < 0)
+            throw new IndexOutOfBoundsException();
+        long currentSize = access.length();
+        if (length <= currentSize)
+            // already bigger
             return false;
         access.setLength(length);
         return true;
@@ -281,12 +122,12 @@ public class RawFileDirect extends RawFile {
     }
 
     @Override
-    public fr.cenotelie.commons.storage.Endpoint acquireEndpointAt(long index) {
+    public Endpoint acquireEndpointAt(long index) {
         return endpoint;
     }
 
     @Override
-    public void releaseEndpoint(fr.cenotelie.commons.storage.Endpoint endpoint) {
+    public void releaseEndpoint(Endpoint endpoint) {
         // do nothing
     }
 

@@ -68,6 +68,15 @@ public abstract class Storage implements AutoCloseable {
     public abstract boolean cut(long from, long to) throws IOException;
 
     /**
+     * Extends the size of this storage system up to the provided length
+     *
+     * @param length The length to extend to
+     * @return Whether the operation had an effect
+     * @throws IOException When an IO error occurred
+     */
+    public abstract boolean extendTo(long length) throws IOException;
+
+    /**
      * Flushes any outstanding changes to this storage system
      *
      * @throws IOException When an IO error occurred

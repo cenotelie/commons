@@ -68,6 +68,13 @@ public class ThreadSafeStorage extends Storage {
     }
 
     @Override
+    public boolean extendTo(long length) throws IOException {
+        if (length < 0 || length > Integer.MAX_VALUE)
+            throw new IndexOutOfBoundsException();
+        return storage.extendTo(length);
+    }
+
+    @Override
     public void flush() throws IOException {
         storage.flush();
     }

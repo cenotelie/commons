@@ -151,6 +151,13 @@ public class InMemoryStore extends Storage {
     }
 
     @Override
+    public boolean extendTo(long length) throws IOException {
+        if (length < 0)
+            throw new IndexOutOfBoundsException();
+        return onWriteUpTo(length);
+    }
+
+    @Override
     public void flush() throws IOException {
         // do nothing
     }
@@ -204,16 +211,17 @@ public class InMemoryStore extends Storage {
      * When a thread wrote up to an index
      *
      * @param index The maximum index written to
+     * @return Whether the size was modified
      */
-    void onWriteUpTo(long index) {
+    boolean onWriteUpTo(long index) {
         while (true) {
             long current = size.get();
             if (current > index)
                 // not the furthest => exit
-                return;
+                return false;
             if (size.compareAndSet(current, index))
                 // succeeded to update => exit
-                return;
+                return true;
             // start over
         }
     }

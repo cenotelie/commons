@@ -190,7 +190,7 @@ public class RawFileSplit extends RawFile {
     }
 
     @Override
-    public boolean truncate(long length) throws IOException {
+    public boolean cut(long from, long to) {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
