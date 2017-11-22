@@ -87,31 +87,6 @@ class RawFileBlockTS extends RawFileBlock {
     public static final int RESERVE_RESULT_FAIL = -1;
 
     /**
-     * Gets the name of the block state
-     *
-     * @param state The block state
-     * @return The associated name
-     */
-    private static String stateName(int state) {
-        if (state < 0)
-            return "INVALID(" + state + ")";
-        switch (state) {
-            case BLOCK_STATE_FREE:
-                return "READY";
-            case BLOCK_STATE_RESERVED:
-                return "RESERVED";
-            case BLOCK_STATE_READY:
-                return "READY";
-            case BLOCK_STATE_RECLAIMING:
-                return "RECLAIMING";
-            case BLOCK_STATE_IN_USE:
-                return "IN_USE(1)";
-            default:
-                return "IN_USE(" + (state - BLOCK_STATE_READY) + ")";
-        }
-    }
-
-    /**
      * The state of this block
      */
     private final AtomicInteger state;
@@ -182,7 +157,7 @@ class RawFileBlockTS extends RawFileBlock {
         if (this.buffer == null)
             this.buffer = new byte[Constants.PAGE_SIZE];
         else
-            zeroesFrom(0);
+            zeroes(0, Constants.PAGE_SIZE);
         this.isDirty = false;
         touch(time);
         if (this.location < fileSize)
@@ -201,7 +176,7 @@ class RawFileBlockTS extends RawFileBlock {
             int current = state.get();
             switch (current) {
                 case BLOCK_STATE_FREE:
-                    throw new Error("Bad block state: " + stateName(current) + ", expected READY");
+                    throw new IllegalStateException();
                 case BLOCK_STATE_RESERVED:
                     if (this.location != location)
                         return false;
@@ -243,7 +218,7 @@ class RawFileBlockTS extends RawFileBlock {
         while (true) {
             int current = state.get();
             if (current <= BLOCK_STATE_READY)
-                throw new Error("Bad block state: " + stateName(current) + ", expected IN_USE");
+                throw new IllegalStateException();
             else if (current == BLOCK_STATE_IN_USE && state.compareAndSet(BLOCK_STATE_IN_USE, BLOCK_STATE_READY))
                 return;
             else if (current > BLOCK_STATE_IN_USE && state.compareAndSet(current, current - 1))

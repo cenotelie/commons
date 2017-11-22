@@ -33,10 +33,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class RawFileSplit extends RawFile {
     /**
-     * The maximum number of part files
-     */
-    public static final int MAX_FILES = 9999;
-    /**
      * The maximum number of missing file before stopping to look for them
      */
     private static final int MAX_MISSING = 15;
@@ -110,7 +106,7 @@ public class RawFileSplit extends RawFile {
         this.fileMaxSize = maxSize;
         int last = -1;
         int missing = 0;
-        for (int i = 0; i != MAX_FILES && missing < MAX_MISSING; i++) {
+        for (int i = 0; missing < MAX_MISSING; i++) {
             File file = new File(directory, fileName(i));
             if (file.exists()) {
                 last = i;
@@ -120,7 +116,7 @@ public class RawFileSplit extends RawFile {
             }
         }
         this.filesCount = new AtomicInteger(last + 1);
-        this.files = new RawFile[last + 1];
+        this.files = new RawFile[bufferSize(last + 1)];
         this.state = new AtomicInteger(STATE_READY);
     }
 
@@ -130,7 +126,7 @@ public class RawFileSplit extends RawFile {
      * @param count A number of files
      * @return The size of the buffer
      */
-    private int bufferSize(int count) {
+    private static int bufferSize(int count) {
         int size = 2; // minimum buffer size
         while (size < count) {
             size = size << 1;

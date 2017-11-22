@@ -132,12 +132,13 @@ class RawFileBlock extends Endpoint {
     }
 
     /**
-     * Zeroes the end of this page from the specified index forward
+     * Zeroes some part of this page
      *
-     * @param index The starting index within this page
+     * @param from The starting index within this page (included)
+     * @param to   The last index within this page (excluded)
      */
-    public void zeroesFrom(int index) {
-        Arrays.fill(buffer, index, Constants.PAGE_SIZE - index, (byte) 0);
+    public void zeroes(int from, int to) {
+        Arrays.fill(buffer, from, to, (byte) 0);
     }
 
     @Override

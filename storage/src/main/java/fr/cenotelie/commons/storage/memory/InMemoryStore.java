@@ -95,8 +95,9 @@ public class InMemoryStore extends Storage {
         }
         try {
             // do we have to update the current size?
+            long currentSize;
             while (true) {
-                long currentSize = size.get();
+                currentSize = size.get();
                 if (from >= currentSize)
                     // start after the current size => no effect
                     return false;
@@ -105,7 +106,7 @@ public class InMemoryStore extends Storage {
                     break;
                 if (size.compareAndSet(currentSize, from)) {
                     // only cut up to the end ...
-                    to = Math.min(to, currentSize);
+                    to = currentSize;
                     break;
                 }
             }
@@ -138,7 +139,7 @@ public class InMemoryStore extends Storage {
                 pages[i] = null;
             }
             // cut the last page
-            if (toIndex == Constants.PAGE_SIZE)
+            if (toIndex == Constants.PAGE_SIZE || to == currentSize)
                 // completely cut the page
                 pages[toPage] = null;
             else if (pages[toPage] != null)
@@ -148,13 +149,6 @@ public class InMemoryStore extends Storage {
         } finally {
             state.set(STATE_READY);
         }
-    }
-
-    @Override
-    public boolean extendTo(long length) throws IOException {
-        if (length < 0)
-            throw new IndexOutOfBoundsException();
-        return onWriteUpTo(length);
     }
 
     @Override
@@ -211,17 +205,16 @@ public class InMemoryStore extends Storage {
      * When a thread wrote up to an index
      *
      * @param index The maximum index written to
-     * @return Whether the size was modified
      */
-    boolean onWriteUpTo(long index) {
+    void onWriteUpTo(long index) {
         while (true) {
             long current = size.get();
             if (current > index)
                 // not the furthest => exit
-                return false;
+                return;
             if (size.compareAndSet(current, index))
                 // succeeded to update => exit
-                return true;
+                return;
             // start over
         }
     }

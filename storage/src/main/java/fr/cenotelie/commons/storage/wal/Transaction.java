@@ -74,11 +74,6 @@ public class Transaction implements AutoCloseable {
         }
 
         @Override
-        public boolean extendTo(long length) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
         public void flush() {
             throw new UnsupportedOperationException();
         }

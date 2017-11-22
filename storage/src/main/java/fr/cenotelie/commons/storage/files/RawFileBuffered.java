@@ -22,6 +22,7 @@ import fr.cenotelie.commons.storage.Endpoint;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.StandardOpenOption;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -157,21 +158,38 @@ public class RawFileBuffered extends RawFile {
     }
 
     @Override
-    public boolean cut(long from, long to) {
+    public boolean cut(long from, long to) throws IOException {
+        if (from < 0 || from > to)
+            throw new IndexOutOfBoundsException();
+        if (from == to)
+            // 0-length cut => do nothing
+            return false;
+
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
-                throw new IOException("The storage system is closed");
+                throw new IllegalStateException();
             if (!state.compareAndSet(STATE_READY, STATE_BUSY))
                 continue;
             try {
-                doTruncate(length);
+                // do we have to update the current size?
                 while (true) {
-                    long old = size.get();
-                    if (old <= length)
+                    long currentSize = size.get();
+                    if (from >= currentSize)
+                        // start after the current size => no effect
                         return false;
-                    if (size.compareAndSet(old, length))
+                    if (to < currentSize) {
+                        // no effect on the current size ...
+                        cutOverwrite(from, to);
+                        cutCleanBlocks(from, to);
                         return true;
+                    }
+                    if (size.compareAndSet(currentSize, from)) {
+                        // truncate
+                        channel.truncate(from);
+                        cutCleanBlocks(from, currentSize);
+                        return true;
+                    }
                 }
             } finally {
                 state.set(STATE_READY);
@@ -180,22 +198,71 @@ public class RawFileBuffered extends RawFile {
     }
 
     /**
-     * Does the job of truncating this file
+     * When cutting the file, overwrite the physical file
      *
-     * @param length The length to truncate to
+     * @param from The starting index to cut at (included)
+     * @param to   The end index to cut to (excluded)
      * @throws IOException When an IO error occurred
      */
-    private void doTruncate(long length) throws IOException {
-        channel.truncate(length);
+    private void cutOverwrite(long from, long to) throws IOException {
+        long current = from;
+        int remaining = (int) (to - from);
+        ByteBuffer buffer = null;
+        while (remaining >= 1024) {
+            if (buffer == null)
+                buffer = ByteBuffer.allocate(1024);
+            cutOverwriteWithBuffer(buffer, current);
+            remaining -= 1024;
+            current += 1024;
+        }
+        if (remaining > 0) {
+            buffer = ByteBuffer.allocate(remaining);
+            cutOverwriteWithBuffer(buffer, current);
+        }
+    }
+
+    /**
+     * When cutting the file, overwrite the physical file using the specified buffer
+     *
+     * @param buffer   The buffer to use
+     * @param location The location to write to
+     * @throws IOException When an IO error occurred
+     */
+    private void cutOverwriteWithBuffer(ByteBuffer buffer, long location) throws IOException {
+        buffer.position(0);
+        int total = 0;
+        while (total < buffer.capacity()) {
+            int written = channel.write(buffer, location + total);
+            total += written;
+        }
+    }
+
+    /**
+     * When cutting the file, clean-up relevant blocks
+     *
+     * @param from The starting index to cut at (included)
+     * @param to   The end index to cut to (excluded)
+     */
+    private void cutCleanBlocks(long from, long to) {
+        int fromPage = (int) (from >>> Constants.PAGE_INDEX_LENGTH);
+        int fromIndex = (int) (from & Constants.INDEX_MASK_LOWER);
+        int toPage = (int) (to >>> Constants.PAGE_INDEX_LENGTH);
+        int toIndex = (int) (to & Constants.INDEX_MASK_LOWER);
+        if (toIndex == 0) {
+            toPage--;
+            toIndex = Constants.PAGE_SIZE;
+        }
+
         for (int i = 0; i != blockCount.get(); i++) {
-            if (blocks[i].location + Constants.PAGE_SIZE > length) {
-                // the page ends after the length to truncate to => must zero this page
-                if (blocks[i].location >= length)
-                    // the block is fully after the limit => fully zero it
-                    blocks[i].zeroesFrom(0);
-                else
-                    // the limit is within this block => zeroes from the limit forward
-                    blocks[i].zeroesFrom((int) (length - blocks[i].location));
+            if (blocks[i].location >= to || blocks[i].location + Constants.PAGE_SIZE <= from)
+                // starts after the cut, or ends before the cut
+                continue;
+            int blockPage = (int) (blocks[i].location >>> Constants.PAGE_INDEX_LENGTH);
+            if (blockPage == fromPage) {
+                // this block contains the from index
+                blocks[i].zeroes(fromIndex, blockPage == toPage ? toIndex : Constants.PAGE_SIZE);
+            } else {
+                blocks[i].zeroes(0, blockPage == toPage ? toIndex : Constants.PAGE_SIZE);
             }
         }
     }
@@ -205,7 +272,7 @@ public class RawFileBuffered extends RawFile {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
-                throw new IOException("The storage system is closed");
+                throw new IllegalStateException();
             if (!state.compareAndSet(STATE_READY, STATE_BUSY))
                 continue;
             try {
@@ -222,9 +289,11 @@ public class RawFileBuffered extends RawFile {
 
     @Override
     public Endpoint acquireEndpointAt(long index) {
+        if (index < 0)
+            throw new IndexOutOfBoundsException();
         try {
             return getBlockFor(index);
-        } catch (IOException exception) {
+        } catch (Throwable exception) {
             throw new RuntimeException(exception);
         }
     }
@@ -239,7 +308,7 @@ public class RawFileBuffered extends RawFile {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
-                throw new IOException("The file is already closed");
+                throw new IllegalStateException();
             if (state.compareAndSet(STATE_READY, STATE_CLOSED))
                 break;
         }
@@ -339,7 +408,7 @@ public class RawFileBuffered extends RawFile {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
-                throw new IOException("The storage system is closed");
+                throw new IllegalStateException();
             if (state.compareAndSet(STATE_READY, STATE_BUSY))
                 break;
         }
@@ -378,7 +447,7 @@ public class RawFileBuffered extends RawFile {
                         return target;
                     }
                 }
-            } catch (IOException exception) {
+            } catch (Throwable exception) {
                 state.set(STATE_READY);
                 throw exception;
             }

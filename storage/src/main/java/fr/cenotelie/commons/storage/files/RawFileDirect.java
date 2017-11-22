@@ -95,24 +95,15 @@ public class RawFileDirect extends RawFile {
             // start after the current size => no effect
             return false;
         if (to >= currentSize) {
-            // only cut up to the end ...
-            to = Math.min(to, currentSize);
-            access.setLength(to);
+            // truncate the file
+            access.setLength(from);
+        } else {
+            // overwrite the cut content with 0
+            access.seek(from);
+            for (long i = from; i != to; i++) {
+                access.writeByte(0);
+            }
         }
-        for (long i = from; i != to; i++)
-            access.writeByte(0);
-        return true;
-    }
-
-    @Override
-    public boolean extendTo(long length) throws IOException {
-        if (length < 0)
-            throw new IndexOutOfBoundsException();
-        long currentSize = access.length();
-        if (length <= currentSize)
-            // already bigger
-            return false;
-        access.setLength(length);
         return true;
     }
 
