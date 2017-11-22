@@ -455,6 +455,8 @@ class ThreadSafeAccessManager {
      * @return The new access, or null if it cannot be obtained
      */
     public Access get(int location, int length, boolean writable) {
+        if (location < 0 || length <= 0)
+            throw new IllegalArgumentException();
         ThreadSafeAccess access = newAccess(location);
         access.setup(storage, location, length, writable);
         listInsert(access.identifier, location);

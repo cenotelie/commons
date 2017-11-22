@@ -79,7 +79,7 @@ public class InMemoryStore extends Storage {
     }
 
     @Override
-    public boolean cut(long from, long to) throws IOException {
+    public boolean cut(long from, long to) {
         if (from < 0 || from > to)
             throw new IndexOutOfBoundsException();
         if (from == to)
@@ -89,7 +89,7 @@ public class InMemoryStore extends Storage {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
-                throw new IOException("The storage system is closed");
+                throw new IllegalStateException();
             if (state.compareAndSet(STATE_READY, STATE_BUSY))
                 break;
         }
@@ -162,7 +162,7 @@ public class InMemoryStore extends Storage {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
-                throw new RuntimeException(new IOException("The storage system is closed"));
+                throw new IllegalStateException();
             if (state.compareAndSet(STATE_READY, STATE_BUSY))
                 break;
         }
@@ -185,11 +185,11 @@ public class InMemoryStore extends Storage {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
-                throw new IOException("The storage system is closed");
+                throw new IllegalStateException();
             if (state.compareAndSet(STATE_READY, STATE_BUSY))
                 break;
         }
