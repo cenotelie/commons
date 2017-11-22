@@ -66,13 +66,13 @@ class TransactionAccess extends Access {
     /**
      * Setups this access before using it
      *
-     * @param backend  The target backend for this access
-     * @param location The location of the span for this access within the backend
+     * @param storage  The target storage system for this access
+     * @param location The location of the span for this access within the target storage system
      * @param length   The length of the allowed span
      * @param writable Whether the access allows writing
      */
-    public void init(Storage backend, long location, int length, boolean writable) {
-        setup(backend, location, length, writable);
+    public void init(Storage storage, long location, int length, boolean writable) {
+        setup(storage, location, length, writable);
         state.set(STATE_READY);
     }
 

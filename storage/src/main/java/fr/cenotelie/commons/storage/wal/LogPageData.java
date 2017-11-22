@@ -31,7 +31,7 @@ public class LogPageData extends PageEdits {
      */
     public final int offset;
     /**
-     * The location in the backend of the touched page
+     * The location in the backing storage system of the touched page
      */
     public final long location;
     /**
@@ -47,7 +47,7 @@ public class LogPageData extends PageEdits {
      * Initializes this structure from the edits of a page
      *
      * @param offset   The offset of this data relative to the page's location
-     * @param location The location in the backend of the touched page
+     * @param location The location in the backing storage system of the touched page
      * @param edits    The edits of a page
      */
     public LogPageData(int offset, long location, PageEdits edits, byte[] buffer) {
@@ -95,15 +95,15 @@ public class LogPageData extends PageEdits {
     }
 
     /**
-     * Applies the edits of this page to the specified backend
+     * Applies the edits of this page to the backing storage system
      *
-     * @param backend The backend
+     * @param storage The backing storage system
      */
-    public void applyTo(Storage backend) {
+    public void applyTo(Storage storage) {
         if (editsContent == null)
             return;
         for (int i = 0; i != editsCount; i++) {
-            try (Access access = backend.access(location + editIndex(edits[i]), editLength(edits[i]), true)) {
+            try (Access access = storage.access(location + editIndex(edits[i]), editLength(edits[i]), true)) {
                 access.writeBytes(editsContent[i]);
             }
         }

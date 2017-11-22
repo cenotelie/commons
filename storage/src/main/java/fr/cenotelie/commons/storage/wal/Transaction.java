@@ -56,9 +56,9 @@ public class Transaction implements AutoCloseable {
     public static final int STATE_REJECTED = 4;
 
     /**
-     * Represents a backend to use for providing access through this transaction
+     * Represents a virtual storage system to use for providing snapshot access through this (isolated) transaction
      */
-    private class Backend extends Storage {
+    private class SnapshotStorage extends Storage {
         @Override
         public boolean isWritable() {
             return Transaction.this.writable;
@@ -116,9 +116,9 @@ public class Transaction implements AutoCloseable {
      */
     private final boolean autocommit;
     /**
-     * The backend to use for providing access through this transaction
+     * The virtual storage system to use for providing accesses through this transaction
      */
-    private final Storage backend;
+    private final Storage storage;
     /**
      * The current state of this transaction
      */
@@ -150,7 +150,7 @@ public class Transaction implements AutoCloseable {
         this.timestamp = (new Date()).getTime();
         this.writable = writable;
         this.autocommit = autocommit;
-        this.backend = new Backend();
+        this.storage = new SnapshotStorage();
         this.state = STATE_RUNNING;
         this.pages = new Page[8];
         this.pagesCount = 0;
@@ -176,9 +176,9 @@ public class Transaction implements AutoCloseable {
     }
 
     /**
-     * Gets whether this transaction allows writing to the backend storage system
+     * Gets whether this transaction allows writing to the storage system
      *
-     * @return Whether this transaction allows writing to the backend storage system
+     * @return Whether this transaction allows writing to the storage system
      */
     public boolean isWritable() {
         return writable;
@@ -278,7 +278,7 @@ public class Transaction implements AutoCloseable {
     }
 
     /**
-     * Accesses the content of the backend storage system through an access element
+     * Accesses the content of the storage system through an access element
      * An access must be within the boundaries of a page.
      *
      * @param index    The index within this file of the reserved area for the access
@@ -290,12 +290,12 @@ public class Transaction implements AutoCloseable {
         if (state != STATE_RUNNING)
             throw new Error("Bad state");
         TransactionAccess access = parent.acquireAccess();
-        access.init(backend, index, length, this.writable & writable);
+        access.init(storage, index, length, this.writable & writable);
         return access;
     }
 
     /**
-     * Acquires a page of the backend storage system
+     * Acquires a page of the storage system
      *
      * @param location The location of the page to acquire
      * @return The acquired page

@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Implements a write-ahead log that guard the access to another backend storage system
+ * Implements a write-ahead log that guard the access to a storage system
  * A write-ahead log provides the following guarantees:
  * - Atomicity, transactions are either fully committed to the log, or not
  * - Isolation, transactions only see the changes of transactions fully committed before they started using snapshot isolation
@@ -56,11 +56,11 @@ public class WriteAheadLog implements AutoCloseable {
     private static final int INDEX_SIZE = 1024;
 
     /**
-     * The backend is now closed
+     * The storage system is now closed
      */
     private static final int STATE_CLOSED = -1;
     /**
-     * The backend is ready for IO
+     * The storage system is ready for IO
      */
     private static final int STATE_READY = 0;
     /**
@@ -72,15 +72,15 @@ public class WriteAheadLog implements AutoCloseable {
      */
     private static final int STATE_FLAG_INDEX_LOCK = 2;
     /**
-     * The flag for locking access to the backend for writing
+     * The flag for locking access to the storage system for writing
      */
-    private static final int STATE_FLAG_BACKEND_LOCK = 4;
+    private static final int STATE_FLAG_STORAGE_WRITE_LOCK = 4;
 
 
     /**
-     * The backend storage that is guarded by this WAL
+     * The storage system that is guarded by this WAL
      */
-    private final Storage backend;
+    private final Storage storage;
     /**
      * The storage for the log itself
      */
@@ -125,12 +125,12 @@ public class WriteAheadLog implements AutoCloseable {
     /**
      * Initializes this log
      *
-     * @param backend The backend storage that is guarded by this WAL
+     * @param storage The storage system that is guarded by this WAL
      * @param log     The storage for the log itself
      * @throws IOException when an error occurred while accessing storage
      */
-    public WriteAheadLog(Storage backend, Storage log) throws IOException {
-        this.backend = backend;
+    public WriteAheadLog(Storage storage, Storage log) throws IOException {
+        this.storage = storage;
         this.log = log;
         this.state = new AtomicInteger(STATE_CLOSED);
         reload();
@@ -160,14 +160,14 @@ public class WriteAheadLog implements AutoCloseable {
             // nothing to do
             return;
         DateFormat dateFormat = DateFormat.getDateTimeInstance();
-        try (Access access = new Access(backend, 0, (int) size, false)) {
+        try (Access access = new Access(storage, 0, (int) size, false)) {
             while (access.getIndex() < size) {
                 try {
                     // load the data for this transaction
                     LogTransactionData data = new LogTransactionData(access);
                     Logging.get().warning("WAL: Recovered transaction " + data.getSequenceNumber() + ", started at " + dateFormat.format(new Date(data.getTimestamp())));
-                    // apply to the backend storage
-                    data.applyTo(backend);
+                    // apply to the storage system
+                    data.applyTo(storage);
                     Logging.get().warning("WAL: Applied transaction " + data.getSequenceNumber());
                 } catch (IndexOutOfBoundsException exception) {
                     Logging.get().warning("WAL: Ended with a partial (unrecoverable) transaction");
@@ -176,7 +176,7 @@ public class WriteAheadLog implements AutoCloseable {
                 }
             }
         }
-        backend.flush();
+        storage.flush();
         // truncate the log
         log.truncate(0);
         log.flush();
@@ -215,40 +215,40 @@ public class WriteAheadLog implements AutoCloseable {
     }
 
     /**
-     * Locks the backend for writing back
+     * Locks the backing storage system for writing back
      */
-    private void stateLockBackendWriting() {
+    private void stateLockStorageWriting() {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
                 throw new Error("Log is closed");
-            if ((s & STATE_FLAG_BACKEND_LOCK) == STATE_FLAG_BACKEND_LOCK)
+            if ((s & STATE_FLAG_STORAGE_WRITE_LOCK) == STATE_FLAG_STORAGE_WRITE_LOCK)
                 // another thread is already writing
                 continue;
             if ((s & 0x0000FF00) > 0)
                 // some threads are reading
                 continue;
-            if (state.compareAndSet(s, s | STATE_FLAG_BACKEND_LOCK))
+            if (state.compareAndSet(s, s | STATE_FLAG_STORAGE_WRITE_LOCK))
                 break;
         }
     }
 
     /**
-     * Releases the lock in the backend for writing
+     * Releases the lock in the backing storage system for writing
      */
-    private void stateReleaseBackendWriting() {
+    private void stateReleaseStorageWriting() {
         while (true) {
             int s = state.get();
-            int target = s & (~STATE_FLAG_BACKEND_LOCK);
+            int target = s & (~STATE_FLAG_STORAGE_WRITE_LOCK);
             if (state.compareAndSet(s, target))
                 break;
         }
     }
 
     /**
-     * Begins a reading access to the backend
+     * Begins a reading access to the backing storage system
      */
-    private void stateBeginBackendReading() {
+    private void stateBeginStorageReading() {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
@@ -264,9 +264,9 @@ public class WriteAheadLog implements AutoCloseable {
     }
 
     /**
-     * Ends a reading access to the backend
+     * Ends a reading access to the backing storage system
      */
-    private void stateEndBackendReading() {
+    private void stateEndStorageReading() {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
@@ -393,9 +393,9 @@ public class WriteAheadLog implements AutoCloseable {
     }
 
     /**
-     * Acquires a page of the backend storage system
+     * Acquires a page of the backing storage system
      *
-     * @param location The location in the backend storage system of the requested page
+     * @param location The location in the backing storage system of the requested page
      * @param endMark  The sequence number of the last transaction known to the current one
      * @return The requested page
      */
@@ -421,15 +421,15 @@ public class WriteAheadLog implements AutoCloseable {
      * Loads and initializes a page at the specified location up to the specified end mark
      *
      * @param page     The page to load and initialize
-     * @param location The page's location in the backend
+     * @param location The page's location in the storage system
      * @param endMark  The sequence number of the last transaction known to the current one
      */
     private void loadPage(Page page, long location, long endMark) {
-        stateBeginBackendReading();
+        stateBeginStorageReading();
         try {
-            page.loadBase(backend, location);
+            page.loadBase(storage, location);
         } finally {
-            stateEndBackendReading();
+            stateEndStorageReading();
         }
         stateLock(STATE_FLAG_INDEX_LOCK);
         try {
@@ -500,10 +500,10 @@ public class WriteAheadLog implements AutoCloseable {
     }
 
     /**
-     * Finds the index of the first transaction in the log that cannot be merged back into the backend
+     * Finds the index of the first transaction in the log that cannot be merged back into the storage system
      *
      * @param minEndMark The lowest end mark for the running transactions
-     * @return The index of the first transaction in the log that cannot be merged back into the backend
+     * @return The index of the first transaction in the log that cannot be merged back into the storage system
      */
     private int doCheckpointGetFirstUnmovableTransaction(long minEndMark) {
         stateLock(STATE_FLAG_INDEX_LOCK);
@@ -522,7 +522,7 @@ public class WriteAheadLog implements AutoCloseable {
     }
 
     /**
-     * Write back the data of a transaction to the backend
+     * Write back the data of a transaction to the storage system
      *
      * @param transaction The data of a transaction
      */
@@ -533,11 +533,11 @@ public class WriteAheadLog implements AutoCloseable {
         } finally {
             stateRelease(STATE_FLAG_INDEX_LOCK);
         }
-        stateLockBackendWriting();
+        stateLockStorageWriting();
         try {
-            transaction.applyTo(backend);
+            transaction.applyTo(storage);
         } finally {
-            stateReleaseBackendWriting();
+            stateReleaseStorageWriting();
         }
     }
 
@@ -545,7 +545,7 @@ public class WriteAheadLog implements AutoCloseable {
     public void close() throws IOException {
         try {
             doCheckpoint();
-            backend.close();
+            storage.close();
             log.close();
         } finally {
             state.set(STATE_CLOSED);

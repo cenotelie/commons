@@ -97,19 +97,19 @@ class Page extends Endpoint {
     }
 
     /**
-     * Loads the base content of this page from the backend
+     * Loads the base content of this page from the backing storage system
      *
-     * @param backend  The backend to load from
-     * @param location The location in the backend to load from
+     * @param storage  The backing storage system to load from
+     * @param location The location in the storage system to load from
      */
-    public void loadBase(Storage backend, long location) {
+    public void loadBase(Storage storage, long location) {
         if (buffer == null)
             buffer = new byte[Constants.PAGE_SIZE];
         int length = Constants.PAGE_SIZE;
-        if (location + Constants.PAGE_SIZE > backend.getSize())
-            length = (int) (backend.getSize() - location);
+        if (location + Constants.PAGE_SIZE > storage.getSize())
+            length = (int) (storage.getSize() - location);
         if (length > 0) {
-            try (Access access = backend.access(location, length, false)) {
+            try (Access access = storage.access(location, length, false)) {
                 access.readBytes(buffer, 0, length);
             }
         }

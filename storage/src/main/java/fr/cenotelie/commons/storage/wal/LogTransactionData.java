@@ -118,13 +118,13 @@ class LogTransactionData {
     }
 
     /**
-     * Applies the edits of this transaction to the specified backend
+     * Applies the edits of this transaction to the specified storage system
      *
-     * @param backend The backend
+     * @param storage The backing storage system
      */
-    public void applyTo(Storage backend) {
+    public void applyTo(Storage storage) {
         for (LogPageData page : pages) {
-            page.applyTo(backend);
+            page.applyTo(storage);
         }
     }
 
