@@ -79,37 +79,71 @@ public class InMemoryStore extends Storage {
     }
 
     @Override
-    public boolean truncate(long length) throws IOException {
+    public boolean cut(long from, long to) throws IOException {
+        if (from < 0 || from > to)
+            throw new IndexOutOfBoundsException();
+        if (from == to)
+            // 0-length cut => do nothing
+            return false;
+
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
-                throw new IOException("The file is closed");
+                throw new IOException("The storage system is closed");
             if (state.compareAndSet(STATE_READY, STATE_BUSY))
                 break;
         }
         try {
+            // do we have to update the current size?
             while (true) {
                 long currentSize = size.get();
-                if (length >= currentSize)
+                if (from >= currentSize)
+                    // start after the current size => no effect
                     return false;
-                if (size.compareAndSet(currentSize, length))
+                if (to < currentSize)
+                    // no effect on the current size ...
                     break;
+                if (size.compareAndSet(currentSize, from)) {
+                    // only cut up to the end ...
+                    to = Math.min(to, currentSize);
+                    break;
+                }
             }
-            int lastPage = (int) (length >>> Constants.PAGE_INDEX_LENGTH);
-            int lastIndex = (int) (length & Constants.INDEX_MASK_LOWER);
-            if (lastIndex == 0) {
-                lastPage--;
-                lastIndex = Constants.PAGE_SIZE;
+            // get the page and page-specific indices
+            int fromPage = (int) (from >>> Constants.PAGE_INDEX_LENGTH);
+            int fromIndex = (int) (from & Constants.INDEX_MASK_LOWER);
+            int toPage = (int) (to >>> Constants.PAGE_INDEX_LENGTH);
+            int toIndex = (int) (to & Constants.INDEX_MASK_LOWER);
+            if (toIndex == 0) {
+                toPage--;
+                toIndex = Constants.PAGE_SIZE;
             }
-            if (lastPage >= pages.length)
-                // too small
-                return false;
-            for (int i = pages.length - 1; i != lastPage; i--) {
-                // drop this page
+            // within the same page
+            if (fromPage == toPage) {
+                if (pages[fromPage] == null)
+                    // nothing to do, but we did cut the empty!
+                    return true;
+                pages[fromPage].zeroes(fromIndex, toIndex);
+                return true;
+            }
+            // cut the first page
+            if (fromIndex == 0)
+                // completely cut the page
+                pages[fromPage] = null;
+            else if (pages[fromPage] != null)
+                // do not cut the complete page, but cut the content
+                pages[fromPage].zeroes(fromIndex, Constants.PAGE_SIZE);
+            for (int i = fromPage + 1; i != toPage; i++) {
+                // completely cut intermediate pages
                 pages[i] = null;
             }
-            if (lastIndex != Constants.PAGE_SIZE && pages[lastPage] != null)
-                pages[lastPage].zeroesFrom(lastIndex);
+            // cut the last page
+            if (toIndex == Constants.PAGE_SIZE)
+                // completely cut the page
+                pages[toPage] = null;
+            else if (pages[toPage] != null)
+                // do not cut the complete page, but cut the content
+                pages[toPage].zeroes(0, toIndex);
             return true;
         } finally {
             state.set(STATE_READY);
@@ -123,10 +157,12 @@ public class InMemoryStore extends Storage {
 
     @Override
     public Endpoint acquireEndpointAt(long index) {
+        if (index < 0)
+            throw new IndexOutOfBoundsException();
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
-                throw new RuntimeException(new IOException("The file is closed"));
+                throw new RuntimeException(new IOException("The storage system is closed"));
             if (state.compareAndSet(STATE_READY, STATE_BUSY))
                 break;
         }
@@ -153,7 +189,7 @@ public class InMemoryStore extends Storage {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
-                throw new IOException("The file is closed");
+                throw new IOException("The storage system is closed");
             if (state.compareAndSet(STATE_READY, STATE_BUSY))
                 break;
         }

@@ -53,7 +53,19 @@ public abstract class Storage implements AutoCloseable {
      * @return Whether the operation had an effect
      * @throws IOException When an IO error occurred
      */
-    public abstract boolean truncate(long length) throws IOException;
+    public boolean truncate(long length) throws IOException {
+        return cut(length, Long.MAX_VALUE);
+    }
+
+    /**
+     * Cuts content within this storage system
+     *
+     * @param from The starting index to cut at
+     * @param to   The end index to cut to (excluded)
+     * @return Whether the operation had an effect
+     * @throws IOException When an IO error occurred
+     */
+    public abstract boolean cut(long from, long to) throws IOException;
 
     /**
      * Flushes any outstanding changes to this storage system

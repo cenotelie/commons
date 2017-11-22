@@ -70,7 +70,7 @@ public class Transaction implements AutoCloseable {
         }
 
         @Override
-        public boolean truncate(long length) throws IOException {
+        public boolean cut(long from, long to) throws IOException {
             throw new UnsupportedOperationException();
         }
 

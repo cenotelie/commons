@@ -161,7 +161,7 @@ public class RawFileBuffered extends RawFile {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
-                throw new IOException("The file is closed");
+                throw new IOException("The storage system is closed");
             if (!state.compareAndSet(STATE_READY, STATE_BUSY))
                 continue;
             try {
@@ -205,7 +205,7 @@ public class RawFileBuffered extends RawFile {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
-                throw new IOException("The file is closed");
+                throw new IOException("The storage system is closed");
             if (!state.compareAndSet(STATE_READY, STATE_BUSY))
                 continue;
             try {
@@ -339,7 +339,7 @@ public class RawFileBuffered extends RawFile {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
-                throw new IOException("The file is closed");
+                throw new IOException("The storage system is closed");
             if (state.compareAndSet(STATE_READY, STATE_BUSY))
                 break;
         }

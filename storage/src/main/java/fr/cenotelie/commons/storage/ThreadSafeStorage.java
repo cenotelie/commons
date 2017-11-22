@@ -56,14 +56,14 @@ public class ThreadSafeStorage extends Storage {
     }
 
     @Override
-    public boolean truncate(long length) throws IOException {
-        if (length > Integer.MAX_VALUE)
-            throw new IndexOutOfBoundsException("Length must be less than Integer.MAX_VALUE");
-        long size = storage.getSize();
-        if (size <= length)
+    public boolean cut(long from, long to) throws IOException {
+        if (from < 0 || from > to || from > Integer.MAX_VALUE || to > Integer.MAX_VALUE)
+            throw new IndexOutOfBoundsException();
+        if (from == to)
+            // 0-length cut => do nothing
             return false;
-        try (Access access = access(length, (int) (size - length), true)) {
-            return storage.truncate(length);
+        try (Access access = access((int) from, (int) (to - from), true)) {
+            return storage.cut(from, to);
         }
     }
 
@@ -84,8 +84,8 @@ public class ThreadSafeStorage extends Storage {
 
     @Override
     public Access access(long location, int length, boolean writable) {
-        if (location > Integer.MAX_VALUE)
-            throw new IndexOutOfBoundsException("Location must be less than Integer.MAX_VALUE");
+        if (location < 0 || location > Integer.MAX_VALUE)
+            throw new IndexOutOfBoundsException();
         return accessManager.get((int) location, length, storage.isWritable() && writable);
     }
 
@@ -98,6 +98,8 @@ public class ThreadSafeStorage extends Storage {
      * @return The new access, or null if it cannot be obtained
      */
     public Access access(int location, int length, boolean writable) {
+        if (location < 0)
+            throw new IndexOutOfBoundsException();
         return accessManager.get(location, length, storage.isWritable() && writable);
     }
 
