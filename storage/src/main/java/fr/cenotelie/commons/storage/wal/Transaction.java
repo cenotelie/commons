@@ -22,7 +22,6 @@ import fr.cenotelie.commons.storage.Constants;
 import fr.cenotelie.commons.storage.Endpoint;
 import fr.cenotelie.commons.storage.Storage;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
 
@@ -70,12 +69,12 @@ public class Transaction implements AutoCloseable {
         }
 
         @Override
-        public boolean cut(long from, long to) throws IOException {
+        public boolean cut(long from, long to) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public void flush() throws IOException {
+        public void flush() {
             throw new UnsupportedOperationException();
         }
 
@@ -90,7 +89,7 @@ public class Transaction implements AutoCloseable {
         }
 
         @Override
-        public void close() throws IOException {
+        public void close() {
             throw new UnsupportedOperationException();
         }
     }
@@ -209,7 +208,7 @@ public class Transaction implements AutoCloseable {
      */
     public void commit() throws ConcurrentWriting {
         if (state != STATE_RUNNING)
-            throw new Error("Bad state");
+            throw new IllegalStateException();
         state = STATE_COMMITTING;
         try {
             LogTransactionData data = getLogData();
@@ -254,7 +253,7 @@ public class Transaction implements AutoCloseable {
      */
     public void abort() {
         if (state != STATE_RUNNING)
-            throw new Error("Bad state");
+            throw new IllegalStateException();
         state = STATE_ABORTED;
     }
 
@@ -287,8 +286,10 @@ public class Transaction implements AutoCloseable {
      * @return The access element
      */
     public Access access(long index, int length, boolean writable) {
+        if (index < 0 || length <= 0)
+            throw new IllegalArgumentException();
         if (state != STATE_RUNNING)
-            throw new Error("Bad state");
+            throw new IllegalStateException();
         TransactionAccess access = parent.acquireAccess();
         access.init(storage, index, length, this.writable & writable);
         return access;
