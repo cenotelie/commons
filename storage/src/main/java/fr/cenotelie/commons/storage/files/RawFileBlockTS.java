@@ -282,7 +282,7 @@ class RawFileBlockTS extends RawFileBlock {
     }
 
     /**
-     * Flushes any outstanding changes to the backend file
+     * Flushes any outstanding changes to the backing file
      *
      * @param channel  The originating file channel
      * @param fileSize The current size of the file

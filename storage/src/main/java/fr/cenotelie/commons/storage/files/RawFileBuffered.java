@@ -41,11 +41,11 @@ public class RawFileBuffered extends RawFile {
     private static final int FILE_MAX_LOADED_BLOCKS = 1024;
 
     /**
-     * The backend is ready for IO
+     * The storage system is ready for IO
      */
     private static final int STATE_READY = 0;
     /**
-     * The backend is currently busy with an operation
+     * The storage system is currently busy with an operation
      */
     private static final int STATE_BUSY = 1;
     /**
@@ -82,7 +82,7 @@ public class RawFileBuffered extends RawFile {
      */
     private final AtomicLong time;
     /**
-     * The state of this file backend
+     * The state of this file storage system
      */
     private final AtomicInteger state;
 

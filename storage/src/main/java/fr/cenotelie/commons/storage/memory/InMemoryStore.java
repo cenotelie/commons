@@ -27,21 +27,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Implements an in-memory storage backend
+ * Implements an in-memory storage system
  *
  * @author Laurent Wouters
  */
 public class InMemoryStore extends Storage {
     /**
-     * The backend is ready for IO
+     * The storage system is ready for IO
      */
     private static final int STATE_READY = 0;
     /**
-     * The backend is currently busy with an operation
+     * The storage system is currently busy with an operation
      */
     private static final int STATE_BUSY = 1;
     /**
-     * The backend is now closed
+     * The storage system is now closed
      */
     private static final int STATE_CLOSED = -1;
 

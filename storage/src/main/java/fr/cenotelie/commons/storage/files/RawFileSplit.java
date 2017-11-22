@@ -42,15 +42,15 @@ public class RawFileSplit extends RawFile {
     private static final int MAX_MISSING = 15;
 
     /**
-     * The backend is ready for IO
+     * The storage system is ready for IO
      */
     private static final int STATE_READY = 0;
     /**
-     * The backend is currently busy with an operation
+     * The storage system is currently busy with an operation
      */
     private static final int STATE_BUSY = 1;
     /**
-     * The backend is now closed
+     * The storage system is now closed
      */
     private static final int STATE_CLOSED = -1;
 
@@ -292,10 +292,10 @@ public class RawFileSplit extends RawFile {
     }
 
     /**
-     * Acquires an endpoint that enables reading and writing to the backend at the specified index
+     * Acquires an endpoint that enables reading and writing to the storage system at the specified index
      * The endpoint must be subsequently released by a call to
      *
-     * @param index An index within this backend
+     * @param index An index within this storage system
      * @return The corresponding endpoint
      */
     private Endpoint doAcquireEndpointAt(long index) throws IOException {

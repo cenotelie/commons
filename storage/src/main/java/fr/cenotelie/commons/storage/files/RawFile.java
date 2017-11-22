@@ -22,15 +22,15 @@ import fr.cenotelie.commons.storage.Storage;
 import java.io.File;
 
 /**
- * Represents the raw access to a data file
+ * Represents a storage system that is backed by one or more files
  *
  * @author Laurent Wouters
  */
 public abstract class RawFile extends Storage {
     /**
-     * Gets the backing system file
+     * Gets the backing file (or directory)
      *
-     * @return The backing system file
+     * @return The backing file (or directory)
      */
     public abstract File getSystemFile();
 }

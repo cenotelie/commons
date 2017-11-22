@@ -21,7 +21,7 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Factory to create file storage backend for specified files
+ * Factory to create file storage systems for specified files
  *
  * @author Laurent Wouters
  */
@@ -30,7 +30,7 @@ public abstract class RawFileFactory {
      * Creates a file storage system for the specified file
      *
      * @param file     The system file
-     * @param writable Whether the backend shall allow writing
+     * @param writable Whether the storage system shall allow writing
      * @return The file storage system
      * @throws IOException when an IO error occurred
      */
