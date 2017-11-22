@@ -36,6 +36,10 @@ public class RawFileSplit extends RawFile {
      * The maximum number of part files
      */
     public static final int MAX_FILES = 9999;
+    /**
+     * The maximum number of missing file before stopping to look for them
+     */
+    private static final int MAX_MISSING = 15;
 
     /**
      * The backend is ready for IO
@@ -104,15 +108,19 @@ public class RawFileSplit extends RawFile {
         this.factory = factory;
         this.writable = writable;
         this.fileMaxSize = maxSize;
-        this.filesCount = new AtomicInteger(0);
-        for (int i = 0; i != MAX_FILES; i++) {
+        int last = -1;
+        int missing = 0;
+        for (int i = 0; i != MAX_FILES && missing < MAX_MISSING; i++) {
             File file = new File(directory, fileName(i));
-            if (!file.exists()) {
-                filesCount.set(i);
-                files = new RawFile[bufferSize(i)];
-                break;
+            if (file.exists()) {
+                last = i;
+                missing = 0;
+            } else {
+                missing++;
             }
         }
+        this.filesCount = new AtomicInteger(last + 1);
+        this.files = new RawFile[last + 1];
         this.state = new AtomicInteger(STATE_READY);
     }
 
