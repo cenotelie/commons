@@ -17,14 +17,14 @@
 
 package fr.cenotelie.commons.storage.files;
 
-import fr.cenotelie.commons.storage.StorageEndpoint;
+import fr.cenotelie.commons.storage.Endpoint;
 
 /**
  * A proxy endpoint for a split file
  *
  * @author Laurent Wouters
  */
-class RawFileSplitEndpointProxy extends StorageEndpoint {
+class RawFileSplitEndpointProxy extends Endpoint {
     /**
      * The file that provided the original endpoint
      */
@@ -32,7 +32,7 @@ class RawFileSplitEndpointProxy extends StorageEndpoint {
     /**
      * The original endpoint
      */
-    private final StorageEndpoint endpoint;
+    private final Endpoint endpoint;
     /**
      * The offset of this endpoint relative to the original one
      */
@@ -50,7 +50,7 @@ class RawFileSplitEndpointProxy extends StorageEndpoint {
      * @param offset   The offset of this endpoint relative to the original one
      * @param maxSize  The maximum size of a part file
      */
-    public RawFileSplitEndpointProxy(RawFile file, StorageEndpoint endpoint, long offset, long maxSize) {
+    public RawFileSplitEndpointProxy(RawFile file, Endpoint endpoint, long offset, long maxSize) {
         this.file = file;
         this.endpoint = endpoint;
         this.offset = offset;

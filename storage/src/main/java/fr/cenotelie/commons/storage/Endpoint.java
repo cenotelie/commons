@@ -18,12 +18,12 @@
 package fr.cenotelie.commons.storage;
 
 /**
- * Represents an endpoint for a storage system backend.
- * An endpoint gives a controlled access to the storage system for IO operations.
+ * Represents an endpoint for a storage system.
+ * An endpoint provides access to the storage system at a certain range.
  *
  * @author Laurent Wouters
  */
-public abstract class StorageEndpoint {
+public abstract class Endpoint {
     /**
      * Gets the lower bound for indices within the scope of this endpoint
      *
@@ -98,26 +98,6 @@ public abstract class StorageEndpoint {
     public abstract long readLong(long index);
 
     /**
-     * Reads a single float at the current index
-     *
-     * @param index The index within this element for this operation
-     * @return The float
-     */
-    public float readFloat(long index) {
-        return Float.intBitsToFloat(readInt(index));
-    }
-
-    /**
-     * Reads a single double at the current index
-     *
-     * @param index The index within this element for this operation
-     * @return The double
-     */
-    public double readDouble(long index) {
-        return Double.longBitsToDouble(readLong(index));
-    }
-
-    /**
      * Writes a single byte at the current index
      *
      * @param index The index within this element for this operation
@@ -174,24 +154,4 @@ public abstract class StorageEndpoint {
      * @param value The long to write
      */
     public abstract void writeLong(long index, long value);
-
-    /**
-     * Writes a single float at the current index
-     *
-     * @param index The index within this element for this operation
-     * @param value The float to write
-     */
-    public void writeFloat(long index, float value) {
-        writeInt(index, Float.floatToIntBits(value));
-    }
-
-    /**
-     * Writes a single double at the current index
-     *
-     * @param index The index within this element for this operation
-     * @param value The double to write
-     */
-    public void writeDouble(long index, double value) {
-        writeLong(index, Double.doubleToLongBits(value));
-    }
 }

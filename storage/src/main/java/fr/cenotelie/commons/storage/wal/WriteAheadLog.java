@@ -17,8 +17,8 @@
 
 package fr.cenotelie.commons.storage.wal;
 
-import fr.cenotelie.commons.storage.StorageAccess;
-import fr.cenotelie.commons.storage.StorageBackend;
+import fr.cenotelie.commons.storage.Access;
+import fr.cenotelie.commons.storage.Storage;
 import fr.cenotelie.commons.utils.logging.Logging;
 
 import java.io.IOException;
@@ -80,11 +80,11 @@ public class WriteAheadLog implements AutoCloseable {
     /**
      * The backend storage that is guarded by this WAL
      */
-    private final StorageBackend backend;
+    private final Storage backend;
     /**
      * The storage for the log itself
      */
-    private final StorageBackend log;
+    private final Storage log;
     /**
      * The current state of the log
      */
@@ -129,7 +129,7 @@ public class WriteAheadLog implements AutoCloseable {
      * @param log     The storage for the log itself
      * @throws IOException when an error occurred while accessing storage
      */
-    public WriteAheadLog(StorageBackend backend, StorageBackend log) throws IOException {
+    public WriteAheadLog(Storage backend, Storage log) throws IOException {
         this.backend = backend;
         this.log = log;
         this.state = new AtomicInteger(STATE_CLOSED);
@@ -160,7 +160,7 @@ public class WriteAheadLog implements AutoCloseable {
             // nothing to do
             return;
         DateFormat dateFormat = DateFormat.getDateTimeInstance();
-        try (StorageAccess access = new StorageAccess(backend, 0, (int) size, false)) {
+        try (Access access = new Access(backend, 0, (int) size, false)) {
             while (access.getIndex() < size) {
                 try {
                     // load the data for this transaction
@@ -353,7 +353,7 @@ public class WriteAheadLog implements AutoCloseable {
             }
             // no conflict, write this transaction to the log
             data.logLocation = log.getSize();
-            try (StorageAccess access = log.access(data.logLocation, data.getSerializationLength(), true)) {
+            try (Access access = log.access(data.logLocation, data.getSerializationLength(), true)) {
                 data.writeTo(access);
             }
             try {
@@ -441,7 +441,7 @@ public class WriteAheadLog implements AutoCloseable {
                 LogPageData data = index[i].getPage(location);
                 if (data == null)
                     continue;
-                try (StorageAccess access = log.access(index[i].logLocation + data.offset, data.getSerializationLength(), false)) {
+                try (Access access = log.access(index[i].logLocation + data.offset, data.getSerializationLength(), false)) {
                     page.loadEdits(access, data);
                 }
             }
@@ -528,7 +528,7 @@ public class WriteAheadLog implements AutoCloseable {
      */
     private void doCheckpointWriteBack(LogTransactionData transaction) {
         stateLock(STATE_FLAG_INDEX_LOCK);
-        try (StorageAccess access = log.access(transaction.logLocation, transaction.getSerializationLength(), false)) {
+        try (Access access = log.access(transaction.logLocation, transaction.getSerializationLength(), false)) {
             transaction.loadContent(access);
         } finally {
             stateRelease(STATE_FLAG_INDEX_LOCK);

@@ -17,10 +17,10 @@
 
 package fr.cenotelie.commons.storage.wal;
 
+import fr.cenotelie.commons.storage.Access;
 import fr.cenotelie.commons.storage.Constants;
-import fr.cenotelie.commons.storage.StorageAccess;
-import fr.cenotelie.commons.storage.StorageBackend;
-import fr.cenotelie.commons.storage.StorageEndpoint;
+import fr.cenotelie.commons.storage.Endpoint;
+import fr.cenotelie.commons.storage.Storage;
 import fr.cenotelie.commons.utils.ByteUtils;
 
 import java.util.Arrays;
@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Laurent Wouters
  */
-class Page extends StorageEndpoint {
+class Page extends Endpoint {
     /**
      * The page is free, i.e. not assigned to any location
      */
@@ -102,14 +102,14 @@ class Page extends StorageEndpoint {
      * @param backend  The backend to load from
      * @param location The location in the backend to load from
      */
-    public void loadBase(StorageBackend backend, long location) {
+    public void loadBase(Storage backend, long location) {
         if (buffer == null)
             buffer = new byte[Constants.PAGE_SIZE];
         int length = Constants.PAGE_SIZE;
         if (location + Constants.PAGE_SIZE > backend.getSize())
             length = (int) (backend.getSize() - location);
         if (length > 0) {
-            try (StorageAccess access = backend.access(location, length, false)) {
+            try (Access access = backend.access(location, length, false)) {
                 access.readBytes(buffer, 0, length);
             }
         }
@@ -123,7 +123,7 @@ class Page extends StorageEndpoint {
      * @param access The access to use for loading
      * @param data   The data of the transaction
      */
-    public void loadEdits(StorageAccess access, LogPageData data) {
+    public void loadEdits(Access access, LogPageData data) {
         access.skip(8 + 4); // skip the location data and number of edits
         for (int i = 0; i != data.editsCount; i++) {
             int offset = PageEdits.editIndex(data.edits[i]);

@@ -18,7 +18,7 @@
 package fr.cenotelie.commons.storage.files;
 
 import fr.cenotelie.commons.storage.Constants;
-import fr.cenotelie.commons.storage.StorageEndpoint;
+import fr.cenotelie.commons.storage.Endpoint;
 
 import java.io.File;
 import java.io.IOException;
@@ -221,7 +221,7 @@ public class RawFileBuffered extends RawFile {
     }
 
     @Override
-    public StorageEndpoint acquireEndpointAt(long index) {
+    public Endpoint acquireEndpointAt(long index) {
         try {
             return getBlockFor(index);
         } catch (IOException exception) {
@@ -230,7 +230,7 @@ public class RawFileBuffered extends RawFile {
     }
 
     @Override
-    public void releaseEndpoint(StorageEndpoint endpoint) {
+    public void releaseEndpoint(Endpoint endpoint) {
         ((RawFileBlockTS) endpoint).release();
     }
 

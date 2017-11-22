@@ -30,7 +30,7 @@ import java.util.Random;
  *
  * @author Laurent Wouters
  */
-public class TSAccessManagerTest {
+public class ThreadSafeAccessManagerTest {
     /**
      * Numbers of threads
      */
@@ -48,7 +48,7 @@ public class TSAccessManagerTest {
     public void testConcurrentAccesses() {
         Collection<Thread> threads = new ArrayList<>();
         final Random random = new Random();
-        final TSAccessManager manager = new TSAccessManager(new InMemoryStore());
+        final ThreadSafeAccessManager manager = new ThreadSafeAccessManager(new InMemoryStore());
 
         for (int i = 0; i != THREAD_COUNT; i++) {
             Thread thread = new Thread(new Runnable() {
@@ -57,7 +57,7 @@ public class TSAccessManagerTest {
                     for (int i = 0; i != ACCESSES_COUNT; i++) {
                         int location = random.nextInt() & 0xFFFF;
                         int length = random.nextInt() & 0x00FF;
-                        try (StorageAccess access = manager.get(location, length, false)) {
+                        try (Access access = manager.get(location, length, false)) {
                             Assert.assertEquals(location, access.getLocation());
                             Assert.assertEquals(length, access.getLength());
                         }

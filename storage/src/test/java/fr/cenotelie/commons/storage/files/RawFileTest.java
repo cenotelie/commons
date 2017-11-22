@@ -18,7 +18,7 @@
 package fr.cenotelie.commons.storage.files;
 
 import fr.cenotelie.commons.storage.Constants;
-import fr.cenotelie.commons.storage.StorageAccess;
+import fr.cenotelie.commons.storage.Access;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -76,7 +76,7 @@ public abstract class RawFileTest {
         int totalLength = Constants.PAGE_SIZE * 3;
         // the number of integer values to read and write
         int valueCount = totalLength / 4;
-        try (StorageAccess access = backend.access(0, totalLength, true)) {
+        try (Access access = backend.access(0, totalLength, true)) {
             for (int i = 0; i != valueCount; i++) {
                 access.writeInt(i);
             }
@@ -84,7 +84,7 @@ public abstract class RawFileTest {
         // check the total size
         Assert.assertEquals(totalLength, backend.getSize());
         // re-read immediately
-        try (StorageAccess access = backend.access(0, totalLength, false)) {
+        try (Access access = backend.access(0, totalLength, false)) {
             for (int i = 0; i != valueCount; i++) {
                 int value = access.readInt();
                 Assert.assertEquals(i, value);
@@ -98,7 +98,7 @@ public abstract class RawFileTest {
         // reopen an re-read in read-only
         backend = reopen(backend, false);
         Assert.assertEquals(totalLength, backend.getSize());
-        try (StorageAccess access = backend.access(0, totalLength, false)) {
+        try (Access access = backend.access(0, totalLength, false)) {
             for (int i = 0; i != valueCount; i++) {
                 int value = access.readInt();
                 Assert.assertEquals(i, value);
@@ -119,7 +119,7 @@ public abstract class RawFileTest {
         int totalLength = Constants.PAGE_SIZE * 2 + Constants.PAGE_SIZE / 2;
         // the number of integer values to read and write
         int valueCount = totalLength / 4;
-        try (StorageAccess access = backend.access(0, totalLength, true)) {
+        try (Access access = backend.access(0, totalLength, true)) {
             for (int i = 0; i != valueCount; i++) {
                 access.writeInt(i);
             }
@@ -127,7 +127,7 @@ public abstract class RawFileTest {
         // check the total size
         Assert.assertEquals(totalLength, backend.getSize());
         // re-read immediately
-        try (StorageAccess access = backend.access(0, totalLength, false)) {
+        try (Access access = backend.access(0, totalLength, false)) {
             for (int i = 0; i != valueCount; i++) {
                 int value = access.readInt();
                 Assert.assertEquals(i, value);
@@ -141,7 +141,7 @@ public abstract class RawFileTest {
         // reopen an re-read in read-only
         backend = reopen(backend, false);
         Assert.assertEquals(totalLength, backend.getSize());
-        try (StorageAccess access = backend.access(0, totalLength, false)) {
+        try (Access access = backend.access(0, totalLength, false)) {
             for (int i = 0; i != valueCount; i++) {
                 int value = access.readInt();
                 Assert.assertEquals(i, value);
@@ -162,7 +162,7 @@ public abstract class RawFileTest {
         int totalLength = Constants.PAGE_SIZE * 3;
         // the number of integer values to read and write
         int valueCount = totalLength / 4;
-        try (StorageAccess access = backend.access(0, totalLength, true)) {
+        try (Access access = backend.access(0, totalLength, true)) {
             for (int i = 0; i != valueCount; i++) {
                 access.writeInt(i);
             }
@@ -180,7 +180,7 @@ public abstract class RawFileTest {
         // reopen an re-read in read-only
         backend = reopen(backend, false);
         Assert.assertEquals(totalLength, backend.getSize());
-        try (StorageAccess access = backend.access(0, totalLength, false)) {
+        try (Access access = backend.access(0, totalLength, false)) {
             for (int i = 0; i != valueCount; i++) {
                 int value = access.readInt();
                 Assert.assertEquals(i, value);
@@ -201,7 +201,7 @@ public abstract class RawFileTest {
         int totalLength = Constants.PAGE_SIZE * 2 + Constants.PAGE_SIZE / 2;
         // the number of integer values to read and write
         int valueCount = totalLength / 4;
-        try (StorageAccess access = backend.access(0, totalLength, true)) {
+        try (Access access = backend.access(0, totalLength, true)) {
             for (int i = 0; i != valueCount; i++) {
                 access.writeInt(i);
             }
@@ -219,7 +219,7 @@ public abstract class RawFileTest {
         // reopen an re-read in read-only
         backend = reopen(backend, false);
         Assert.assertEquals(totalLength, backend.getSize());
-        try (StorageAccess access = backend.access(0, totalLength, false)) {
+        try (Access access = backend.access(0, totalLength, false)) {
             for (int i = 0; i != valueCount; i++) {
                 int value = access.readInt();
                 Assert.assertEquals(i, value);

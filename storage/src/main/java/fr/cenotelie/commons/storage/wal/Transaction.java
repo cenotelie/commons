@@ -17,10 +17,10 @@
 
 package fr.cenotelie.commons.storage.wal;
 
+import fr.cenotelie.commons.storage.Access;
 import fr.cenotelie.commons.storage.Constants;
-import fr.cenotelie.commons.storage.StorageAccess;
-import fr.cenotelie.commons.storage.StorageBackend;
-import fr.cenotelie.commons.storage.StorageEndpoint;
+import fr.cenotelie.commons.storage.Endpoint;
+import fr.cenotelie.commons.storage.Storage;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -58,7 +58,7 @@ public class Transaction implements AutoCloseable {
     /**
      * Represents a backend to use for providing access through this transaction
      */
-    private class Backend extends StorageBackend {
+    private class Backend extends Storage {
         @Override
         public boolean isWritable() {
             return Transaction.this.writable;
@@ -80,12 +80,12 @@ public class Transaction implements AutoCloseable {
         }
 
         @Override
-        public StorageEndpoint acquireEndpointAt(long index) {
+        public Endpoint acquireEndpointAt(long index) {
             return Transaction.this.acquirePage(index);
         }
 
         @Override
-        public void releaseEndpoint(StorageEndpoint endpoint) {
+        public void releaseEndpoint(Endpoint endpoint) {
             // do nothing here, the pages are returned at the end of the transaction
         }
 
@@ -118,7 +118,7 @@ public class Transaction implements AutoCloseable {
     /**
      * The backend to use for providing access through this transaction
      */
-    private final StorageBackend backend;
+    private final Storage backend;
     /**
      * The current state of this transaction
      */
@@ -286,7 +286,7 @@ public class Transaction implements AutoCloseable {
      * @param writable Whether the access shall allow writing
      * @return The access element
      */
-    public StorageAccess access(long index, int length, boolean writable) {
+    public Access access(long index, int length, boolean writable) {
         if (state != STATE_RUNNING)
             throw new Error("Bad state");
         TransactionAccess access = parent.acquireAccess();

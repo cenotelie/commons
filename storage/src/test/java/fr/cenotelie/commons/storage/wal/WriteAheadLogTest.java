@@ -17,7 +17,7 @@
 
 package fr.cenotelie.commons.storage.wal;
 
-import fr.cenotelie.commons.storage.StorageAccess;
+import fr.cenotelie.commons.storage.Access;
 import fr.cenotelie.commons.storage.memory.InMemoryStore;
 import org.junit.Assert;
 import org.junit.Test;
@@ -38,13 +38,13 @@ public class WriteAheadLogTest {
         WriteAheadLog wal = new WriteAheadLog(base, log);
 
         try (Transaction transaction = wal.newTransaction(true)) {
-            try (StorageAccess access = transaction.access(0, 4, true)) {
+            try (Access access = transaction.access(0, 4, true)) {
                 access.writeInt(0xFFFFFFFF);
             }
             transaction.commit();
         }
         try (Transaction transaction = wal.newTransaction(false)) {
-            try (StorageAccess access = transaction.access(0, 4, false)) {
+            try (Access access = transaction.access(0, 4, false)) {
                 int value = access.readInt();
                 Assert.assertEquals(0xFFFFFFFF, value);
             }
@@ -63,13 +63,13 @@ public class WriteAheadLogTest {
         Transaction transaction1 = wal.newTransaction(true);
         Transaction transaction2 = wal.newTransaction(false);
 
-        try (StorageAccess access = transaction1.access(0, 4, true)) {
+        try (Access access = transaction1.access(0, 4, true)) {
             access.writeInt(0xFFFFFFFF);
         }
         transaction1.commit();
         transaction1.close();
 
-        try (StorageAccess access = transaction2.access(0, 4, false)) {
+        try (Access access = transaction2.access(0, 4, false)) {
             int value = access.readInt();
             Assert.assertEquals(0, value);
         }
@@ -88,13 +88,13 @@ public class WriteAheadLogTest {
         Transaction transaction1 = wal.newTransaction(true);
         Transaction transaction2 = wal.newTransaction(true);
 
-        try (StorageAccess access = transaction1.access(0, 4, true)) {
+        try (Access access = transaction1.access(0, 4, true)) {
             access.writeInt(0xFFFFFFFF);
         }
         transaction1.commit();
         transaction1.close();
 
-        try (StorageAccess access = transaction2.access(0, 4, true)) {
+        try (Access access = transaction2.access(0, 4, true)) {
             access.writeInt(0xFFFFFFFE);
         }
         boolean catched = false;

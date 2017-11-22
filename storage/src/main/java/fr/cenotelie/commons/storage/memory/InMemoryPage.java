@@ -18,7 +18,7 @@
 package fr.cenotelie.commons.storage.memory;
 
 import fr.cenotelie.commons.storage.Constants;
-import fr.cenotelie.commons.storage.StorageEndpoint;
+import fr.cenotelie.commons.storage.Endpoint;
 import fr.cenotelie.commons.utils.ByteUtils;
 
 import java.util.Arrays;
@@ -28,7 +28,7 @@ import java.util.Arrays;
  *
  * @author Laurent Wouters
  */
-class InMemoryPage extends StorageEndpoint {
+class InMemoryPage extends Endpoint {
     /**
      * The parent store
      */

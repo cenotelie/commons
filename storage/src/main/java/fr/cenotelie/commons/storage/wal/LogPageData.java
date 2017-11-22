@@ -17,8 +17,8 @@
 
 package fr.cenotelie.commons.storage.wal;
 
-import fr.cenotelie.commons.storage.StorageAccess;
-import fr.cenotelie.commons.storage.StorageBackend;
+import fr.cenotelie.commons.storage.Access;
+import fr.cenotelie.commons.storage.Storage;
 
 /**
  * Represents the data of a paged touched by a transaction in the log
@@ -66,7 +66,7 @@ public class LogPageData extends PageEdits {
      * @param access The access to use for loading
      * @param offset The offset of this data relative to the page's location
      */
-    public LogPageData(StorageAccess access, int offset) {
+    public LogPageData(Access access, int offset) {
         this.offset = offset;
         this.location = access.readLong();
         this.editsCount = access.readInt();
@@ -84,7 +84,7 @@ public class LogPageData extends PageEdits {
      *
      * @param access The access to use for loading
      */
-    public void loadContent(StorageAccess access) {
+    public void loadContent(Access access) {
         this.editsContent = new byte[editsCount][];
         access.skip(8 + 4); // skip the location data and number of edits
         for (int i = 0; i != editsCount; i++) {
@@ -99,11 +99,11 @@ public class LogPageData extends PageEdits {
      *
      * @param backend The backend
      */
-    public void applyTo(StorageBackend backend) {
+    public void applyTo(Storage backend) {
         if (editsContent == null)
             return;
         for (int i = 0; i != editsCount; i++) {
-            try (StorageAccess access = backend.access(location + editIndex(edits[i]), editLength(edits[i]), true)) {
+            try (Access access = backend.access(location + editIndex(edits[i]), editLength(edits[i]), true)) {
                 access.writeBytes(editsContent[i]);
             }
         }
@@ -125,7 +125,7 @@ public class LogPageData extends PageEdits {
      *
      * @param access The access to use
      */
-    public void writeTo(StorageAccess access) {
+    public void writeTo(Access access) {
         access.writeLong(location);
         access.writeInt(editsCount);
         for (int i = 0; i != editsCount; i++) {

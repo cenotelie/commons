@@ -17,8 +17,6 @@
 
 package fr.cenotelie.commons.storage.files;
 
-import fr.cenotelie.commons.storage.StorageEndpoint;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -34,7 +32,7 @@ public class RawFileDirect extends RawFile {
     /**
      * The endpoint for a direct file access
      */
-    private final class Endpoint extends StorageEndpoint {
+    private final class Endpoint extends fr.cenotelie.commons.storage.Endpoint {
         /**
          * The access to the file
          */
@@ -283,12 +281,12 @@ public class RawFileDirect extends RawFile {
     }
 
     @Override
-    public StorageEndpoint acquireEndpointAt(long index) {
+    public fr.cenotelie.commons.storage.Endpoint acquireEndpointAt(long index) {
         return endpoint;
     }
 
     @Override
-    public void releaseEndpoint(StorageEndpoint endpoint) {
+    public void releaseEndpoint(fr.cenotelie.commons.storage.Endpoint endpoint) {
         // do nothing
     }
 

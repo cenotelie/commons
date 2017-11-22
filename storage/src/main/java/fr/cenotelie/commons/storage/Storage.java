@@ -20,11 +20,18 @@ package fr.cenotelie.commons.storage;
 import java.io.IOException;
 
 /**
- * Represents a backend storage system for IO operations.
+ * Represents a storage system that can be read from and written to.
+ * A storage system basically provides an abstraction for a virtually infinite array of bytes.
+ * However, a system storage can only be read from and written to in a controlled manner through Accesses.
+ * Accesses are obtained by the <code>access</code> method in this class.
+ * <p>
+ * A storage system must provide endpoints, which are an abstraction over different part of the storage system.
+ * Depending on the index (location within the storage) that is requested, different endpoints may be used.
+ * Endpoints are generally not manipulated by API users, as they are transparently requested and released by Accesses.
  *
  * @author Laurent Wouters
  */
-public abstract class StorageBackend implements AutoCloseable {
+public abstract class Storage implements AutoCloseable {
     /**
      * Gets whether this storage system can be written to
      *
@@ -56,31 +63,31 @@ public abstract class StorageBackend implements AutoCloseable {
     public abstract void flush() throws IOException;
 
     /**
-     * Acquires an endpoint that enables reading and writing to the backend at the specified index
+     * Acquires an endpoint that enables reading and writing to the storage system at the specified index
      * The endpoint must be subsequently released by a call to
      *
-     * @param index An index within this backend
+     * @param index An index within this storage system
      * @return The corresponding endpoint
      */
-    public abstract StorageEndpoint acquireEndpointAt(long index);
+    public abstract Endpoint acquireEndpointAt(long index);
 
     /**
      * When an endpoint is no longer required
      *
      * @param endpoint The endpoint to release
      */
-    public abstract void releaseEndpoint(StorageEndpoint endpoint);
+    public abstract void releaseEndpoint(Endpoint endpoint);
 
     /**
-     * Gets an access to the associated backend for the specified span
+     * Gets an access to the associated storage system for the specified span
      *
-     * @param location The location of the span within the backend
+     * @param location The location of the span within the storage system
      * @param length   The length of the allowed span
      * @param writable Whether the access allows writing
      * @return The new access, or null if it cannot be obtained
      */
-    public StorageAccess access(long location, int length, boolean writable) {
-        return new StorageAccess(this, location, length, isWritable() && writable);
+    public Access access(long location, int length, boolean writable) {
+        return new Access(this, location, length, isWritable() && writable);
     }
 
     /**

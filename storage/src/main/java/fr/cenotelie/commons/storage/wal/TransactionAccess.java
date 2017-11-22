@@ -17,8 +17,8 @@
 
 package fr.cenotelie.commons.storage.wal;
 
-import fr.cenotelie.commons.storage.StorageAccess;
-import fr.cenotelie.commons.storage.StorageBackend;
+import fr.cenotelie.commons.storage.Access;
+import fr.cenotelie.commons.storage.Storage;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Laurent Wouters
  */
-class TransactionAccess extends StorageAccess {
+class TransactionAccess extends Access {
     /**
      * The page is free, i.e. not assigned to any location
      */
@@ -71,7 +71,7 @@ class TransactionAccess extends StorageAccess {
      * @param length   The length of the allowed span
      * @param writable Whether the access allows writing
      */
-    public void init(StorageBackend backend, long location, int length, boolean writable) {
+    public void init(Storage backend, long location, int length, boolean writable) {
         setup(backend, location, length, writable);
         state.set(STATE_READY);
     }

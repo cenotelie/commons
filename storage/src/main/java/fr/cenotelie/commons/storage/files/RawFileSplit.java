@@ -17,7 +17,7 @@
 
 package fr.cenotelie.commons.storage.files;
 
-import fr.cenotelie.commons.storage.StorageEndpoint;
+import fr.cenotelie.commons.storage.Endpoint;
 
 import java.io.File;
 import java.io.IOException;
@@ -274,7 +274,7 @@ public class RawFileSplit extends RawFile {
     }
 
     @Override
-    public StorageEndpoint acquireEndpointAt(long index) {
+    public Endpoint acquireEndpointAt(long index) {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
@@ -298,7 +298,7 @@ public class RawFileSplit extends RawFile {
      * @param index An index within this backend
      * @return The corresponding endpoint
      */
-    private StorageEndpoint doAcquireEndpointAt(long index) throws IOException {
+    private Endpoint doAcquireEndpointAt(long index) throws IOException {
         int fileIndex = (int) (index / fileMaxSize);
         long rest = index % fileMaxSize;
         if (fileIndex >= files.length)
@@ -316,7 +316,7 @@ public class RawFileSplit extends RawFile {
     }
 
     @Override
-    public void releaseEndpoint(StorageEndpoint endpoint) {
+    public void releaseEndpoint(Endpoint endpoint) {
         ((RawFileSplitEndpointProxy) endpoint).release();
     }
 

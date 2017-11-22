@@ -17,7 +17,7 @@
 
 package fr.cenotelie.commons.storage.files;
 
-import fr.cenotelie.commons.storage.StorageBackend;
+import fr.cenotelie.commons.storage.Storage;
 
 import java.io.File;
 
@@ -26,7 +26,7 @@ import java.io.File;
  *
  * @author Laurent Wouters
  */
-public abstract class RawFile extends StorageBackend {
+public abstract class RawFile extends Storage {
     /**
      * Gets the backing system file
      *

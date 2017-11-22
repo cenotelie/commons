@@ -20,23 +20,23 @@ package fr.cenotelie.commons.storage;
 import fr.cenotelie.commons.utils.ByteUtils;
 
 /**
- * Base API for a controlled access to a storage backend element
- * The access defines a span within the backend element that can be accessed.
+ * Represents a controlled access to storage system.
+ * The access defines a span that can be accessed within the storage system.
  * Only operations within this span are allowed.
  * The beginning of the span is a mapped to the 0 index of this access element.
  * The access element keeps track of its current index within the span and will automatically update it upon reading and writing.
  *
  * @author Laurent Wouters
  */
-public class StorageAccess implements AutoCloseable {
+public class Access implements AutoCloseable {
     /**
-     * The target backend for this access
+     * The target storage system for this access
      */
-    private StorageBackend backend;
+    private Storage storage;
     /**
      * The current endpoint
      */
-    private StorageEndpoint endpoint;
+    private Endpoint endpoint;
     /**
      * The lower bound for indices within the scope of this endpoint
      */
@@ -47,11 +47,11 @@ public class StorageAccess implements AutoCloseable {
     private long endpointBoundMax;
 
     /**
-     * The location in the backend
+     * The location in the storage system
      */
     private long location;
     /**
-     * The length of the proxy in the backend
+     * The length of the proxy in the storage system
      */
     private int length;
     /**
@@ -59,15 +59,15 @@ public class StorageAccess implements AutoCloseable {
      */
     private boolean writable;
     /**
-     * The current index in the backend
+     * The current index in the storage system
      */
     private long index;
 
     /**
      * Initializes an empty access
      */
-    public StorageAccess() {
-        this.backend = null;
+    public Access() {
+        this.storage = null;
         this.endpoint = null;
         this.location = -1;
         this.length = 0;
@@ -78,13 +78,13 @@ public class StorageAccess implements AutoCloseable {
     /**
      * Initializes this access
      *
-     * @param backend  The target backend for this access
-     * @param location The location of the span for this access within the backend
+     * @param storage  The target storage system for this access
+     * @param location The location of the span for this access within the storage system
      * @param length   The length of the allowed span
      * @param writable Whether the access allows writing
      */
-    public StorageAccess(StorageBackend backend, long location, int length, boolean writable) {
-        this.backend = backend;
+    public Access(Storage storage, long location, int length, boolean writable) {
+        this.storage = storage;
         this.endpoint = null;
         this.endpointBoundMin = Long.MAX_VALUE;
         this.endpointBoundMax = Long.MIN_VALUE;
@@ -97,13 +97,13 @@ public class StorageAccess implements AutoCloseable {
     /**
      * Setups this access before using it
      *
-     * @param backend  The target backend for this access
-     * @param location The location of the span for this access within the backend
+     * @param storage  The target storage system for this access
+     * @param location The location of the span for this access within the storage system
      * @param length   The length of the allowed span
      * @param writable Whether the access allows writing
      */
-    protected void setup(StorageBackend backend, long location, int length, boolean writable) {
-        this.backend = backend;
+    protected void setup(Storage storage, long location, int length, boolean writable) {
+        this.storage = storage;
         this.endpoint = null;
         this.endpointBoundMin = Long.MAX_VALUE;
         this.endpointBoundMax = Long.MIN_VALUE;
@@ -114,9 +114,9 @@ public class StorageAccess implements AutoCloseable {
     }
 
     /**
-     * Gets the location of this access in the backend
+     * Gets the location of this access in the storage system
      *
-     * @return The location of this access in the backend
+     * @return The location of this access in the storage system
      */
     public long getLocation() {
         return location;
@@ -124,7 +124,7 @@ public class StorageAccess implements AutoCloseable {
 
     /**
      * Gets the current index of this access
-     * The index is local to this access, meaning that 0 represents the start of the access window in the associated backend.
+     * The index is local to this access, meaning that 0 represents the start of the access window in the associated storage system.
      *
      * @return The current access index
      */
@@ -133,7 +133,7 @@ public class StorageAccess implements AutoCloseable {
     }
 
     /**
-     * Gets the length of this access window in the associated backend
+     * Gets the length of this access window in the associated storage system
      *
      * @return The length of this access window
      */
@@ -147,7 +147,7 @@ public class StorageAccess implements AutoCloseable {
      * @param access An access
      * @return Whether the two access are disjoint
      */
-    public boolean disjoints(StorageAccess access) {
+    public boolean disjoints(Access access) {
         return (this.location + this.length <= access.location) // this is completely before parameter
                 || (access.location + access.length <= this.location); // parameter is completely before this
     }
@@ -163,35 +163,35 @@ public class StorageAccess implements AutoCloseable {
 
     /**
      * Positions the index of this access
-     * The index is local to this access, meaning that 0 represents the start of the access window in the associated backend.
+     * The index is local to this access, meaning that 0 represents the start of the access window in the associated storage system.
      *
      * @param index The new access index
      * @return This access
      */
-    public StorageAccess seek(int index) {
+    public Access seek(int index) {
         this.index = location + index;
         return this;
     }
 
     /**
      * Resets the index of this access to its initial position
-     * The index is local to this access, meaning that 0 represents the start of the access window in the associated backend.
+     * The index is local to this access, meaning that 0 represents the start of the access window in the associated storage system.
      *
      * @return This access
      */
-    public StorageAccess reset() {
+    public Access reset() {
         this.index = location;
         return this;
     }
 
     /**
      * Moves the index of this access
-     * The index is local to this access, meaning that 0 represents the start of the access window in the associated backend.
+     * The index is local to this access, meaning that 0 represents the start of the access window in the associated storage system.
      *
      * @param offset The offset to move from
      * @return This access
      */
-    public StorageAccess skip(int offset) {
+    public Access skip(int offset) {
         this.index += offset;
         return this;
     }
@@ -212,8 +212,8 @@ public class StorageAccess implements AutoCloseable {
     private void updateEndpoint() {
         try {
             if (endpoint != null)
-                backend.releaseEndpoint(endpoint);
-            endpoint = backend.acquireEndpointAt(index);
+                storage.releaseEndpoint(endpoint);
+            endpoint = storage.acquireEndpointAt(index);
         } catch (Throwable throwable) {
             endpoint = null;
             endpointBoundMin = Long.MAX_VALUE;
@@ -464,22 +464,25 @@ public class StorageAccess implements AutoCloseable {
      * Writes a single byte at the current index
      *
      * @param value The byte to write
+     * @return This access
      */
-    public void writeByte(byte value) {
+    public Access writeByte(byte value) {
         if (!writable || !isWithinAccessBounds(1))
             throw new IndexOutOfBoundsException("Cannot write the specified amount of data at this index");
         if (index < endpointBoundMin || index >= endpointBoundMax)
             updateEndpoint();
         endpoint.writeByte(index, value);
         index++;
+        return this;
     }
 
     /**
      * Writes bytes at the current index
      *
      * @param value The bytes to write
+     * @return This access
      */
-    public void writeBytes(byte[] value) {
+    public Access writeBytes(byte[] value) {
         if (!writable || !isWithinAccessBounds(value.length))
             throw new IndexOutOfBoundsException("Cannot write the specified amount of data at this index");
         if (index < endpointBoundMin || index >= endpointBoundMax)
@@ -488,7 +491,7 @@ public class StorageAccess implements AutoCloseable {
             // fast track for access within the current endpoint
             endpoint.writeBytes(index, value);
             index += value.length;
-            return;
+            return this;
         }
         int remaining = length;
         int target = 0;
@@ -506,6 +509,7 @@ public class StorageAccess implements AutoCloseable {
                 updateEndpoint();
             }
         }
+        return this;
     }
 
     /**
@@ -514,8 +518,9 @@ public class StorageAccess implements AutoCloseable {
      * @param buffer The buffer with the bytes to write
      * @param start  The index in the buffer to start writing from
      * @param length The number of bytes to write
+     * @return This access
      */
-    public void writeBytes(byte[] buffer, int start, int length) {
+    public Access writeBytes(byte[] buffer, int start, int length) {
         if (!writable || !isWithinAccessBounds(length))
             throw new IndexOutOfBoundsException("Cannot write the specified amount of data at this index");
         if (index < endpointBoundMin || index >= endpointBoundMax)
@@ -524,7 +529,7 @@ public class StorageAccess implements AutoCloseable {
             // fast track for access within the current endpoint
             endpoint.writeBytes(index, buffer, start, length);
             index += length;
-            return;
+            return this;
         }
         int remaining = length;
         int target = start;
@@ -542,14 +547,16 @@ public class StorageAccess implements AutoCloseable {
                 updateEndpoint();
             }
         }
+        return this;
     }
 
     /**
      * Writes a single char at the current index
      *
      * @param value The char to write
+     * @return This access
      */
-    public void writeChar(char value) {
+    public Access writeChar(char value) {
         if (!writable || !isWithinAccessBounds(2))
             throw new IndexOutOfBoundsException("Cannot write the specified amount of data at this index");
         if (index < endpointBoundMin || index >= endpointBoundMax)
@@ -558,21 +565,23 @@ public class StorageAccess implements AutoCloseable {
             // fast track for access within the current endpoint
             endpoint.writeChar(index, value);
             index += 2;
-            return;
+            return this;
         }
         endpoint.writeByte(index, (byte) (value >>> 8 & 0xFF));
         index++;
         updateEndpoint();
         endpoint.writeByte(index, (byte) (value & 0xFF));
         index++;
+        return this;
     }
 
     /**
      * Writes a single short at the current index
      *
      * @param value The short to write
+     * @return This access
      */
-    public void writeShort(short value) {
+    public Access writeShort(short value) {
         if (!writable || !isWithinAccessBounds(2))
             throw new IndexOutOfBoundsException("Cannot write the specified amount of data at this index");
         if (index < endpointBoundMin || index >= endpointBoundMax)
@@ -581,21 +590,23 @@ public class StorageAccess implements AutoCloseable {
             // fast track for access within the current endpoint
             endpoint.writeShort(index, value);
             index += 2;
-            return;
+            return this;
         }
         endpoint.writeByte(index, (byte) (value >>> 8 & 0xFF));
         index++;
         updateEndpoint();
         endpoint.writeByte(index, (byte) (value & 0xFF));
         index++;
+        return this;
     }
 
     /**
      * Writes a single int at the current index
      *
      * @param value The int to write
+     * @return This access
      */
-    public void writeInt(int value) {
+    public Access writeInt(int value) {
         if (!writable || !isWithinAccessBounds(4))
             throw new IndexOutOfBoundsException("Cannot write the specified amount of data at this index");
         if (index < endpointBoundMin || index >= endpointBoundMax)
@@ -604,7 +615,7 @@ public class StorageAccess implements AutoCloseable {
             // fast track for access within the current endpoint
             endpoint.writeInt(index, value);
             index += 4;
-            return;
+            return this;
         }
         endpoint.writeByte(index, (byte) (value >>> 24 & 0xFF));
         index++;
@@ -617,14 +628,16 @@ public class StorageAccess implements AutoCloseable {
         updateEndpoint();
         endpoint.writeByte(index, (byte) (value & 0xFF));
         index++;
+        return this;
     }
 
     /**
      * Writes a single long at the current index
      *
      * @param value The long to write
+     * @return This access
      */
-    public void writeLong(long value) {
+    public Access writeLong(long value) {
         if (!writable || !isWithinAccessBounds(4))
             throw new IndexOutOfBoundsException("Cannot write the specified amount of data at this index");
         if (index < endpointBoundMin || index >= endpointBoundMax)
@@ -633,7 +646,7 @@ public class StorageAccess implements AutoCloseable {
             // fast track for access within the current endpoint
             endpoint.writeLong(index, value);
             index += 8;
-            return;
+            return this;
         }
         endpoint.writeByte(index, (byte) (value >>> 56 & 0xFF));
         index++;
@@ -658,24 +671,27 @@ public class StorageAccess implements AutoCloseable {
         updateEndpoint();
         endpoint.writeByte(index, (byte) (value & 0xFF));
         index++;
+        return this;
     }
 
     /**
      * Writes a single float at the current index
      *
      * @param value The float to write
+     * @return This access
      */
-    public void writeFloat(float value) {
-        writeInt(Float.floatToIntBits(value));
+    public Access writeFloat(float value) {
+        return writeInt(Float.floatToIntBits(value));
     }
 
     /**
      * Writes a single double at the current index
      *
      * @param value The double to write
+     * @return This access
      */
-    public void writeDouble(double value) {
-        writeLong(Double.doubleToLongBits(value));
+    public Access writeDouble(double value) {
+        return writeLong(Double.doubleToLongBits(value));
     }
 
     @Override
@@ -687,17 +703,17 @@ public class StorageAccess implements AutoCloseable {
      * Releases any held resource
      */
     protected void releaseOnClose() {
-        if (backend != null && endpoint != null) {
+        if (storage != null && endpoint != null) {
             try {
-                backend.releaseEndpoint(endpoint);
+                storage.releaseEndpoint(endpoint);
             } finally {
-                backend = null;
+                storage = null;
                 endpoint = null;
                 endpointBoundMin = Long.MAX_VALUE;
                 endpointBoundMax = Long.MIN_VALUE;
             }
         } else {
-            backend = null;
+            storage = null;
             endpoint = null;
         }
     }

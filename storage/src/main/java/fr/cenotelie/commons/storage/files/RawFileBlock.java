@@ -18,7 +18,7 @@
 package fr.cenotelie.commons.storage.files;
 
 import fr.cenotelie.commons.storage.Constants;
-import fr.cenotelie.commons.storage.StorageEndpoint;
+import fr.cenotelie.commons.storage.Endpoint;
 import fr.cenotelie.commons.utils.ByteUtils;
 
 import java.io.IOException;
@@ -32,7 +32,7 @@ import java.util.Arrays;
  *
  * @author Laurent Wouters
  */
-class RawFileBlock extends StorageEndpoint {
+class RawFileBlock extends Endpoint {
     /**
      * The parent file
      */

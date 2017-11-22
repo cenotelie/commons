@@ -18,15 +18,15 @@
 package fr.cenotelie.commons.storage;
 
 /**
- * Represents a thread-safe access to a backend
+ * Represents a thread-safe access to a storage system
  *
  * @author Laurent Wouters
  */
-class TSAccess extends StorageAccess {
+class ThreadSafeAccess extends Access {
     /**
      * The parent manager
      */
-    private final TSAccessManager manager;
+    private final ThreadSafeAccessManager manager;
     /**
      * The identifier of this access for the parent manager
      */
@@ -38,7 +38,7 @@ class TSAccess extends StorageAccess {
      * @param manager    The parent manager
      * @param identifier The identifier of this access for the parent manager
      */
-    public TSAccess(TSAccessManager manager, int identifier) {
+    public ThreadSafeAccess(ThreadSafeAccessManager manager, int identifier) {
         super();
         this.manager = manager;
         this.identifier = identifier;
@@ -50,7 +50,7 @@ class TSAccess extends StorageAccess {
      * @param manager    The parent manager
      * @param identifier The identifier of this access for the parent manager
      */
-    public TSAccess(TSAccessManager manager, int identifier, int location) {
+    public ThreadSafeAccess(ThreadSafeAccessManager manager, int identifier, int location) {
         super(null, location, 0, false);
         this.manager = manager;
         this.identifier = identifier;

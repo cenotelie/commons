@@ -17,8 +17,8 @@
 
 package fr.cenotelie.commons.storage.wal;
 
-import fr.cenotelie.commons.storage.StorageAccess;
-import fr.cenotelie.commons.storage.StorageBackend;
+import fr.cenotelie.commons.storage.Access;
+import fr.cenotelie.commons.storage.Storage;
 
 /**
  * Represents the data about a transaction as written in a log
@@ -61,7 +61,7 @@ class LogTransactionData {
      *
      * @param access The access to use for loading
      */
-    public LogTransactionData(StorageAccess access) {
+    public LogTransactionData(Access access) {
         long start = access.getIndex();
         logLocation = access.getLocation() + start;
         sequenceNumber = access.readLong();
@@ -79,7 +79,7 @@ class LogTransactionData {
      *
      * @param access The access to use for loading
      */
-    public void loadContent(StorageAccess access) {
+    public void loadContent(Access access) {
         access.skip(8 + 8 + 4); // seq number, timestamp and pages count
         for (int i = 0; i != pages.length; i++)
             pages[i].loadContent(access);
@@ -122,7 +122,7 @@ class LogTransactionData {
      *
      * @param backend The backend
      */
-    public void applyTo(StorageBackend backend) {
+    public void applyTo(Storage backend) {
         for (LogPageData page : pages) {
             page.applyTo(backend);
         }
@@ -145,7 +145,7 @@ class LogTransactionData {
      *
      * @param access The access to use
      */
-    public void writeTo(StorageAccess access) {
+    public void writeTo(Access access) {
         access.writeLong(sequenceNumber);
         access.writeLong(timestamp);
         access.writeInt(pages.length);

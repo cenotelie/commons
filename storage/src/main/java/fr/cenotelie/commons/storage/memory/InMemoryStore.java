@@ -18,8 +18,8 @@
 package fr.cenotelie.commons.storage.memory;
 
 import fr.cenotelie.commons.storage.Constants;
-import fr.cenotelie.commons.storage.StorageBackend;
-import fr.cenotelie.commons.storage.StorageEndpoint;
+import fr.cenotelie.commons.storage.Endpoint;
+import fr.cenotelie.commons.storage.Storage;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Laurent Wouters
  */
-public class InMemoryStore extends StorageBackend {
+public class InMemoryStore extends Storage {
     /**
      * The backend is ready for IO
      */
@@ -122,7 +122,7 @@ public class InMemoryStore extends StorageBackend {
     }
 
     @Override
-    public StorageEndpoint acquireEndpointAt(long index) {
+    public Endpoint acquireEndpointAt(long index) {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
@@ -144,7 +144,7 @@ public class InMemoryStore extends StorageBackend {
     }
 
     @Override
-    public void releaseEndpoint(StorageEndpoint endpoint) {
+    public void releaseEndpoint(Endpoint endpoint) {
         // do nothing
     }
 

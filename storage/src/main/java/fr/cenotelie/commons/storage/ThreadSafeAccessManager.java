@@ -23,12 +23,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
- * Manages the concurrent accesses onto a single IO backend
+ * Manages the concurrent accesses onto a single storage system so that
+ * no writing thread can overlap with other threads accessing the same storage system.
  * This structure is thread safe and lock-free.
  *
  * @author Laurent Wouters
  */
-public class TSAccessManager {
+class ThreadSafeAccessManager {
     /**
      * The size of the access pool
      */
@@ -47,13 +48,13 @@ public class TSAccessManager {
     private static final int THREAD_POOL_SIZE = 16;
 
     /**
-     * The backend element that is protected by this manager
+     * The storage system that is protected by this manager
      */
-    private final StorageBackend backend;
+    private final Storage storage;
     /**
      * The pool of existing accesses in the manager
      */
-    private final TSAccess[] accesses;
+    private final ThreadSafeAccess[] accesses;
     /**
      * The current number of accesses in the pool
      */
@@ -78,15 +79,15 @@ public class TSAccessManager {
     private final AtomicInteger threads;
 
     /**
-     * Initializes this pool
+     * Initializes this manager
      *
-     * @param backend The backend element that is protected by this manager
+     * @param storage The storage system that is protected by this manager
      */
-    public TSAccessManager(StorageBackend backend) {
-        this.backend = backend;
-        this.accesses = new TSAccess[ACCESSES_POOL_SIZE];
-        this.accesses[ACTIVE_HEAD_ID] = new TSAccess(this, ACTIVE_HEAD_ID, 0);
-        this.accesses[ACTIVE_TAIL_ID] = new TSAccess(this, ACTIVE_TAIL_ID, Integer.MAX_VALUE);
+    public ThreadSafeAccessManager(Storage storage) {
+        this.storage = storage;
+        this.accesses = new ThreadSafeAccess[ACCESSES_POOL_SIZE];
+        this.accesses[ACTIVE_HEAD_ID] = new ThreadSafeAccess(this, ACTIVE_HEAD_ID, 0);
+        this.accesses[ACTIVE_TAIL_ID] = new ThreadSafeAccess(this, ACTIVE_TAIL_ID, Integer.MAX_VALUE);
         this.accessesCount = new AtomicInteger(2);
         this.accessesState = new AtomicLongArray(ACCESSES_POOL_SIZE);
         this.accessesState.set(ACTIVE_HEAD_ID, 0x0000000001000001L);
@@ -319,7 +320,7 @@ public class TSAccessManager {
      * @return Whether the attempt is successful
      */
     private boolean listSearchAndInsert(int toInsert, int key) {
-        TSAccess accessToInsert = accesses[toInsert];
+        ThreadSafeAccess accessToInsert = accesses[toInsert];
 
         // find the left node
         int leftNode;
@@ -334,7 +335,7 @@ public class TSAccessManager {
             currentNodeState = accessesState.get(currentNode);
             if (!stateIsActive(currentNodeState))
                 return false;
-            TSAccess accessCurrentNode = accesses[currentNode];
+            ThreadSafeAccess accessCurrentNode = accesses[currentNode];
             if ((accessToInsert.isWritable() || accessCurrentNode.isWritable()) && !accessToInsert.disjoints(accessCurrentNode))
                 // there is a write overlap
                 return false;
@@ -351,7 +352,7 @@ public class TSAccessManager {
                 return false;
             if (stateKey(currentNodeState) >= key + accessToInsert.getLength())
                 break;
-            TSAccess accessCurrentNode = accesses[currentNode];
+            ThreadSafeAccess accessCurrentNode = accesses[currentNode];
             if ((accessToInsert.isWritable() || accessCurrentNode.isWritable()) && !accessToInsert.disjoints(accessCurrentNode))
                 // there is a write overlap
                 return false;
@@ -446,26 +447,26 @@ public class TSAccessManager {
     }
 
     /**
-     * Gets an access to the associated backend for the specified span
+     * Gets an access to the associated storage system for the specified span
      *
-     * @param location The location of the span within the backend
+     * @param location The location of the span within the storage system
      * @param length   The length of the allowed span
      * @param writable Whether the access allows writing
      * @return The new access, or null if it cannot be obtained
      */
-    public StorageAccess get(int location, int length, boolean writable) {
-        TSAccess access = newAccess(location);
-        access.setup(backend, location, length, writable);
+    public Access get(int location, int length, boolean writable) {
+        ThreadSafeAccess access = newAccess(location);
+        access.setup(storage, location, length, writable);
         listInsert(access.identifier, location);
         return access;
     }
 
     /**
-     * Ends an access to the backend
+     * Ends an access to the storage system
      *
      * @param access The access
      */
-    void onAccessEnd(TSAccess access) {
+    void onAccessEnd(ThreadSafeAccess access) {
         listRemove(access.identifier);
     }
 
@@ -475,12 +476,12 @@ public class TSAccessManager {
      * @param key The key for the access
      * @return A free access object
      */
-    private TSAccess newAccess(int key) {
+    private ThreadSafeAccess newAccess(int key) {
         int count = accessesCount.get();
         while (count < ACCESSES_POOL_SIZE) {
             // the pool is not full, try to grow it
             if (accessesCount.compareAndSet(count, count + 1)) {
-                accesses[count] = new TSAccess(this, count);
+                accesses[count] = new ThreadSafeAccess(this, count);
                 accessesState.set(count, stateSetActive(key));
                 return accesses[count];
             }
