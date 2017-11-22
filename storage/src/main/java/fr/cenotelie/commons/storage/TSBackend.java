@@ -59,7 +59,10 @@ public class TSBackend extends StorageBackend {
     public boolean truncate(long length) throws IOException {
         if (length > Integer.MAX_VALUE)
             throw new IndexOutOfBoundsException("Length must be less than Integer.MAX_VALUE");
-        try (StorageAccess access = access(length, (int) backend.getSize(), true)) {
+        long size = backend.getSize();
+        if (size <= length)
+            return false;
+        try (StorageAccess access = access(length, (int) (size - length), true)) {
             return backend.truncate(length);
         }
     }
