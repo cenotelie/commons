@@ -114,6 +114,8 @@ public class RawFileDirect extends RawFile {
 
     @Override
     public Endpoint acquireEndpointAt(long index) {
+        if (index < 0)
+            throw new IndexOutOfBoundsException();
         return endpoint;
     }
 

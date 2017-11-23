@@ -21,6 +21,8 @@ import fr.cenotelie.commons.storage.Endpoint;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -77,7 +79,7 @@ public class RawFileSplit extends RawFile {
     /**
      * The number of part files
      */
-    private final AtomicInteger filesCount;
+    private volatile int filesCount;
     /**
      * The part files
      */
@@ -115,7 +117,7 @@ public class RawFileSplit extends RawFile {
                 missing++;
             }
         }
-        this.filesCount = new AtomicInteger(last + 1);
+        this.filesCount = last + 1;
         this.files = new RawFile[bufferSize(last + 1)];
         this.state = new AtomicInteger(STATE_READY);
     }
@@ -170,15 +172,14 @@ public class RawFileSplit extends RawFile {
                 break;
         }
         try {
-            int count = filesCount.get();
-            if (count == 0)
+            if (filesCount == 0)
                 return 0;
-            long total = (count - 1) * fileMaxSize;
-            if (files[count - 1] == null)
-                files[count - 1] = factory.newStorage(new File(directory, fileName(count - 1)), writable);
-            total += files[count - 1].getSize();
+            long total = (filesCount - 1) * fileMaxSize;
+            if (files[filesCount - 1] == null)
+                files[filesCount - 1] = factory.newStorage(new File(directory, fileName(filesCount - 1)), writable);
+            total += files[filesCount - 1].getSize();
             return total;
-        } catch (IOException exception) {
+        } catch (Throwable exception) {
             throw new RuntimeException(exception);
         } finally {
             state.set(STATE_READY);
@@ -186,67 +187,144 @@ public class RawFileSplit extends RawFile {
     }
 
     @Override
-    public boolean cut(long from, long to) {
+    public boolean cut(long from, long to) throws IOException {
+        if (from < 0 || from > to)
+            throw new IndexOutOfBoundsException();
+        if (from == to)
+            // 0-length cut => do nothing
+            return false;
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
-                throw new IOException("The storage system is closed");
+                throw new IllegalStateException();
             if (state.compareAndSet(STATE_READY, STATE_BUSY))
                 break;
         }
         try {
-            return doTruncate(length);
+            return doCut(from, to);
         } finally {
             state.set(STATE_READY);
         }
     }
 
     /**
-     * Truncates this storage system to the specified length
+     * Cuts content within this storage system
      *
-     * @param length The length to truncate to
+     * @param from The starting index to cut at (included)
+     * @param to   The end index to cut to (excluded)
      * @return Whether the operation had an effect
      * @throws IOException When an IO error occurred
      */
-    private boolean doTruncate(long length) throws IOException {
-        int fileIndex = (int) (length / fileMaxSize);
-        long rest = length % fileMaxSize;
-        int count = filesCount.get();
-        if (fileIndex >= count)
+    private boolean doCut(long from, long to) throws IOException {
+        int fromFileIndex = (int) (from / fileMaxSize);
+        long fromRest = from % fileMaxSize;
+        int toFileIndex = (int) (to / fileMaxSize);
+        long toRest = to % fileMaxSize;
+        if (toRest == 0) {
+            toFileIndex--;
+            toRest = fileMaxSize;
+        }
+
+        if (fromFileIndex >= filesCount)
+            // nothing to cut
             return false;
-        for (int i = fileIndex + 1; i != count; i++) {
-            // close the file
-            if (files[i] != null) {
-                files[i].close();
-                files[i] = null;
+        try {
+            // cut the first file
+            boolean didSomething = doCutFile(fromFileIndex, fromRest, toFileIndex == fromFileIndex ? toRest : fileMaxSize);
+            if (fromFileIndex == toFileIndex)
+                return didSomething;
+            for (int i = fromFileIndex + 1; i != toFileIndex; i++) {
+                // not the last file
+                didSomething |= doCutFile(i, 0, fileMaxSize);
             }
+            // cut the last file
+            didSomething |= doCutFile(toFileIndex, 0, toFileIndex);
+            return didSomething;
+        } finally {
+            doCutDetectLastFile();
         }
-        for (int i = fileIndex + 1; i != count; i++) {
-            // delete the file
-            File target = new File(directory, fileName(i));
-            if (target.exists() && !target.delete())
-                throw new IOException("Failed to delete file " + target.getAbsolutePath());
+    }
+
+    /**
+     * Cuts a specific file
+     *
+     * @param fileIndex The index of the file to cut
+     * @param from      The starting index to cut at (included)
+     * @param to        The end index to cut to (excluded)
+     * @return Whether the operation had an effect
+     * @throws IOException When an IO error occurred
+     */
+    private boolean doCutFile(int fileIndex, long from, long to) throws IOException {
+        if (files[fileIndex] != null) {
+            // the file is open, apply the cut
+            return doCutFileOpen(fileIndex, from, to);
         }
-        // truncate the last file
-        if (rest == 0) {
-            // delete
-            if (files[fileIndex] != null) {
-                files[fileIndex].close();
-                files[fileIndex] = null;
+
+        File target = new File(directory, fileName(fileIndex));
+        if (!target.exists())
+            // the file does not exist
+            return false;
+        long length = target.length();
+        if (from >= length)
+            // the cut is after the file
+            return false;
+        if (to >= length) {
+            // this would either completely delete the file, or truncate it
+            if (from == 0) {
+                // delete the file
+                if (target.exists() && !target.delete())
+                    throw new IOException("Failed to delete file " + target.getAbsolutePath());
+                return true;
             }
-            File target = new File(directory, fileName(fileIndex));
-            filesCount.set(fileIndex);
-            if (target.exists() && !target.delete())
-                throw new IOException("Failed to delete file " + target.getAbsolutePath());
+            // here, truncate at from
+            try (FileChannel channel = FileChannel.open(target.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE)) {
+                channel.truncate(from);
+                channel.force(true);
+            }
             return true;
-        } else {
-            // truncate to rest
-            filesCount.set(fileIndex + 1);
-            if (files[fileIndex] == null)
-                files[fileIndex] = factory.newStorage(new File(directory, fileName(fileIndex)), writable);
-            boolean deletedSomeFiles = fileIndex + 1 != count;
-            boolean truncated = files[fileIndex].truncate(rest);
-            return deletedSomeFiles || truncated;
+        }
+
+        // here, the cut is within the file, we need to allocate the file
+        files[fileIndex] = factory.newStorage(target, writable);
+        return doCutFileOpen(fileIndex, from, to);
+    }
+
+    /**
+     * Cuts a specific file when it is open
+     *
+     * @param fileIndex The index of the file to cut
+     * @param from      The starting index to cut at (included)
+     * @param to        The end index to cut to (excluded)
+     * @return Whether the operation had an effect
+     * @throws IOException When an IO error occurred
+     */
+    private boolean doCutFileOpen(int fileIndex, long from, long to) throws IOException {
+        boolean result = files[fileIndex].cut(from, to);
+        if (!result)
+            // did nothing
+            return false;
+        if (from == 0 && files[fileIndex].getSize() == 0) {
+            // file is now empty, delete it
+            files[fileIndex].close();
+            files[fileIndex] = null;
+            File target = new File(directory, fileName(fileIndex));
+            if (target.exists() && !target.delete())
+                throw new IOException("Failed to delete file " + target.getAbsolutePath());
+        }
+        return true;
+    }
+
+    /**
+     * (Re-) detects the last file after the cut
+     */
+    private void doCutDetectLastFile() {
+        for (int i = filesCount - 1; i != -1; i--) {
+            File file = new File(directory, fileName(i));
+            if (file.exists()) {
+                // this file exists, this is the last file
+                filesCount = i;
+                return;
+            }
         }
     }
 
@@ -255,12 +333,12 @@ public class RawFileSplit extends RawFile {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
-                throw new IOException("The storage system is closed");
+                throw new IllegalStateException();
             if (state.compareAndSet(STATE_READY, STATE_BUSY))
                 break;
         }
         try {
-            for (int i = 0; i != filesCount.get(); i++) {
+            for (int i = 0; i != filesCount; i++) {
                 if (files[i] != null)
                     files[i].flush();
             }
@@ -271,16 +349,18 @@ public class RawFileSplit extends RawFile {
 
     @Override
     public Endpoint acquireEndpointAt(long index) {
+        if (index < 0)
+            throw new IndexOutOfBoundsException();
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
-                throw new RuntimeException(new IOException("The storage system is closed"));
+                throw new IllegalStateException();
             if (state.compareAndSet(STATE_READY, STATE_BUSY))
                 break;
         }
         try {
             return doAcquireEndpointAt(index);
-        } catch (IOException exception) {
+        } catch (Throwable exception) {
             throw new RuntimeException(exception);
         } finally {
             state.set(STATE_READY);
@@ -301,8 +381,8 @@ public class RawFileSplit extends RawFile {
             files = Arrays.copyOf(files, bufferSize(fileIndex + 1));
         if (files[fileIndex] == null)
             files[fileIndex] = factory.newStorage(new File(directory, fileName(fileIndex)), writable);
-        if (filesCount.get() < fileIndex + 1)
-            filesCount.set(fileIndex + 1);
+        if (filesCount < fileIndex + 1)
+            filesCount = fileIndex + 1;
         return new RawFileSplitEndpointProxy(
                 files[fileIndex],
                 files[fileIndex].acquireEndpointAt(rest),
@@ -321,12 +401,12 @@ public class RawFileSplit extends RawFile {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
-                throw new IOException("The storage system is closed");
+                throw new IllegalStateException();
             if (state.compareAndSet(STATE_READY, STATE_BUSY))
                 break;
         }
         try {
-            for (int i = 0; i != filesCount.get(); i++) {
+            for (int i = 0; i != filesCount; i++) {
                 if (files[i] != null)
                     files[i].close();
             }
