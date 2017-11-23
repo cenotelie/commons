@@ -237,7 +237,7 @@ public class Transaction implements AutoCloseable {
         LogPageData[] pageData = new LogPageData[dirtyPagesCount];
         sequenceNumber = parent.getSequenceNumber();
         int index = 0;
-        int offset = 8 + 8 + 4; // seq number, timestamp and pages count
+        int offset = LogTransactionData.SERIALIZATION_SIZE_HEADER; // seq number, timestamp and pages count
         for (int i = 0; i != pagesCount; i++) {
             if (pages[i].isDirty()) {
                 pageData[index] = pages[i].getLogData(offset);
