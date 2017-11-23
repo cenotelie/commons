@@ -27,8 +27,8 @@ import java.util.Date;
 
 /**
  * Represents a user transaction for a write-ahead log that can be used to perform reading and writing
- * A transaction is expected to be used by one thread only.
- * A transaction MUST be closed
+ * A transaction is expected to be used by one thread only, and is only usable and the thread that created the transaction.
+ * A transaction MUST be closed.
  *
  * @author Laurent Wouters
  */
@@ -95,6 +95,10 @@ public class Transaction implements AutoCloseable {
     }
 
     /**
+     * The thread that created and is running this transaction
+     */
+    private final Thread thread;
+    /**
      * The parent write-ahead log
      */
     private final WriteAheadLog parent;
@@ -144,6 +148,7 @@ public class Transaction implements AutoCloseable {
      * @param autocommit Whether this transaction should commit when being closed
      */
     Transaction(WriteAheadLog parent, long endMark, boolean writable, boolean autocommit) {
+        this.thread = Thread.currentThread();
         this.parent = parent;
         this.endMark = endMark;
         this.timestamp = (new Date()).getTime();
@@ -207,6 +212,8 @@ public class Transaction implements AutoCloseable {
      * @throws ConcurrentWriting when a concurrent transaction already committed conflicting changes to the log
      */
     public void commit() throws ConcurrentWriting {
+        if (thread != Thread.currentThread() && thread.isAlive())
+            throw new WrongThreadException();
         if (state != STATE_RUNNING)
             throw new IllegalStateException();
         state = STATE_COMMITTING;
@@ -216,8 +223,13 @@ public class Transaction implements AutoCloseable {
                 parent.doTransactionCommit(data, endMark);
             state = STATE_COMMITTED;
         } catch (ConcurrentWriting exception) {
+            // the commit is rejected
             state = STATE_REJECTED;
             throw exception;
+        } catch (Throwable throwable) {
+            // any other exception => abort
+            state = STATE_ABORTED;
+            throw throwable;
         }
     }
 
@@ -252,6 +264,8 @@ public class Transaction implements AutoCloseable {
      * Aborts this transaction
      */
     public void abort() {
+        if (thread != Thread.currentThread() && thread.isAlive())
+            throw new WrongThreadException();
         if (state != STATE_RUNNING)
             throw new IllegalStateException();
         state = STATE_ABORTED;
@@ -264,6 +278,8 @@ public class Transaction implements AutoCloseable {
      */
     @Override
     public void close() throws ConcurrentWriting {
+        if (thread != Thread.currentThread() && thread.isAlive())
+            throw new WrongThreadException();
         if (state == STATE_RUNNING) {
             if (autocommit)
                 commit();
@@ -286,6 +302,8 @@ public class Transaction implements AutoCloseable {
      * @return The access element
      */
     public Access access(long index, int length, boolean writable) {
+        if (thread != Thread.currentThread() && thread.isAlive())
+            throw new WrongThreadException();
         if (index < 0 || length <= 0)
             throw new IllegalArgumentException();
         if (state != STATE_RUNNING)
@@ -302,6 +320,8 @@ public class Transaction implements AutoCloseable {
      * @return The acquired page
      */
     private Page acquirePage(long location) {
+        if (thread != Thread.currentThread() && thread.isAlive())
+            throw new WrongThreadException();
         location = location & (~Constants.INDEX_MASK_LOWER);
         for (int i = 0; i != pagesCount; i++) {
             if (pages[i].getLocation() == location)

@@ -64,17 +64,23 @@ public class WriteAheadLog implements AutoCloseable {
      */
     private static final int STATE_READY = 0;
     /**
+     * State flag for locking the log due to its closing
+     * In this state, new transactions cannot be created.
+     * Ongoing transactions must terminate.
+     */
+    private static final int STATE_FLAG_CLOSING_LOCK = 1;
+    /**
      * State flag for locking access to the transactions register
      */
-    private static final int STATE_FLAG_TRANSACTIONS_LOCK = 1;
+    private static final int STATE_FLAG_TRANSACTIONS_LOCK = 2;
     /**
      * State flag for locking access to the index register
      */
-    private static final int STATE_FLAG_INDEX_LOCK = 2;
+    private static final int STATE_FLAG_INDEX_LOCK = 4;
     /**
      * The flag for locking access to the storage system for writing
      */
-    private static final int STATE_FLAG_STORAGE_WRITE_LOCK = 4;
+    private static final int STATE_FLAG_STORAGE_WRITE_LOCK = 8;
 
 
     /**
@@ -183,24 +189,6 @@ public class WriteAheadLog implements AutoCloseable {
     }
 
     /**
-     * Locks a resource in this log
-     *
-     * @param flag The flag used for locking the resource
-     */
-    private void stateLock(int flag) {
-        while (true) {
-            int s = state.get();
-            if (s == STATE_CLOSED)
-                throw new Error("Log is closed");
-            if ((s & flag) != 0)
-                // flag is already used
-                continue;
-            if (state.compareAndSet(s, s | flag))
-                break;
-        }
-    }
-
-    /**
      * Releases the lock on a resource in this log
      *
      * @param flag The flag used for locking the resource
@@ -209,70 +197,6 @@ public class WriteAheadLog implements AutoCloseable {
         while (true) {
             int s = state.get();
             int target = s & (~flag);
-            if (state.compareAndSet(s, target))
-                break;
-        }
-    }
-
-    /**
-     * Locks the backing storage system for writing back
-     */
-    private void stateLockStorageWriting() {
-        while (true) {
-            int s = state.get();
-            if (s == STATE_CLOSED)
-                throw new Error("Log is closed");
-            if ((s & STATE_FLAG_STORAGE_WRITE_LOCK) == STATE_FLAG_STORAGE_WRITE_LOCK)
-                // another thread is already writing
-                continue;
-            if ((s & 0x0000FF00) > 0)
-                // some threads are reading
-                continue;
-            if (state.compareAndSet(s, s | STATE_FLAG_STORAGE_WRITE_LOCK))
-                break;
-        }
-    }
-
-    /**
-     * Releases the lock in the backing storage system for writing
-     */
-    private void stateReleaseStorageWriting() {
-        while (true) {
-            int s = state.get();
-            int target = s & (~STATE_FLAG_STORAGE_WRITE_LOCK);
-            if (state.compareAndSet(s, target))
-                break;
-        }
-    }
-
-    /**
-     * Begins a reading access to the backing storage system
-     */
-    private void stateBeginStorageReading() {
-        while (true) {
-            int s = state.get();
-            if (s == STATE_CLOSED)
-                throw new Error("Log is closed");
-            int count = (s & 0x0000FF00) >>> 8;
-            if (count == 0xFF)
-                // already 255 reading threads
-                continue;
-            int target = (s & 0xFFFF00FF) | ((count + 1) << 8);
-            if (state.compareAndSet(s, target))
-                break;
-        }
-    }
-
-    /**
-     * Ends a reading access to the backing storage system
-     */
-    private void stateEndStorageReading() {
-        while (true) {
-            int s = state.get();
-            if (s == STATE_CLOSED)
-                throw new Error("Log is closed");
-            int count = (s & 0x0000FF00) >>> 8;
-            int target = (s & 0xFFFF00FF) | ((count - 1) << 8);
             if (state.compareAndSet(s, target))
                 break;
         }
@@ -299,7 +223,20 @@ public class WriteAheadLog implements AutoCloseable {
      * @return The new transaction
      */
     public Transaction newTransaction(boolean writable, boolean autocommit) {
-        stateLock(STATE_FLAG_TRANSACTIONS_LOCK);
+        while (true) {
+            int s = state.get();
+            if (s == STATE_CLOSED)
+                // already closed ...
+                throw new IllegalStateException();
+            if ((s & STATE_FLAG_CLOSING_LOCK) == STATE_FLAG_CLOSING_LOCK)
+                // flag is already used, someone is already closing this log ...
+                throw new IllegalStateException();
+            if ((s & STATE_FLAG_TRANSACTIONS_LOCK) == STATE_FLAG_TRANSACTIONS_LOCK)
+                // flag is already used by another thread
+                continue;
+            if (state.compareAndSet(s, s | STATE_FLAG_TRANSACTIONS_LOCK))
+                break;
+        }
         try {
             Transaction transaction = new Transaction(this, indexLastCommitted, writable, autocommit);
             // register this transaction
@@ -338,7 +275,17 @@ public class WriteAheadLog implements AutoCloseable {
      * @throws ConcurrentWriting when a concurrent transaction already committed conflicting changes to the log
      */
     void doTransactionCommit(LogTransactionData data, long endMark) throws ConcurrentWriting {
-        stateLock(STATE_FLAG_INDEX_LOCK);
+        while (true) {
+            int s = state.get();
+            if (s == STATE_CLOSED)
+                // already closed ...
+                throw new IllegalStateException();
+            if ((s & STATE_FLAG_INDEX_LOCK) == STATE_FLAG_INDEX_LOCK)
+                // flag is already used by another thread
+                continue;
+            if (state.compareAndSet(s, s | STATE_FLAG_INDEX_LOCK))
+                break;
+        }
         try {
             if (indexLastCommitted > endMark) {
                 // check for concurrent writing from unknown transactions
@@ -378,7 +325,17 @@ public class WriteAheadLog implements AutoCloseable {
      * @param transaction The transaction that ended
      */
     void onTransactionEnd(Transaction transaction) {
-        stateLock(STATE_FLAG_TRANSACTIONS_LOCK);
+        while (true) {
+            int s = state.get();
+            if (s == STATE_CLOSED)
+                // already closed ...
+                throw new IllegalStateException();
+            if ((s & STATE_FLAG_TRANSACTIONS_LOCK) == STATE_FLAG_TRANSACTIONS_LOCK)
+                // flag is already used by another thread
+                continue;
+            if (state.compareAndSet(s, s | STATE_FLAG_TRANSACTIONS_LOCK))
+                break;
+        }
         try {
             for (int i = 0; i != transactions.length; i++) {
                 if (transactions[i] == transaction) {
@@ -400,13 +357,16 @@ public class WriteAheadLog implements AutoCloseable {
      * @return The requested page
      */
     Page acquirePage(long location, long endMark) {
-        if (state.get() == STATE_CLOSED)
-            throw new Error("Log is closed");
         for (int i = 0; i != POOL_PAGES_SIZE; i++) {
             if (pages[i].reserve()) {
                 // reserved a free page
-                loadPage(pages[i], location, endMark);
-                return pages[i];
+                try {
+                    loadPage(pages[i], location, endMark);
+                    return pages[i];
+                } catch (Throwable throwable) {
+                    pages[i].release();
+                    throw throwable;
+                }
             }
         }
         // no free page?
@@ -425,13 +385,43 @@ public class WriteAheadLog implements AutoCloseable {
      * @param endMark  The sequence number of the last transaction known to the current one
      */
     private void loadPage(Page page, long location, long endMark) {
-        stateBeginStorageReading();
+        // increase the number of readers
+        while (true) {
+            int s = state.get();
+            if (s == STATE_CLOSED)
+                // already closed ...
+                throw new IllegalStateException();
+            int count = (s & 0x0000FF00) >>> 8;
+            if (count == 0xFF)
+                // already 255 reading threads
+                continue;
+            int target = (s & 0xFFFF00FF) | ((count + 1) << 8);
+            if (state.compareAndSet(s, target))
+                break;
+        }
         try {
             page.loadBase(storage, location);
         } finally {
-            stateEndStorageReading();
+            // decrease the number of readers
+            while (true) {
+                int s = state.get();
+                int count = (s & 0x0000FF00) >>> 8;
+                int target = (s & 0xFFFF00FF) | ((count - 1) << 8);
+                if (state.compareAndSet(s, target))
+                    break;
+            }
         }
-        stateLock(STATE_FLAG_INDEX_LOCK);
+        while (true) {
+            int s = state.get();
+            if (s == STATE_CLOSED)
+                // already closed ...
+                throw new IllegalStateException();
+            if ((s & STATE_FLAG_INDEX_LOCK) == STATE_FLAG_INDEX_LOCK)
+                // flag is already used by another thread
+                continue;
+            if (state.compareAndSet(s, s | STATE_FLAG_INDEX_LOCK))
+                break;
+        }
         try {
             for (int i = 0; i != indexLength; i++) {
                 if (index[i].getSequenceNumber() > endMark)
@@ -457,8 +447,6 @@ public class WriteAheadLog implements AutoCloseable {
      * @return An access to be initialized
      */
     TransactionAccess acquireAccess() {
-        if (state.get() == STATE_CLOSED)
-            throw new Error("Log is closed");
         for (int i = 0; i != POOL_ACCESSES_SIZE; i++) {
             if (accesses[i].reserve())
                 return accesses[i];
@@ -467,17 +455,54 @@ public class WriteAheadLog implements AutoCloseable {
         return new TransactionAccess();
     }
 
-
     /**
      * Executes a checkpoint
+     *
+     * @throws IOException when an error occurred while accessing storage
      */
-    private synchronized void doCheckpoint() {
+    private synchronized void doCheckpoint() throws IOException {
         long minEndMark = doCheckpointGetLowestEndMark();
-        int firstUnmovable = doCheckpointGetFirstUnmovableTransaction(minEndMark);
-        if (firstUnmovable == -1)
-            return;
-        for (int i = 0; i != firstUnmovable; i++) {
-            doCheckpointWriteBack(index[i]);
+        while (true) {
+            int s = state.get();
+            if ((s & STATE_FLAG_INDEX_LOCK) == STATE_FLAG_INDEX_LOCK)
+                // flag is already used by another thread
+                continue;
+            if (state.compareAndSet(s, s | STATE_FLAG_INDEX_LOCK))
+                break;
+        }
+        try {
+            if (indexLength == 0)
+                // nothing to do
+                return;
+            int firstUnmovable = indexLength; // the first transaction data that cannot be written back
+            for (int i = 0; i != indexLength; i++) {
+                if (index[i].getSequenceNumber() >= minEndMark) {
+                    // found it
+                    firstUnmovable = i;
+                    break;
+                }
+                // write back this transaction
+                doCheckpointWriteBack(index[i]);
+            }
+            if (firstUnmovable == 0)
+                // we did nothing => exit
+                return;
+            // commit the storage
+            storage.flush();
+            // here we are reasonably sure that the data is written back to the storage
+            // cut the log
+            if (firstUnmovable == indexLength) {
+                // we committed all transactions, truncate the log to 0
+                log.truncate(0);
+                indexLength = 0;
+                Arrays.fill(index, null);
+            } else {
+                // cut the content
+
+            }
+            log.flush();
+        } finally {
+            stateRelease(STATE_FLAG_INDEX_LOCK);
         }
     }
 
@@ -487,7 +512,14 @@ public class WriteAheadLog implements AutoCloseable {
      * @return The lower end mark
      */
     private long doCheckpointGetLowestEndMark() {
-        stateLock(STATE_FLAG_TRANSACTIONS_LOCK);
+        while (true) {
+            int s = state.get();
+            if ((s & STATE_FLAG_TRANSACTIONS_LOCK) == STATE_FLAG_TRANSACTIONS_LOCK)
+                // flag is already used by another thread
+                continue;
+            if (state.compareAndSet(s, s | STATE_FLAG_TRANSACTIONS_LOCK))
+                break;
+        }
         try {
             long minEndMark = Long.MAX_VALUE;
             for (int i = 0; i != transactionsCount; i++) {
@@ -500,49 +532,47 @@ public class WriteAheadLog implements AutoCloseable {
     }
 
     /**
-     * Finds the index of the first transaction in the log that cannot be merged back into the storage system
-     *
-     * @param minEndMark The lowest end mark for the running transactions
-     * @return The index of the first transaction in the log that cannot be merged back into the storage system
-     */
-    private int doCheckpointGetFirstUnmovableTransaction(long minEndMark) {
-        stateLock(STATE_FLAG_INDEX_LOCK);
-        try {
-            int first = -1;
-            for (int i = 0; i != indexLength; i++) {
-                if (index[i].getSequenceNumber() >= minEndMark) {
-                    first = i;
-                    break;
-                }
-            }
-            return first;
-        } finally {
-            stateRelease(STATE_FLAG_INDEX_LOCK);
-        }
-    }
-
-    /**
      * Write back the data of a transaction to the storage system
      *
      * @param transaction The data of a transaction
      */
     private void doCheckpointWriteBack(LogTransactionData transaction) {
-        stateLock(STATE_FLAG_INDEX_LOCK);
         try (Access access = log.access(transaction.logLocation, transaction.getSerializationLength(), false)) {
             transaction.loadContent(access);
-        } finally {
-            stateRelease(STATE_FLAG_INDEX_LOCK);
         }
-        stateLockStorageWriting();
+        // locks the storage for writing
+        while (true) {
+            int s = state.get();
+            if ((s & STATE_FLAG_STORAGE_WRITE_LOCK) == STATE_FLAG_STORAGE_WRITE_LOCK)
+                // another thread is already writing
+                continue;
+            if ((s & 0x0000FF00) > 0)
+                // some threads are reading
+                continue;
+            if (state.compareAndSet(s, s | STATE_FLAG_STORAGE_WRITE_LOCK))
+                break;
+        }
         try {
             transaction.applyTo(storage);
         } finally {
-            stateReleaseStorageWriting();
+            stateRelease(STATE_FLAG_STORAGE_WRITE_LOCK);
         }
     }
 
     @Override
     public void close() throws IOException {
+        while (true) {
+            int s = state.get();
+            if (s == STATE_CLOSED)
+                // already closed ...
+                throw new IllegalStateException();
+            if ((s & STATE_FLAG_CLOSING_LOCK) == STATE_FLAG_CLOSING_LOCK)
+                // flag is already used, someone is already closing this log ...
+                throw new IllegalStateException();
+            if (state.compareAndSet(s, s | STATE_FLAG_CLOSING_LOCK))
+                break;
+        }
+
         try {
             doCheckpoint();
             storage.close();
