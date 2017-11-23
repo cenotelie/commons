@@ -27,6 +27,14 @@ import fr.cenotelie.commons.storage.Storage;
  */
 class LogTransactionData {
     /**
+     * The serialization size of the transaction header:
+     * - int64: the transaction's sequence number
+     * - int64: the transaction's timestamp
+     * - int32: the number of touched pages
+     */
+    public static final int SERIALIZATION_SIZE_HEADER = 8 + 8 + 4;
+
+    /**
      * Location of this transaction in the log
      */
     public long logLocation;
@@ -80,7 +88,7 @@ class LogTransactionData {
      * @param access The access to use for loading
      */
     public void loadContent(Access access) {
-        access.skip(8 + 8 + 4); // seq number, timestamp and pages count
+        access.skip(SERIALIZATION_SIZE_HEADER); // seq number, timestamp and pages count
         for (int i = 0; i != pages.length; i++)
             pages[i].loadContent(access);
     }
@@ -134,23 +142,23 @@ class LogTransactionData {
      * @return The length of this data
      */
     public int getSerializationLength() {
-        int result = 8 + 8 + 4; // seq number, timestamp and pages count
+        int result = SERIALIZATION_SIZE_HEADER; // seq number, timestamp and pages count
         for (int i = 0; i != pages.length; i++)
             result += pages[i].getSerializationLength();
         return result;
     }
 
     /**
-     * Writes this data to the provided access
+     * Serialize this data into a log through the provided access
      *
      * @param access The access to use
      */
-    public void writeTo(Access access) {
+    public void serialize(Access access) {
         access.writeLong(sequenceNumber);
         access.writeLong(timestamp);
         access.writeInt(pages.length);
         for (int i = 0; i != pages.length; i++)
-            pages[i].writeTo(access);
+            pages[i].serialize(access);
     }
 
     /**

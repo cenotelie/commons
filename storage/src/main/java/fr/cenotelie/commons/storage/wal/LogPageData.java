@@ -27,6 +27,13 @@ import fr.cenotelie.commons.storage.Storage;
  */
 public class LogPageData extends PageEdits {
     /**
+     * The serialization size of the page data header:
+     * - int64: the location of the page
+     * - The edits header
+     */
+    public static final int SERIALIZATION_SIZE_HEADER = 8 + PageEdits.SERIALIZATION_SIZE_HEADER;
+
+    /**
      * The offset of this data relative to the page's location
      */
     public final int offset;
@@ -85,12 +92,12 @@ public class LogPageData extends PageEdits {
      * @param access The access to use for loading
      */
     public void loadContent(Access access) {
-        this.editsContent = new byte[editsCount][];
-        access.skip(8 + 4); // skip the location data and number of edits
+        editsContent = new byte[editsCount][];
+        access.skip(SERIALIZATION_SIZE_HEADER); // skip the location data and number of edits
         for (int i = 0; i != editsCount; i++) {
             int length = PageEdits.editLength(edits[i]);
-            access.skip(8); // skip the offset and length
-            this.editsContent[i] = access.readBytes(length);
+            access.skip(PageEdits.SERIALIZATION_SIZE_EDIT_HEADER); // skip the offset and length
+            editsContent[i] = access.readBytes(length);
         }
     }
 
@@ -121,11 +128,11 @@ public class LogPageData extends PageEdits {
     }
 
     /**
-     * Writes this data to the provided access
+     * Serialize this data into a log through the provided access
      *
      * @param access The access to use
      */
-    public void writeTo(Access access) {
+    public void serialize(Access access) {
         access.writeLong(location);
         access.writeInt(editsCount);
         for (int i = 0; i != editsCount; i++) {

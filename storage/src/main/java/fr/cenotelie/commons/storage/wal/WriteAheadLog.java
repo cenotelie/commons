@@ -354,7 +354,7 @@ public class WriteAheadLog implements AutoCloseable {
             // no conflict, write this transaction to the log
             data.logLocation = log.getSize();
             try (Access access = log.access(data.logLocation, data.getSerializationLength(), true)) {
-                data.writeTo(access);
+                data.serialize(access);
             }
             try {
                 log.flush();

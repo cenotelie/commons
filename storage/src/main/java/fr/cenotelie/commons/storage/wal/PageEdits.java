@@ -28,6 +28,18 @@ import java.util.Arrays;
  */
 class PageEdits {
     /**
+     * The serialization size of the edits header:
+     * - int32: the number of edits
+     */
+    public static final int SERIALIZATION_SIZE_HEADER = 4;
+    /**
+     * The serialization size of an edit's header:
+     * - int32: offset from the beginning of the page
+     * - int32: length of the edit in bytes
+     */
+    public static final int SERIALIZATION_SIZE_EDIT_HEADER = 4 + 4;
+
+    /**
      * The initial size of the edits buffers
      */
     private static final int BUFFER_SIZE = 8;
@@ -174,12 +186,9 @@ class PageEdits {
      * @return The serialization length of the edits
      */
     public int getSerializationLength() {
-        int result = 4; // int32: number of edits
+        int result = SERIALIZATION_SIZE_HEADER;
         for (int i = 0; i != editsCount; i++) {
-            // int32: offset in the  page for the edit
-            // int32: length of the edit
-            // length of the actual content for the edit
-            result += 4 + 4 + editLength(edits[i]);
+            result += SERIALIZATION_SIZE_EDIT_HEADER + editLength(edits[i]);
         }
         return result;
     }
