@@ -216,29 +216,35 @@ public class RawFileSplit extends RawFile {
      * @throws IOException When an IO error occurred
      */
     private boolean doCut(long from, long to) throws IOException {
-        int fromFileIndex = (int) (from / fileMaxSize);
+        long fromFileIndex = from / fileMaxSize;
         long fromRest = from % fileMaxSize;
-        int toFileIndex = (int) (to / fileMaxSize);
+        long toFileIndex = to / fileMaxSize;
         long toRest = to % fileMaxSize;
+
+        if (fromFileIndex >= filesCount)
+            // nothing to cut
+            return false;
+        // re-adjust the end of the cut if necessary
+        if (toFileIndex > filesCount) {
+            toFileIndex = filesCount;
+            toRest = 0;
+        }
         if (toRest == 0) {
             toFileIndex--;
             toRest = fileMaxSize;
         }
 
-        if (fromFileIndex >= filesCount)
-            // nothing to cut
-            return false;
         try {
             // cut the first file
-            boolean didSomething = doCutFile(fromFileIndex, fromRest, toFileIndex == fromFileIndex ? toRest : fileMaxSize);
+            boolean didSomething = doCutFile((int) fromFileIndex, fromRest, toFileIndex == fromFileIndex ? toRest : fileMaxSize);
             if (fromFileIndex == toFileIndex)
                 return didSomething;
-            for (int i = fromFileIndex + 1; i != toFileIndex; i++) {
+            for (int i = (int) fromFileIndex + 1; i != toFileIndex; i++) {
                 // not the last file
                 didSomething |= doCutFile(i, 0, fileMaxSize);
             }
             // cut the last file
-            didSomething |= doCutFile(toFileIndex, 0, toFileIndex);
+            didSomething |= doCutFile((int) toFileIndex, 0, toRest);
             return didSomething;
         } finally {
             doCutDetectLastFile();
@@ -255,6 +261,9 @@ public class RawFileSplit extends RawFile {
      * @throws IOException When an IO error occurred
      */
     private boolean doCutFile(int fileIndex, long from, long to) throws IOException {
+        if (fileIndex >= filesCount)
+            // this file does not exist
+            return false;
         if (files[fileIndex] != null) {
             // the file is open, apply the cut
             return doCutFileOpen(fileIndex, from, to);
@@ -322,7 +331,7 @@ public class RawFileSplit extends RawFile {
             File file = new File(directory, fileName(i));
             if (file.exists()) {
                 // this file exists, this is the last file
-                filesCount = i;
+                filesCount = i + 1;
                 return;
             }
         }
