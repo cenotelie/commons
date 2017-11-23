@@ -207,6 +207,15 @@ public class Transaction implements AutoCloseable {
     }
 
     /**
+     * Gets whether this transaction is an orphan because the thread that created it is no longer alive and the transaction is still running
+     *
+     * @return Whether this transaction is orphan
+     */
+    public boolean isOrphan() {
+        return state == STATE_RUNNING && !thread.isAlive();
+    }
+
+    /**
      * Commits this transaction to the parent log
      *
      * @throws ConcurrentWriting when a concurrent transaction already committed conflicting changes to the log

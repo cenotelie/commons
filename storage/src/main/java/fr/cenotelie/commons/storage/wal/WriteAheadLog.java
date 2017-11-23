@@ -39,6 +39,19 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class WriteAheadLog implements AutoCloseable {
     /**
+     * The size of a header for the log:
+     * - int64: magic number
+     * - int64: timestamp for the last header update
+     * - int64: number of stored transaction data
+     * - int64: location of the first transaction data
+     */
+    private static final int LOG_HEADER_SIZE = 8 + 8 + 8 + 8;
+    /**
+     * The magic number for the log's header
+     */
+    private static final long LOG_HEADER_MAGIC_NUMBER = 0x0063656e2d77616cL;
+
+    /**
      * The size of the pool for pages
      */
     private static final int POOL_PAGES_SIZE = 1024;
@@ -162,16 +175,37 @@ public class WriteAheadLog implements AutoCloseable {
      */
     private void reload() throws IOException {
         long size = log.getSize();
-        if (size == 0)
+        if (size <= LOG_HEADER_SIZE)
             // nothing to do
             return;
         DateFormat dateFormat = DateFormat.getDateTimeInstance();
-        try (Access access = new Access(storage, 0, (int) size, false)) {
+
+        // try to read the header
+        long beginsAt;
+        try (Access access = new Access(storage, 0, LOG_HEADER_SIZE, false)) {
+            if (access.readLong() != LOG_HEADER_MAGIC_NUMBER) {
+                // this is not a log
+                throw new IOException("The provided storage is not empty and is no a log storage (wrong magic number)");
+            }
+            long timestamp = access.readLong();
+            beginsAt = access.skip(8).readLong(); // skip the number transactions, do not rely on this info, we just read the content
+            Logging.get().info("WAL: Reading log last updated at " + dateFormat.format(new Date(timestamp)));
+        }
+
+        if (beginsAt == 0) {
+            Logging.get().info("WAL: Nothing to restore.");
+            log.truncate(LOG_HEADER_SIZE);
+            log.flush();
+            return;
+        }
+
+        // read and restore
+        try (Access access = new Access(storage, beginsAt, (int) (size - beginsAt), false)) {
             while (access.getIndex() < size) {
                 try {
                     // load the data for this transaction
                     LogTransactionData data = new LogTransactionData(access);
-                    Logging.get().warning("WAL: Recovered transaction " + data.getSequenceNumber() + ", started at " + dateFormat.format(new Date(data.getTimestamp())));
+                    Logging.get().warning("WAL: Recovered transaction " + data.getSequenceNumber() + ", committed at " + dateFormat.format(new Date(data.getTimestamp())));
                     // apply to the storage system
                     data.applyTo(storage);
                     Logging.get().warning("WAL: Applied transaction " + data.getSequenceNumber());
@@ -182,9 +216,17 @@ public class WriteAheadLog implements AutoCloseable {
                 }
             }
         }
+        // make sure everything is committed on the device
         storage.flush();
-        // truncate the log
-        log.truncate(0);
+
+        // truncate, update and flush the log
+        log.truncate(LOG_HEADER_SIZE);
+        try (Access access = log.access(0, LOG_HEADER_SIZE, true)) {
+            access.writeLong(LOG_HEADER_MAGIC_NUMBER);
+            access.writeLong((new Date()).getTime());
+            access.writeLong(0); // no transaction
+            access.writeLong(0); // begin at 0
+        }
         log.flush();
     }
 
@@ -299,7 +341,16 @@ public class WriteAheadLog implements AutoCloseable {
                 }
             }
             // no conflict, write this transaction to the log
-            data.logLocation = log.getSize();
+            data.logLocation = Math.max(LOG_HEADER_SIZE, log.getSize());
+            // if this is the first transaction, also write the header
+            if (indexLength == 0) {
+                try (Access access = log.access(0, LOG_HEADER_SIZE, true)) {
+                    access.writeLong(LOG_HEADER_MAGIC_NUMBER);
+                    access.writeLong((new Date()).getTime());
+                    access.writeLong(1);
+                    access.writeLong(LOG_HEADER_SIZE);
+                }
+            }
             try (Access access = log.access(data.logLocation, data.getSerializationLength(), true)) {
                 data.serialize(access);
             }
@@ -492,15 +543,36 @@ public class WriteAheadLog implements AutoCloseable {
             // here we are reasonably sure that the data is written back to the storage
             // cut the log
             if (firstUnmovable == indexLength) {
-                // we committed all transactions, truncate the log to 0
-                log.truncate(0);
+                // we committed all transactions, truncate, update and flush the log
+                log.truncate(LOG_HEADER_SIZE);
+                try (Access access = log.access(0, LOG_HEADER_SIZE, true)) {
+                    access.writeLong(LOG_HEADER_MAGIC_NUMBER);
+                    access.writeLong((new Date()).getTime());
+                    access.writeLong(0); // no transaction
+                    access.writeLong(0); // begin at 0
+                }
+                log.flush();
                 indexLength = 0;
                 Arrays.fill(index, null);
             } else {
                 // cut the content
-
+                log.cut(LOG_HEADER_SIZE, index[firstUnmovable].logLocation);
+                // rewrite the log header
+                try (Access access = log.access(0, LOG_HEADER_SIZE, true)) {
+                    access.writeLong(LOG_HEADER_MAGIC_NUMBER);
+                    access.writeLong((new Date()).getTime());
+                    access.writeLong(indexLength - firstUnmovable);
+                    access.writeLong(index[firstUnmovable].logLocation);
+                }
+                log.flush();
+                int j = 0;
+                Arrays.fill(index, 0, firstUnmovable, null);
+                for (int i = firstUnmovable; i != indexLength; i++) {
+                    index[j++] = index[i];
+                    index[i] = null;
+                }
+                indexLength = (indexLength - firstUnmovable);
             }
-            log.flush();
         } finally {
             stateRelease(STATE_FLAG_INDEX_LOCK);
         }
