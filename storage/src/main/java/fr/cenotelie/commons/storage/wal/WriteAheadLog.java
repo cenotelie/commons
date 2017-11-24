@@ -19,6 +19,7 @@ package fr.cenotelie.commons.storage.wal;
 
 import fr.cenotelie.commons.storage.Access;
 import fr.cenotelie.commons.storage.Storage;
+import fr.cenotelie.commons.utils.concurrent.DaemonTaskScheduler;
 import fr.cenotelie.commons.utils.logging.Logging;
 
 import java.io.IOException;
@@ -64,9 +65,17 @@ public class WriteAheadLog implements AutoCloseable {
      */
     private static final int TRANSACTIONS_BUFFER = 16;
     /**
+     * The size of the index that should trigger a checkpoint
+     */
+    private static final int INDEX_TRIGGER = 512;
+    /**
      * The size of the index
      */
-    private static final int INDEX_SIZE = 1024;
+    private static final int INDEX_BUFFER = INDEX_TRIGGER * 2;
+    /**
+     * The size of the log that should trigger a checkpoint
+     */
+    private static final long LOG_SIZE_TRIGGER = 1 << 30; // 1Gb
 
     /**
      * The storage system is now closed
@@ -140,6 +149,10 @@ public class WriteAheadLog implements AutoCloseable {
      * The next identifier for transactions
      */
     private final AtomicLong indexSequencer;
+    /**
+     * The scheduler for the janitor's task
+     */
+    private final DaemonTaskScheduler janitorScheduler;
 
     /**
      * Initializes this log
@@ -162,10 +175,16 @@ public class WriteAheadLog implements AutoCloseable {
             this.accesses[i] = new TransactionAccess();
         this.transactions = new Transaction[TRANSACTIONS_BUFFER];
         this.transactionsCount = 0;
-        this.index = new LogTransactionData[INDEX_SIZE];
+        this.index = new LogTransactionData[INDEX_BUFFER];
         this.indexLength = 0;
         this.indexLastCommitted = -1;
         this.indexSequencer = new AtomicLong(0);
+        this.janitorScheduler = new DaemonTaskScheduler(new Runnable() {
+            @Override
+            public void run() {
+                janitorMain();
+            }
+        }, 5000);
     }
 
     /**
@@ -297,6 +316,7 @@ public class WriteAheadLog implements AutoCloseable {
             return transaction;
         } finally {
             stateRelease(STATE_FLAG_TRANSACTIONS_LOCK);
+            janitorScheduler.resetWait();
         }
     }
 
@@ -511,8 +531,8 @@ public class WriteAheadLog implements AutoCloseable {
      *
      * @throws IOException when an error occurred while accessing storage
      */
-    private synchronized void doCheckpoint() throws IOException {
-        long minEndMark = doCheckpointGetLowestEndMark();
+    private synchronized void checkpointExecute() throws IOException {
+        long minEndMark = checkpointGetLowestEndMark();
         while (true) {
             int s = state.get();
             if ((s & STATE_FLAG_INDEX_LOCK) == STATE_FLAG_INDEX_LOCK)
@@ -533,7 +553,7 @@ public class WriteAheadLog implements AutoCloseable {
                     break;
                 }
                 // write back this transaction
-                doCheckpointWriteBack(index[i]);
+                checkpointWriteBack(index[i]);
             }
             if (firstUnmovable == 0)
                 // we did nothing => exit
@@ -583,7 +603,7 @@ public class WriteAheadLog implements AutoCloseable {
      *
      * @return The lower end mark
      */
-    private long doCheckpointGetLowestEndMark() {
+    private long checkpointGetLowestEndMark() {
         while (true) {
             int s = state.get();
             if ((s & STATE_FLAG_TRANSACTIONS_LOCK) == STATE_FLAG_TRANSACTIONS_LOCK)
@@ -608,7 +628,7 @@ public class WriteAheadLog implements AutoCloseable {
      *
      * @param transaction The data of a transaction
      */
-    private void doCheckpointWriteBack(LogTransactionData transaction) {
+    private void checkpointWriteBack(LogTransactionData transaction) {
         try (Access access = log.access(transaction.logLocation, transaction.getSerializationLength(), false)) {
             transaction.loadContent(access);
         }
@@ -631,6 +651,64 @@ public class WriteAheadLog implements AutoCloseable {
         }
     }
 
+    /**
+     * Kills the orphaned transactions
+     */
+    private void janitorKillOrphans() {
+        // cleanup dead transactions
+        while (true) {
+            int s = state.get();
+            if (s == STATE_CLOSED)
+                // already closed ...
+                throw new IllegalStateException();
+            if ((s & STATE_FLAG_TRANSACTIONS_LOCK) == STATE_FLAG_TRANSACTIONS_LOCK)
+                // flag is already used by another thread
+                continue;
+            if (state.compareAndSet(s, s | STATE_FLAG_TRANSACTIONS_LOCK))
+                break;
+        }
+        Transaction[] toKill = null;
+        int toKillCount = 0;
+        try {
+            for (int i = 0; i != transactions.length; i++) {
+                if (transactions[i] != null && transactions[i].isOrphan()) {
+                    if (toKill == null)
+                        toKill = new Transaction[4];
+                    if (toKillCount == toKill.length)
+                        toKill = Arrays.copyOf(toKill, toKill.length * 2);
+                    toKill[toKillCount++] = transactions[i];
+                }
+            }
+        } finally {
+            stateRelease(STATE_FLAG_TRANSACTIONS_LOCK);
+        }
+        // kill the orphaned transactions
+        for (int i = 0; i != toKillCount; i++) {
+            transactions[i].abort();
+            try {
+                transactions[i].close();
+            } catch (ConcurrentWriting exception) {
+                // cannot happen because we aborted the transaction before
+            }
+        }
+    }
+
+    /**
+     * The main method for the janitor
+     */
+    private void janitorMain() {
+        janitorKillOrphans();
+        // should we execute a checkpoint?
+        if (indexLength >= INDEX_TRIGGER || log.getSize() > LOG_SIZE_TRIGGER) {
+            // the condition are met to trigger a checkpoint
+            try {
+                checkpointExecute();
+            } catch (IOException exception) {
+                Logging.get().error(exception);
+            }
+        }
+    }
+
     @Override
     public void close() throws IOException {
         while (true) {
@@ -646,7 +724,9 @@ public class WriteAheadLog implements AutoCloseable {
         }
 
         try {
-            doCheckpoint();
+            janitorScheduler.close();
+            // execute a last checkpoint before closing
+            checkpointExecute();
             storage.close();
             log.close();
         } finally {
