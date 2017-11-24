@@ -19,6 +19,7 @@ package fr.cenotelie.commons.storage.wal;
 
 import fr.cenotelie.commons.storage.Access;
 import fr.cenotelie.commons.storage.Storage;
+import fr.cenotelie.commons.storage.TransactionalStorage;
 import fr.cenotelie.commons.utils.concurrent.DaemonTaskScheduler;
 import fr.cenotelie.commons.utils.logging.Logging;
 
@@ -34,12 +35,12 @@ import java.util.concurrent.atomic.AtomicLong;
  * Implements a write-ahead log that guard the access to a storage system
  * A write-ahead log provides the following guarantees:
  * - Atomicity, transactions are either fully committed to the log, or not
- * - Isolation, transactions only see the changes of transactions fully committed before they started using snapshot isolation
+ * - Isolation, transactions only see the changes of transactions fully committed before they started (snapshot isolation)
  * - Durability, transactions are fully written to the log and flushed to disk before returning as committed
  *
  * @author Laurent Wouters
  */
-public class WriteAheadLog implements AutoCloseable {
+public class WriteAheadLog extends TransactionalStorage {
     /**
      * The size of a header for the log:
      * - int64: magic number
@@ -283,26 +284,22 @@ public class WriteAheadLog implements AutoCloseable {
         }
     }
 
-    /**
-     * Starts a new transaction
-     * The transaction must be ended by a call to the transaction's close method.
-     * The transaction will NOT automatically commit when closed, the commit method should be called before closing.
-     *
-     * @param writable Whether the transaction shall support writing
-     * @return The new transaction
-     */
-    public WalTransaction newTransaction(boolean writable) {
-        return newTransaction(writable, false);
+    @Override
+    public boolean isWritable() {
+        return storage.isWritable();
     }
 
-    /**
-     * Starts a new transaction
-     * The transaction must be ended by a call to the transaction's close method.
-     *
-     * @param writable   Whether the transaction shall support writing
-     * @param autocommit Whether this transaction should commit when being closed
-     * @return The new transaction
-     */
+    @Override
+    public long getSize() {
+        return storage.getSize();
+    }
+
+    @Override
+    public void flush() throws IOException {
+        cleanup();
+    }
+
+    @Override
     public WalTransaction newTransaction(boolean writable, boolean autocommit) {
         while (true) {
             int s = state.get();

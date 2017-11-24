@@ -20,7 +20,9 @@ package fr.cenotelie.commons.storage;
 import java.util.ConcurrentModificationException;
 
 /**
- * Represents a transaction for a transactional storage system
+ * Represents a user transaction for a write-ahead log that can be used to perform reading and writing
+ * A transaction is expected to be used by one thread only, and is only usable and the thread that created the transaction.
+ * A transaction MUST be closed.
  *
  * @author Laurent Wouters
  */

@@ -17,10 +17,65 @@
 
 package fr.cenotelie.commons.storage;
 
+import java.io.IOException;
+
 /**
  * Represents a transactional storage system
+ * A transaction storage system is expected to at least provide the following guarantees:
+ * - Atomicity, transactions are either fully committed, or not
+ * - Isolation, transactions only see the changes of transactions fully committed before they started
  *
  * @author Laurent Wouters
  */
-public abstract class TransactionalStorage {
+public abstract class TransactionalStorage implements AutoCloseable {
+    /**
+     * Gets whether this storage system can be written to
+     *
+     * @return Whether this storage system can be written to
+     */
+    public abstract boolean isWritable();
+
+    /**
+     * Gets the current size of this storage system
+     *
+     * @return The current size of this storage system
+     */
+    public abstract long getSize();
+
+    /**
+     * Flushes any outstanding changes to this storage system
+     *
+     * @throws IOException When an IO error occurred
+     */
+    public abstract void flush() throws IOException;
+
+    /**
+     * Starts a new transaction
+     * The transaction must be ended by a call to the transaction's close method.
+     * The transaction will NOT automatically commit when closed, the commit method should be called before closing.
+     *
+     * @param writable Whether the transaction shall support writing
+     * @return The new transaction
+     */
+    public Transaction newTransaction(boolean writable) {
+        return newTransaction(writable, false);
+    }
+
+    /**
+     * Starts a new transaction
+     * The transaction must be ended by a call to the transaction's close method.
+     *
+     * @param writable   Whether the transaction shall support writing
+     * @param autocommit Whether this transaction should commit when being closed
+     * @return The new transaction
+     */
+    public abstract Transaction newTransaction(boolean writable, boolean autocommit);
+
+    /**
+     * Closes this resource, relinquishing any underlying resources
+     *
+     * @throws IOException When an IO error occurred
+     */
+    @Override
+    public abstract void close() throws IOException;
 }
