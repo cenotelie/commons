@@ -159,13 +159,25 @@ public class WriteAheadLog implements AutoCloseable {
     private final DaemonTaskScheduler janitorScheduler;
 
     /**
-     * Initializes this log
+     * Initializes this log with a janitor
      *
      * @param storage The storage system that is guarded by this WAL
      * @param log     The storage for the log itself
      * @throws IOException when an error occurred while accessing storage
      */
     public WriteAheadLog(Storage storage, Storage log) throws IOException {
+        this(storage, log, true);
+    }
+
+    /**
+     * Initializes this log
+     *
+     * @param storage    The storage system that is guarded by this WAL
+     * @param log        The storage for the log itself
+     * @param useJanitor Whether to use an asynchronous janitor thread
+     * @throws IOException when an error occurred while accessing storage
+     */
+    public WriteAheadLog(Storage storage, Storage log, boolean useJanitor) throws IOException {
         this.storage = storage;
         this.log = log;
         this.state = new AtomicInteger(STATE_CLOSED);
@@ -183,12 +195,15 @@ public class WriteAheadLog implements AutoCloseable {
         this.indexLength = 0;
         this.indexLastCommitted = -1;
         this.indexSequencer = new AtomicLong(0);
-        this.janitorScheduler = new DaemonTaskScheduler(new Runnable() {
-            @Override
-            public void run() {
-                janitorMain();
-            }
-        }, JANITOR_PERIOD);
+        if (useJanitor)
+            this.janitorScheduler = new DaemonTaskScheduler(new Runnable() {
+                @Override
+                public void run() {
+                    janitorMain(false);
+                }
+            }, JANITOR_PERIOD);
+        else
+            this.janitorScheduler = null;
     }
 
     /**
@@ -205,14 +220,14 @@ public class WriteAheadLog implements AutoCloseable {
 
         // try to read the header
         long beginsAt;
-        try (Access access = new Access(storage, 0, LOG_HEADER_SIZE, false)) {
+        try (Access access = new Access(log, 0, LOG_HEADER_SIZE, false)) {
             if (access.readLong() != LOG_HEADER_MAGIC_NUMBER) {
                 // this is not a log
                 throw new IOException("The provided storage is not empty and is no a log storage (wrong magic number)");
             }
             long timestamp = access.readLong();
             beginsAt = access.skip(8).readLong(); // skip the number transactions, do not rely on this info, we just read the content
-            Logging.get().info("WAL: Reading log last updated at " + dateFormat.format(new Date(timestamp)));
+            Logging.get().info("WAL: Reading log with last checkpoint at " + dateFormat.format(new Date(timestamp)));
         }
 
         if (beginsAt == 0) {
@@ -223,7 +238,7 @@ public class WriteAheadLog implements AutoCloseable {
         }
 
         // read and restore
-        try (Access access = new Access(storage, beginsAt, (int) (size - beginsAt), false)) {
+        try (Access access = new Access(log, beginsAt, (int) (size - beginsAt), false)) {
             while (access.getIndex() < size) {
                 try {
                     // load the data for this transaction
@@ -320,7 +335,8 @@ public class WriteAheadLog implements AutoCloseable {
             return transaction;
         } finally {
             stateRelease(STATE_FLAG_TRANSACTIONS_LOCK);
-            janitorScheduler.resetWait();
+            if (janitorScheduler != null)
+                janitorScheduler.resetWait();
         }
     }
 
@@ -699,11 +715,13 @@ public class WriteAheadLog implements AutoCloseable {
 
     /**
      * The main method for the janitor
+     *
+     * @param forceCheckpoint Whether to force the execution of a checkpoint
      */
-    private void janitorMain() {
+    private void janitorMain(boolean forceCheckpoint) {
         janitorKillOrphans();
         // should we execute a checkpoint?
-        if (indexLength >= INDEX_TRIGGER || log.getSize() > LOG_SIZE_TRIGGER) {
+        if (forceCheckpoint || indexLength >= INDEX_TRIGGER || log.getSize() > LOG_SIZE_TRIGGER) {
             // the condition are met to trigger a checkpoint
             try {
                 checkpointExecute();
@@ -711,6 +729,23 @@ public class WriteAheadLog implements AutoCloseable {
                 Logging.get().error(exception);
             }
         }
+    }
+
+    /**
+     * Manually runs the janitor's task once
+     * This method will NOT force the execution of a checkpoint.
+     */
+    public void cleanup() {
+        janitorMain(false);
+    }
+
+    /**
+     * Manually runs the janitor's task once
+     *
+     * @param forceCheckpoint Whether to force the execution of a checkpoint
+     */
+    public void cleanup(boolean forceCheckpoint) {
+        janitorMain(forceCheckpoint);
     }
 
     @Override
@@ -728,9 +763,10 @@ public class WriteAheadLog implements AutoCloseable {
         }
 
         try {
-            janitorScheduler.close();
+            if (janitorScheduler != null)
+                janitorScheduler.close();
             // execute a last checkpoint before closing
-            checkpointExecute();
+            janitorMain(true);
             storage.close();
             log.close();
         } finally {

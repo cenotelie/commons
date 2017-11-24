@@ -112,9 +112,11 @@ class Page extends Endpoint {
             try (Access access = storage.access(location, length, false)) {
                 access.readBytes(buffer, 0, length);
             }
+            if (length < Constants.PAGE_SIZE)
+                Arrays.fill(buffer, length, Constants.PAGE_SIZE - length, (byte) 0);
+        } else {
+            Arrays.fill(buffer, (byte) 0);
         }
-        if (length < Constants.PAGE_SIZE)
-            Arrays.fill(buffer, length, Constants.PAGE_SIZE - length, (byte) 0);
     }
 
     /**

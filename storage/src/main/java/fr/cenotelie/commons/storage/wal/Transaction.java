@@ -331,7 +331,7 @@ public class Transaction implements AutoCloseable {
     private Page acquirePage(long location) {
         if (thread != Thread.currentThread() && thread.isAlive())
             throw new WrongThreadException();
-        location = location & (~Constants.INDEX_MASK_LOWER);
+        location = location & Constants.INDEX_MASK_UPPER;
         for (int i = 0; i != pagesCount; i++) {
             if (pages[i].getLocation() == location)
                 return pages[i];
