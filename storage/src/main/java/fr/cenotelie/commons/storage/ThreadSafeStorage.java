@@ -56,6 +56,11 @@ public class ThreadSafeStorage extends Storage {
     }
 
     @Override
+    public boolean truncate(long length) throws IOException {
+        return cut(length, Integer.MAX_VALUE);
+    }
+
+    @Override
     public boolean cut(long from, long to) throws IOException {
         if (from < 0 || from > to || from > Integer.MAX_VALUE || to > Integer.MAX_VALUE)
             throw new IndexOutOfBoundsException();
