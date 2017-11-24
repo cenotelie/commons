@@ -38,7 +38,7 @@ public class ThreadSafeAccessManagerTest {
     /**
      * The number of entries to insert
      */
-    private static final int ACCESSES_COUNT = 8192;
+    private static final int ACCESSES_COUNT = 1 << 16;
 
 
     /**
@@ -50,7 +50,10 @@ public class ThreadSafeAccessManagerTest {
         final Random random = new Random();
         final ThreadSafeAccessManager manager = new ThreadSafeAccessManager(new InMemoryStore());
 
+        final boolean failures[] = new boolean[THREAD_COUNT];
         for (int i = 0; i != THREAD_COUNT; i++) {
+            final int index = i;
+            failures[i] = false;
             Thread thread = new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -60,8 +63,10 @@ public class ThreadSafeAccessManagerTest {
                         if (length == 0)
                             length = 1;
                         try (Access access = manager.get(location, length, false)) {
-                            Assert.assertEquals(location, access.getLocation());
-                            Assert.assertEquals(length, access.getLength());
+                            if (location != access.getLocation() || length != access.getLength()) {
+                                failures[index] = true;
+                                return;
+                            }
                         }
                     }
                 }
@@ -76,5 +81,7 @@ public class ThreadSafeAccessManagerTest {
                 exception.printStackTrace();
             }
         }
+        for (int i = 0; i != THREAD_COUNT; i++)
+            Assert.assertFalse(failures[i]);
     }
 }
