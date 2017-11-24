@@ -63,6 +63,10 @@ class ThreadSafeAccessManager {
      * The operation failed because there was a concurrent edit
      */
     private static final int RESULT_FAILURE_CONCURRENT = 3;
+    /**
+     * The operation failed because of a timeout (or too many iterations)
+     */
+    private static final int RESULT_FAILURE_TIMEOUT = 4;
 
     /**
      * The storage system that is protected by this manager
@@ -345,6 +349,7 @@ class ThreadSafeAccessManager {
         int rightNode;
         int currentNode = ACTIVE_HEAD_ID;
         long currentNodeState = accessesState.get(currentNode);
+        int iterations = 0;
         while (true) {
             leftNode = currentNode;
             leftNodeState = currentNodeState;
@@ -358,10 +363,14 @@ class ThreadSafeAccessManager {
                 return RESULT_FAILURE_OVERLAP;
             if (key < stateKey(currentNodeState))
                 break;
+            iterations++;
+            if (iterations > ACCESSES_POOL_SIZE)
+                return RESULT_FAILURE_TIMEOUT;
         }
         rightNode = currentNode;
 
         // look for overlap after the insertion point
+        iterations = 0;
         while (true) {
             currentNode = stateActiveNext(currentNodeState);
             currentNodeState = accessesState.get(currentNode);
@@ -373,6 +382,9 @@ class ThreadSafeAccessManager {
             if ((accessToInsert.isWritable() || accessCurrentNode.isWritable()) && !accessToInsert.disjoints(accessCurrentNode))
                 // there is a write overlap
                 return RESULT_FAILURE_OVERLAP;
+            iterations++;
+            if (iterations > ACCESSES_POOL_SIZE)
+                return RESULT_FAILURE_TIMEOUT;
         }
 
         // setup the access to insert
@@ -424,6 +436,7 @@ class ThreadSafeAccessManager {
         long leftNodeState;
         int currentNode = ACTIVE_HEAD_ID;
         long currentNodeState = accessesState.get(currentNode);
+        int iterations = 0;
         while (true) {
             leftNode = currentNode;
             leftNodeState = currentNodeState;
@@ -433,6 +446,9 @@ class ThreadSafeAccessManager {
             currentNodeState = accessesState.get(currentNode);
             if (!stateIsActive(currentNodeState))
                 return RESULT_FAILURE_STALE;
+            iterations++;
+            if (iterations > ACCESSES_POOL_SIZE)
+                return RESULT_FAILURE_TIMEOUT;
         }
 
         // mark as logically deleted
