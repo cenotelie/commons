@@ -28,6 +28,8 @@ import java.util.Collection;
 
 /**
  * Test suite for the simple map store
+ *
+ * @author Laurent Wouters
  */
 public class MapStoreSimpleTest {
     /**
