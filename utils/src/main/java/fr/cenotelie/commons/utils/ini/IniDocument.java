@@ -15,7 +15,7 @@
  * If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-package fr.cenotelie.commons.utils.config;
+package fr.cenotelie.commons.utils.ini;
 
 import fr.cenotelie.commons.utils.IOUtils;
 import fr.cenotelie.commons.utils.TextUtils;
@@ -25,44 +25,44 @@ import java.nio.charset.Charset;
 import java.util.*;
 
 /**
- * Represents a configuration with values associated to properties
+ * Represents an INI document with values associated to properties
  * This structure is NOT thread safe
  *
  * @author Laurent Wouters
  */
-public class Configuration {
+public class IniDocument {
     /**
-     * The global section of this configuration
+     * The global section of this document
      */
-    private final Section global;
+    private final IniSection global;
     /**
      * The named sections
      */
-    private final Map<String, Section> sections;
+    private final Map<String, IniSection> sections;
 
     /**
-     * Initializes an empty configuration
+     * Initializes an empty document
      */
-    public Configuration() {
-        global = new Section(null);
+    public IniDocument() {
+        global = new IniSection(null);
         sections = new HashMap<>();
     }
 
     /**
-     * Gets all the named sections in this configuration
+     * Gets all the named sections in this document
      *
      * @return The named sections
      */
-    public Collection<Section> getSections() {
+    public Collection<IniSection> getSections() {
         return new ArrayList<>(sections.values());
     }
 
     /**
-     * Gets the global section in this configuration
+     * Gets the global section in this document
      *
-     * @return The global section in this configuration
+     * @return The global section in this document
      */
-    public Section getGlobalSection() {
+    public IniSection getGlobalSection() {
         return global;
     }
 
@@ -72,11 +72,11 @@ public class Configuration {
      * @param name A section's name
      * @return The section with the specified name
      */
-    public Section getSection(String name) {
+    public IniSection getSection(String name) {
         if (name == null)
             return global;
         if (!sections.containsKey(name))
-            sections.put(name, new Section(name));
+            sections.put(name, new IniSection(name));
         return sections.get(name);
     }
 
@@ -103,14 +103,14 @@ public class Configuration {
     /**
      * Gets the list of values for the specified section and property
      *
-     * @param section  A section in this configuration
+     * @param section  A section in this document
      * @param property A property in the section
      * @return A list of the values associated to the specified property
      */
     public List<String> getAll(String section, String property) {
         if (section == null)
             return global.getAll(property);
-        Section current = sections.get(section);
+        IniSection current = sections.get(section);
         if (current == null)
             return Collections.emptyList();
         return current.getAll(property);
@@ -119,14 +119,14 @@ public class Configuration {
     /**
      * Gets the list of values for the specified section and property
      *
-     * @param section  A section in this configuration
+     * @param section  A section in this document
      * @param property A property in the section
      * @return A list of the values associated to the specified property
      */
     public String get(String section, String property) {
         if (section == null)
             return global.get(property);
-        Section current = sections.get(section);
+        IniSection current = sections.get(section);
         if (current == null)
             return null;
         return current.get(property);
@@ -143,7 +143,7 @@ public class Configuration {
     public boolean hasValue(String section, String property, String value) {
         if (section == null)
             return global.hasValue(property, value);
-        Section current = sections.get(section);
+        IniSection current = sections.get(section);
         return current != null && current.hasValue(property, value);
     }
 
@@ -160,7 +160,7 @@ public class Configuration {
     /**
      * Adds the specified property-value pair in the specified section
      *
-     * @param section  A section in this configuration
+     * @param section  A section in this document
      * @param property A property in the section
      * @param value    The value to associate
      */
@@ -181,7 +181,7 @@ public class Configuration {
     /**
      * Removes the specified property - value pair from the specified section
      *
-     * @param section  Name of the section in the config file
+     * @param section  Name of the section in the document file
      * @param property A property
      * @param value    The associated value to remove
      */
@@ -202,7 +202,7 @@ public class Configuration {
     /**
      * Sets the property, removing all previous values, if any
      *
-     * @param section  A section in this configuration
+     * @param section  A section in this document
      * @param property A property
      * @param value    The new value
      */
@@ -222,7 +222,7 @@ public class Configuration {
     /**
      * Clears any value for the property
      *
-     * @param section  A section in this configuration
+     * @param section  A section in this document
      * @param property The property to clear
      */
     public void clear(String section, String property) {
@@ -230,7 +230,7 @@ public class Configuration {
     }
 
     /**
-     * Exports this configuration to the specified file
+     * Exports this document to the specified file
      *
      * @param file The file to export to
      * @throws IOException When writing fails
@@ -242,7 +242,7 @@ public class Configuration {
     }
 
     /**
-     * Exports this configuration to the specified file
+     * Exports this document to the specified file
      *
      * @param file The file to export to
      * @throws IOException When writing fails
@@ -254,7 +254,7 @@ public class Configuration {
     }
 
     /**
-     * Exports this configuration to the specified writer
+     * Exports this document to the specified writer
      *
      * @param writer The writer to use
      * @throws IOException When writing fails
@@ -262,7 +262,7 @@ public class Configuration {
     private void save(Writer writer) throws IOException {
         global.save(writer);
         boolean before = !global.isEmpty();
-        for (Section section : sections.values()) {
+        for (IniSection section : sections.values()) {
             if (before)
                 writer.write(IOUtils.LINE_SEPARATOR);
             section.save(writer);
@@ -272,7 +272,7 @@ public class Configuration {
     }
 
     /**
-     * Imports the configuration from the specified file
+     * Imports the document from the specified file
      *
      * @param file The file to import from
      * @throws IOException When reading fails
@@ -284,7 +284,7 @@ public class Configuration {
     }
 
     /**
-     * Imports the configuration from the specified file
+     * Imports the document from the specified file
      *
      * @param file The file to import from
      * @throws IOException When reading fails
@@ -296,7 +296,7 @@ public class Configuration {
     }
 
     /**
-     * Imports the configuration from the specified stream
+     * Imports the document from the specified stream
      *
      * @param stream  The stream to read from
      * @param charset The charset to use
@@ -307,7 +307,7 @@ public class Configuration {
     }
 
     /**
-     * Imports the configuration from the specified reader
+     * Imports the document from the specified reader
      *
      * @param reader The reader
      * @throws IOException When reading fails
@@ -414,10 +414,10 @@ public class Configuration {
     }
 
     /**
-     * Gets whether the specified character starts a comment in a configuration file
+     * Gets whether the specified character starts a comment in a document file
      *
      * @param c The character
-     * @return Whether the specified character starts a comment in a configuration file
+     * @return Whether the specified character starts a comment in a document file
      */
     private static boolean isCommentStart(int c) {
         return c == '#' || c == ';';
@@ -444,7 +444,7 @@ public class Configuration {
     }
 
     /**
-     * The initial length of the buffer for loading a configuration
+     * The initial length of the buffer for loading a document
      */
     private static final int BUFFER_LENGTH = 1024;
     /**

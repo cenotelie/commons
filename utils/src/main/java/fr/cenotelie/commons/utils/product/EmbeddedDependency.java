@@ -21,7 +21,7 @@ import fr.cenotelie.commons.utils.IOUtils;
 import fr.cenotelie.commons.utils.Identifiable;
 import fr.cenotelie.commons.utils.Serializable;
 import fr.cenotelie.commons.utils.TextUtils;
-import fr.cenotelie.commons.utils.config.Configuration;
+import fr.cenotelie.commons.utils.ini.IniDocument;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -73,7 +73,7 @@ public class EmbeddedDependency implements Identifiable, Serializable {
      */
     public EmbeddedDependency(Class<?> type, String identifier) throws IOException {
         try (InputStream stream = type.getResourceAsStream("/META-INF/dependencies/" + identifier)) {
-            Configuration configuration = new Configuration();
+            IniDocument configuration = new IniDocument();
             configuration.load(stream, IOUtils.CHARSET);
             this.identifier = identifier;
             this.contentType = configuration.get("type");

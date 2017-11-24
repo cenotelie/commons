@@ -15,7 +15,7 @@
  * If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-package fr.cenotelie.commons.utils.config;
+package fr.cenotelie.commons.utils.ini;
 
 import fr.cenotelie.commons.utils.IOUtils;
 import fr.cenotelie.commons.utils.TextUtils;
@@ -25,12 +25,12 @@ import java.io.Writer;
 import java.util.*;
 
 /**
- * Represents a section in a configuration file
+ * Represents a section in an INI file
  * This structure is NOT thread safe
  *
  * @author Laurent Wouters
  */
-public class Section {
+public class IniSection {
     /**
      * The section's name
      */
@@ -45,7 +45,7 @@ public class Section {
      *
      * @param name The section's name
      */
-    public Section(String name) {
+    public IniSection(String name) {
         this.name = name;
         this.properties = new HashMap<>();
     }
