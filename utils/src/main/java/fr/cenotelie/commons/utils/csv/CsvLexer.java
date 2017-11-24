@@ -38,7 +38,7 @@ import java.util.Arrays;
  *
  * @author Laurent Wouters
  */
-class CSVLexer {
+class CsvLexer {
     /**
      * Represents an error in this lexer
      */
@@ -101,7 +101,7 @@ class CSVLexer {
      * @param valueSeparator The character that separates values in rows
      * @param textMarker     The character that marks the beginning and end of raw text
      */
-    public CSVLexer(Reader input, char valueSeparator, char textMarker) {
+    public CsvLexer(Reader input, char valueSeparator, char textMarker) {
         this(input, valueSeparator, textMarker, false);
     }
 
@@ -113,7 +113,7 @@ class CSVLexer {
      * @param textMarker              The character that marks the beginning and end of raw text
      * @param keepBeginningWhiteSpace Whether the beginning string whitespaces must be kept or removed
      */
-    public CSVLexer(Reader input, char valueSeparator, char textMarker, boolean keepBeginningWhiteSpace) {
+    public CsvLexer(Reader input, char valueSeparator, char textMarker, boolean keepBeginningWhiteSpace) {
         this.input = new RewindableTextStream(input);
         this.separator = valueSeparator;
         this.textMarker = textMarker;

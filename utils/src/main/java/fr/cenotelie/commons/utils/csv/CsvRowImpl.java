@@ -27,7 +27,7 @@ package fr.cenotelie.commons.utils.csv;
  *
  * @author Laurent Wouters
  */
-class CSVRowImpl implements CSVRow {
+class CsvRowImpl implements CsvRow {
     /**
      * The initial state
      */
@@ -48,7 +48,7 @@ class CSVRowImpl implements CSVRow {
     /**
      * The CSV lexer to use
      */
-    private final CSVLexer lexer;
+    private final CsvLexer lexer;
     /**
      * The value of the next cell in this row
      */
@@ -63,7 +63,7 @@ class CSVRowImpl implements CSVRow {
      *
      * @param lexer The CSV lexer to use
      */
-    public CSVRowImpl(CSVLexer lexer) {
+    public CsvRowImpl(CsvLexer lexer) {
         this.lexer = lexer;
         this.state = 0;
         findNext();
@@ -75,9 +75,9 @@ class CSVRowImpl implements CSVRow {
     public void onStateInit() {
         next = lexer.next();
         int type = lexer.getTokenType();
-        if (type == CSVLexer.TOKEN_VALUE) {
+        if (type == CsvLexer.TOKEN_VALUE) {
             state = STATE_CELL;
-        } else if (type == CSVLexer.TOKEN_SEPARATOR) {
+        } else if (type == CsvLexer.TOKEN_SEPARATOR) {
             next = "";
             state = STATE_SEPARATOR;
         } else {
@@ -92,7 +92,7 @@ class CSVRowImpl implements CSVRow {
     private void onStateCell() {
         next = lexer.next();
         int type = lexer.getTokenType();
-        if (type == CSVLexer.TOKEN_SEPARATOR) {
+        if (type == CsvLexer.TOKEN_SEPARATOR) {
             onStateSeparator();
         } else {
             next = null;
@@ -106,9 +106,9 @@ class CSVRowImpl implements CSVRow {
     private void onStateSeparator() {
         next = lexer.next();
         int type = lexer.getTokenType();
-        if (type == CSVLexer.TOKEN_VALUE) {
+        if (type == CsvLexer.TOKEN_VALUE) {
             state = STATE_CELL;
-        } else if (type == CSVLexer.TOKEN_SEPARATOR) {
+        } else if (type == CsvLexer.TOKEN_SEPARATOR) {
             next = "";
             state = STATE_SEPARATOR;
         } else {

@@ -24,5 +24,5 @@ import java.util.Iterator;
  *
  * @author Laurent Wouters
  */
-public interface CSVDocument extends Iterator<CSVRow> {
+public interface CsvDocument extends Iterator<CsvRow> {
 }

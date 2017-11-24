@@ -30,7 +30,7 @@ import java.io.Reader;
  *
  * @author Laurent Wouters
  */
-public class CSV {
+public class Csv {
     /**
      * Parses a CSV document
      *
@@ -38,7 +38,7 @@ public class CSV {
      * @param valueSeparator The character that separates values in rows
      * @param textMarker     The character that marks the beginning and end of raw text
      */
-    public static CSVDocument parse(Reader input, char valueSeparator, char textMarker) {
+    public static CsvDocument parse(Reader input, char valueSeparator, char textMarker) {
         return parse(input, valueSeparator, textMarker, false);
     }
 
@@ -50,8 +50,8 @@ public class CSV {
      * @param textMarker              The character that marks the beginning and end of raw text
      * @param keepBeginningWhiteSpace Whether the beginning string whitespaces must be kept or removed
      */
-    public static CSVDocument parse(final Reader input, final char valueSeparator, final char textMarker, final boolean keepBeginningWhiteSpace) {
-        CSVLexer lexer = new CSVLexer(input, valueSeparator, textMarker, keepBeginningWhiteSpace);
-        return new CSVDocumentImpl(lexer);
+    public static CsvDocument parse(final Reader input, final char valueSeparator, final char textMarker, final boolean keepBeginningWhiteSpace) {
+        CsvLexer lexer = new CsvLexer(input, valueSeparator, textMarker, keepBeginningWhiteSpace);
+        return new CsvDocumentImpl(lexer);
     }
 }
