@@ -19,6 +19,7 @@ package fr.cenotelie.commons.storage.wal;
 
 import fr.cenotelie.commons.storage.Access;
 import fr.cenotelie.commons.storage.Constants;
+import fr.cenotelie.commons.storage.Transaction;
 import fr.cenotelie.commons.storage.files.RawFileBuffered;
 import fr.cenotelie.commons.storage.memory.InMemoryStore;
 import org.junit.Assert;
@@ -40,7 +41,7 @@ public class WriteAheadLogTest {
         InMemoryStore log = new InMemoryStore();
         WriteAheadLog wal = new WriteAheadLog(base, log, false);
 
-        WalTransaction transaction = wal.newTransaction(true);
+        Transaction transaction = wal.newTransaction(true);
         try (Access access = transaction.access(0, 4, true)) {
             access.writeInt(0xFFFFFFFF);
         }
@@ -90,7 +91,7 @@ public class WriteAheadLogTest {
         InMemoryStore log = new InMemoryStore();
         WriteAheadLog wal = new WriteAheadLog(base, log, false);
 
-        WalTransaction transaction = wal.newTransaction(true);
+        Transaction transaction = wal.newTransaction(true);
         try (Access access = transaction.access(0, 4, true)) {
             access.writeInt(0xFFFFFFFF);
         }
@@ -126,13 +127,13 @@ public class WriteAheadLogTest {
         InMemoryStore log = new InMemoryStore();
         WriteAheadLog wal = new WriteAheadLog(base, log, false);
 
-        try (WalTransaction transaction = wal.newTransaction(true)) {
+        try (Transaction transaction = wal.newTransaction(true)) {
             try (Access access = transaction.access(0, 4, true)) {
                 access.writeInt(0xFFFFFFFF);
             }
             transaction.commit();
         }
-        try (WalTransaction transaction = wal.newTransaction(false)) {
+        try (Transaction transaction = wal.newTransaction(false)) {
             try (Access access = transaction.access(0, 4, false)) {
                 int value = access.readInt();
                 Assert.assertEquals(0xFFFFFFFF, value);
@@ -149,8 +150,8 @@ public class WriteAheadLogTest {
         InMemoryStore log = new InMemoryStore();
         WriteAheadLog wal = new WriteAheadLog(base, log, false);
 
-        WalTransaction transaction1 = wal.newTransaction(true);
-        WalTransaction transaction2 = wal.newTransaction(false);
+        Transaction transaction1 = wal.newTransaction(true);
+        Transaction transaction2 = wal.newTransaction(false);
 
         try (Access access = transaction1.access(0, 4, true)) {
             access.writeInt(0xFFFFFFFF);
@@ -174,8 +175,8 @@ public class WriteAheadLogTest {
         InMemoryStore log = new InMemoryStore();
         WriteAheadLog wal = new WriteAheadLog(base, log, false);
 
-        WalTransaction transaction1 = wal.newTransaction(true);
-        WalTransaction transaction2 = wal.newTransaction(true);
+        Transaction transaction1 = wal.newTransaction(true);
+        Transaction transaction2 = wal.newTransaction(true);
 
         try (Access access = transaction1.access(0, 4, true)) {
             access.writeInt(0xFFFFFFFF);
@@ -205,7 +206,7 @@ public class WriteAheadLogTest {
         WriteAheadLog wal = new WriteAheadLog(base, log, false);
 
         // write the data
-        try (WalTransaction transaction = wal.newTransaction(true)) {
+        try (Transaction transaction = wal.newTransaction(true)) {
             try (Access access = transaction.access(0, 4, true)) {
                 access.writeInt(0xFFFFFFFF);
             }
@@ -214,7 +215,7 @@ public class WriteAheadLogTest {
             }
             transaction.commit();
         }
-        try (WalTransaction transaction = wal.newTransaction(true)) {
+        try (Transaction transaction = wal.newTransaction(true)) {
             try (Access access = transaction.access(4, 4, true)) {
                 access.writeInt(0xEEEEEEEE);
             }
@@ -261,7 +262,7 @@ public class WriteAheadLogTest {
         WriteAheadLog wal = new WriteAheadLog(base, log, false);
 
         // write the data
-        try (WalTransaction transaction = wal.newTransaction(true)) {
+        try (Transaction transaction = wal.newTransaction(true)) {
             try (Access access = transaction.access(0, 4, true)) {
                 access.writeInt(0xFFFFFFFF);
             }
@@ -270,7 +271,7 @@ public class WriteAheadLogTest {
             }
             transaction.commit();
         }
-        try (WalTransaction transaction = wal.newTransaction(true)) {
+        try (Transaction transaction = wal.newTransaction(true)) {
             try (Access access = transaction.access(4, 4, true)) {
                 access.writeInt(0xEEEEEEEE);
             }
@@ -326,7 +327,7 @@ public class WriteAheadLogTest {
         WriteAheadLog wal = new WriteAheadLog(base, log, false);
 
         // write the data
-        try (WalTransaction transaction = wal.newTransaction(true)) {
+        try (Transaction transaction = wal.newTransaction(true)) {
             try (Access access = transaction.access(0, 4, true)) {
                 access.writeInt(0xFFFFFFFF);
             }
@@ -338,7 +339,7 @@ public class WriteAheadLogTest {
         // do the checkpoint
         wal.cleanup(true);
         // write more data
-        try (WalTransaction transaction = wal.newTransaction(true)) {
+        try (Transaction transaction = wal.newTransaction(true)) {
             try (Access access = transaction.access(4, 4, true)) {
                 access.writeInt(0xEEEEEEEE);
             }
