@@ -15,7 +15,7 @@
  * If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-package fr.cenotelie.commons.storage.wal;
+package fr.cenotelie.commons.storage;
 
 /**
  * Exception when a thread tries to use a transaction that has not been created by it

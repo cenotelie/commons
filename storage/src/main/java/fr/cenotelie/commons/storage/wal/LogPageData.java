@@ -25,13 +25,13 @@ import fr.cenotelie.commons.storage.Storage;
  *
  * @author Laurent Wouters
  */
-public class LogPageData extends PageEdits {
+class LogPageData extends WalPageEdits {
     /**
      * The serialization size of the page data header:
      * - int64: the location of the page
      * - The edits header
      */
-    public static final int SERIALIZATION_SIZE_HEADER = 8 + PageEdits.SERIALIZATION_SIZE_HEADER;
+    public static final int SERIALIZATION_SIZE_HEADER = 8 + WalPageEdits.SERIALIZATION_SIZE_HEADER;
 
     /**
      * The offset of this data relative to the page's location
@@ -57,7 +57,7 @@ public class LogPageData extends PageEdits {
      * @param location The location in the backing storage system of the touched page
      * @param edits    The edits of a page
      */
-    public LogPageData(int offset, long location, PageEdits edits, byte[] buffer) {
+    public LogPageData(int offset, long location, WalPageEdits edits, byte[] buffer) {
         this.offset = offset;
         this.location = location;
         this.editsContent = null;
@@ -95,8 +95,8 @@ public class LogPageData extends PageEdits {
         editsContent = new byte[editsCount][];
         access.skip(SERIALIZATION_SIZE_HEADER); // skip the location data and number of edits
         for (int i = 0; i != editsCount; i++) {
-            int length = PageEdits.editLength(edits[i]);
-            access.skip(PageEdits.SERIALIZATION_SIZE_EDIT_HEADER); // skip the offset and length
+            int length = WalPageEdits.editLength(edits[i]);
+            access.skip(WalPageEdits.SERIALIZATION_SIZE_EDIT_HEADER); // skip the offset and length
             editsContent[i] = access.readBytes(length);
         }
     }

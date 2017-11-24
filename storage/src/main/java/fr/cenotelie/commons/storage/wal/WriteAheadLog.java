@@ -25,6 +25,7 @@ import fr.cenotelie.commons.utils.logging.Logging;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.util.Arrays;
+import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -124,15 +125,15 @@ public class WriteAheadLog implements AutoCloseable {
     /**
      * The pool of pages
      */
-    private final Page[] pages;
+    private final WalPage[] pages;
     /**
      * The pool of accesses
      */
-    private final TransactionAccess[] accesses;
+    private final WalAccess[] accesses;
     /**
      * The currently running transactions
      */
-    private volatile Transaction[] transactions;
+    private volatile WalTransaction[] transactions;
     /**
      * The number of running transactions
      */
@@ -183,13 +184,13 @@ public class WriteAheadLog implements AutoCloseable {
         this.state = new AtomicInteger(STATE_CLOSED);
         reload();
         this.state.set(STATE_READY);
-        this.pages = new Page[POOL_PAGES_SIZE];
-        this.accesses = new TransactionAccess[POOL_ACCESSES_SIZE];
+        this.pages = new WalPage[POOL_PAGES_SIZE];
+        this.accesses = new WalAccess[POOL_ACCESSES_SIZE];
         for (int i = 0; i != POOL_PAGES_SIZE; i++)
-            this.pages[i] = new Page();
+            this.pages[i] = new WalPage();
         for (int i = 0; i != POOL_ACCESSES_SIZE; i++)
-            this.accesses[i] = new TransactionAccess();
-        this.transactions = new Transaction[TRANSACTIONS_BUFFER];
+            this.accesses[i] = new WalAccess();
+        this.transactions = new WalTransaction[TRANSACTIONS_BUFFER];
         this.transactionsCount = 0;
         this.index = new LogTransactionData[INDEX_BUFFER];
         this.indexLength = 0;
@@ -290,7 +291,7 @@ public class WriteAheadLog implements AutoCloseable {
      * @param writable Whether the transaction shall support writing
      * @return The new transaction
      */
-    public Transaction newTransaction(boolean writable) {
+    public WalTransaction newTransaction(boolean writable) {
         return newTransaction(writable, false);
     }
 
@@ -302,7 +303,7 @@ public class WriteAheadLog implements AutoCloseable {
      * @param autocommit Whether this transaction should commit when being closed
      * @return The new transaction
      */
-    public Transaction newTransaction(boolean writable, boolean autocommit) {
+    public WalTransaction newTransaction(boolean writable, boolean autocommit) {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
@@ -318,7 +319,7 @@ public class WriteAheadLog implements AutoCloseable {
                 break;
         }
         try {
-            Transaction transaction = new Transaction(this, indexLastCommitted, writable, autocommit);
+            WalTransaction transaction = new WalTransaction(this, indexLastCommitted, writable, autocommit);
             // register this transaction
             if (transactionsCount >= transactions.length) {
                 transactions = Arrays.copyOf(transactions, transactions.length * 2);
@@ -354,9 +355,9 @@ public class WriteAheadLog implements AutoCloseable {
      *
      * @param data    The data of the transaction to commit
      * @param endMark The end mark for this transaction
-     * @throws ConcurrentWritingException when a concurrent transaction already committed conflicting changes to the log
+     * @throws ConcurrentModificationException when a concurrent transaction already committed conflicting changes to the log
      */
-    void doTransactionCommit(LogTransactionData data, long endMark) throws ConcurrentWritingException {
+    void doTransactionCommit(LogTransactionData data, long endMark) throws ConcurrentModificationException {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
@@ -376,7 +377,7 @@ public class WriteAheadLog implements AutoCloseable {
                         // this transaction is NOT known to the committing one (after the end-mark)
                         // examine this transaction for concurrent edits
                         if (data.intersects(index[i]))
-                            throw new ConcurrentWritingException(index[i].getSequenceNumber(), index[i].getTimestamp());
+                            throw new ConcurrentModificationException();
                     }
                 }
             }
@@ -415,7 +416,7 @@ public class WriteAheadLog implements AutoCloseable {
      *
      * @param transaction The transaction that ended
      */
-    void onTransactionEnd(Transaction transaction) {
+    void onTransactionEnd(WalTransaction transaction) {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
@@ -447,7 +448,7 @@ public class WriteAheadLog implements AutoCloseable {
      * @param endMark  The sequence number of the last transaction known to the current one
      * @return The requested page
      */
-    Page acquirePage(long location, long endMark) {
+    WalPage acquirePage(long location, long endMark) {
         for (int i = 0; i != POOL_PAGES_SIZE; i++) {
             if (pages[i].reserve()) {
                 // reserved a free page
@@ -462,7 +463,7 @@ public class WriteAheadLog implements AutoCloseable {
         }
         // no free page?
         // create a new page
-        Page page = new Page();
+        WalPage page = new WalPage();
         page.reserve();
         loadPage(page, location, endMark);
         return page;
@@ -475,7 +476,7 @@ public class WriteAheadLog implements AutoCloseable {
      * @param location The page's location in the storage system
      * @param endMark  The sequence number of the last transaction known to the current one
      */
-    private void loadPage(Page page, long location, long endMark) {
+    private void loadPage(WalPage page, long location, long endMark) {
         // increase the number of readers
         while (true) {
             int s = state.get();
@@ -537,13 +538,13 @@ public class WriteAheadLog implements AutoCloseable {
      *
      * @return An access to be initialized
      */
-    TransactionAccess acquireAccess() {
+    WalAccess acquireAccess() {
         for (int i = 0; i != POOL_ACCESSES_SIZE; i++) {
             if (accesses[i].reserve())
                 return accesses[i];
         }
         // no candidate for reuse
-        return new TransactionAccess();
+        return new WalAccess();
     }
 
     /**
@@ -687,13 +688,13 @@ public class WriteAheadLog implements AutoCloseable {
             if (state.compareAndSet(s, s | STATE_FLAG_TRANSACTIONS_LOCK))
                 break;
         }
-        Transaction[] toKill = null;
+        WalTransaction[] toKill = null;
         int toKillCount = 0;
         try {
             for (int i = 0; i != transactions.length; i++) {
                 if (transactions[i] != null && transactions[i].isOrphan()) {
                     if (toKill == null)
-                        toKill = new Transaction[4];
+                        toKill = new WalTransaction[4];
                     if (toKillCount == toKill.length)
                         toKill = Arrays.copyOf(toKill, toKill.length * 2);
                     toKill[toKillCount++] = transactions[i];
@@ -707,7 +708,7 @@ public class WriteAheadLog implements AutoCloseable {
             transactions[i].abort();
             try {
                 transactions[i].close();
-            } catch (ConcurrentWritingException exception) {
+            } catch (ConcurrentModificationException exception) {
                 // cannot happen because we aborted the transaction before
             }
         }

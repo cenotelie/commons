@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Laurent Wouters
  */
-class TransactionAccess extends Access {
+class WalAccess extends Access {
     /**
      * The page is free, i.e. not assigned to any location
      */
@@ -49,7 +49,7 @@ class TransactionAccess extends Access {
     /**
      * Initializes this access
      */
-    public TransactionAccess() {
+    public WalAccess() {
         super();
         this.state = new AtomicInteger(STATE_FREE);
     }

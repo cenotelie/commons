@@ -26,7 +26,7 @@ import java.util.Arrays;
  *
  * @author Laurent Wouters
  */
-class PageEdits {
+class WalPageEdits {
     /**
      * The serialization size of the edits header:
      * - int32: the number of edits
@@ -58,7 +58,7 @@ class PageEdits {
     /**
      * Initializes this structure
      */
-    public PageEdits() {
+    public WalPageEdits() {
         this.edits = null;
         this.editsCount = 0;
     }
@@ -152,7 +152,7 @@ class PageEdits {
      * @param data Another collection of edits
      * @return Whether there are conflicts
      */
-    public boolean intersects(PageEdits data) {
+    public boolean intersects(WalPageEdits data) {
         // initialize
         int i = 0;
         int j = 0;

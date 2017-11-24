@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Laurent Wouters
  */
-class Page extends Endpoint {
+class WalPage extends Endpoint {
     /**
      * The page is free, i.e. not assigned to any location
      */
@@ -60,12 +60,12 @@ class Page extends Endpoint {
     /**
      * The edits for this page
      */
-    private PageEdits edits;
+    private WalPageEdits edits;
 
     /**
      * Initializes this page
      */
-    public Page() {
+    public WalPage() {
         this.state = new AtomicInteger(STATE_FREE);
     }
 
@@ -128,8 +128,8 @@ class Page extends Endpoint {
     public void loadEdits(Access access, LogPageData data) {
         access.skip(8 + 4); // skip the location data and number of edits
         for (int i = 0; i != data.editsCount; i++) {
-            int offset = PageEdits.editIndex(data.edits[i]);
-            int length = PageEdits.editLength(data.edits[i]);
+            int offset = WalPageEdits.editIndex(data.edits[i]);
+            int length = WalPageEdits.editLength(data.edits[i]);
             access.skip(8); // skip the offset and length
             access.readBytes(buffer, offset, length);
         }
@@ -173,7 +173,7 @@ class Page extends Endpoint {
      */
     private void addEdit(int index, int length) {
         if (edits == null)
-            edits = new PageEdits();
+            edits = new WalPageEdits();
         edits.addEdit(index, length);
     }
 
