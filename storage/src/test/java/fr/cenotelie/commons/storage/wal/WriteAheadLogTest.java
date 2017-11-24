@@ -100,7 +100,7 @@ public class WriteAheadLogTest {
         boolean catched = false;
         try {
             transaction2.commit();
-        } catch (ConcurrentWriting exception) {
+        } catch (ConcurrentWritingException exception) {
             catched = true;
         }
         transaction2.close();

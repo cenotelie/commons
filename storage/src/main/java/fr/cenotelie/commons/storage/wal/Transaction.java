@@ -218,9 +218,9 @@ public class Transaction implements AutoCloseable {
     /**
      * Commits this transaction to the parent log
      *
-     * @throws ConcurrentWriting when a concurrent transaction already committed conflicting changes to the log
+     * @throws ConcurrentWritingException when a concurrent transaction already committed conflicting changes to the log
      */
-    public void commit() throws ConcurrentWriting {
+    public void commit() throws ConcurrentWritingException {
         if (thread != Thread.currentThread() && thread.isAlive())
             throw new WrongThreadException();
         if (state != STATE_RUNNING)
@@ -231,7 +231,7 @@ public class Transaction implements AutoCloseable {
             if (data != null)
                 parent.doTransactionCommit(data, endMark);
             state = STATE_COMMITTED;
-        } catch (ConcurrentWriting exception) {
+        } catch (ConcurrentWritingException exception) {
             // the commit is rejected
             state = STATE_REJECTED;
             throw exception;
@@ -283,10 +283,10 @@ public class Transaction implements AutoCloseable {
     /**
      * Closes this transaction and commit the edits (if any) made within this transaction to the write-ahead log
      *
-     * @throws ConcurrentWriting when a concurrent transaction already committed conflicting changes to the log
+     * @throws ConcurrentWritingException when a concurrent transaction already committed conflicting changes to the log
      */
     @Override
-    public void close() throws ConcurrentWriting {
+    public void close() throws ConcurrentWritingException {
         if (thread != Thread.currentThread() && thread.isAlive())
             throw new WrongThreadException();
         if (state == STATE_RUNNING) {

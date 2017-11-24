@@ -25,7 +25,7 @@ import java.io.IOException;
  *
  * @author Laurent Wouters
  */
-public class ConcurrentWriting extends IOException {
+public class ConcurrentWritingException extends IOException {
     /**
      * The sequence number of the conflicting transaction
      */
@@ -59,7 +59,7 @@ public class ConcurrentWriting extends IOException {
      * @param sequenceNumber The sequence number of the conflicting transaction
      * @param timestamp      The timestamp of the conflicting transaction
      */
-    public ConcurrentWriting(long sequenceNumber, long timestamp) {
+    public ConcurrentWritingException(long sequenceNumber, long timestamp) {
         this.sequenceNumber = sequenceNumber;
         this.timestamp = timestamp;
     }

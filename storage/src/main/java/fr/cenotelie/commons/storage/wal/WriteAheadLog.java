@@ -338,9 +338,9 @@ public class WriteAheadLog implements AutoCloseable {
      *
      * @param data    The data of the transaction to commit
      * @param endMark The end mark for this transaction
-     * @throws ConcurrentWriting when a concurrent transaction already committed conflicting changes to the log
+     * @throws ConcurrentWritingException when a concurrent transaction already committed conflicting changes to the log
      */
-    void doTransactionCommit(LogTransactionData data, long endMark) throws ConcurrentWriting {
+    void doTransactionCommit(LogTransactionData data, long endMark) throws ConcurrentWritingException {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
@@ -360,7 +360,7 @@ public class WriteAheadLog implements AutoCloseable {
                         // this transaction is NOT known to the committing one (after the end-mark)
                         // examine this transaction for concurrent edits
                         if (data.intersects(index[i]))
-                            throw new ConcurrentWriting(index[i].getSequenceNumber(), index[i].getTimestamp());
+                            throw new ConcurrentWritingException(index[i].getSequenceNumber(), index[i].getTimestamp());
                     }
                 }
             }
@@ -691,7 +691,7 @@ public class WriteAheadLog implements AutoCloseable {
             transactions[i].abort();
             try {
                 transactions[i].close();
-            } catch (ConcurrentWriting exception) {
+            } catch (ConcurrentWritingException exception) {
                 // cannot happen because we aborted the transaction before
             }
         }
