@@ -57,6 +57,8 @@ public class ThreadSafeAccessManagerTest {
                     for (int i = 0; i != ACCESSES_COUNT; i++) {
                         int location = random.nextInt() & 0xFFFF;
                         int length = random.nextInt() & 0x00FF;
+                        if (length == 0)
+                            length = 1;
                         try (Access access = manager.get(location, length, false)) {
                             Assert.assertEquals(location, access.getLocation());
                             Assert.assertEquals(length, access.getLength());
