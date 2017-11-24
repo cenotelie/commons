@@ -76,6 +76,10 @@ public class WriteAheadLog implements AutoCloseable {
      * The size of the log that should trigger a checkpoint
      */
     private static final long LOG_SIZE_TRIGGER = 1 << 30; // 1Gb
+    /**
+     * The wait period for the janitor
+     */
+    private static final int JANITOR_PERIOD = 5000; // 5 seconds
 
     /**
      * The storage system is now closed
@@ -184,7 +188,7 @@ public class WriteAheadLog implements AutoCloseable {
             public void run() {
                 janitorMain();
             }
-        }, 5000);
+        }, JANITOR_PERIOD);
     }
 
     /**
