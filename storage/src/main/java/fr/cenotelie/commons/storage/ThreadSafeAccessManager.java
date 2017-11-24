@@ -48,6 +48,23 @@ class ThreadSafeAccessManager {
     private static final int THREAD_POOL_SIZE = 16;
 
     /**
+     * The operation succeeded
+     */
+    private static final int RESULT_OK = 0;
+    /**
+     * The operation failed because the list was stale
+     */
+    private static final int RESULT_FAILURE_STALE = 1;
+    /**
+     * The operation failed because there was a write overlap
+     */
+    private static final int RESULT_FAILURE_OVERLAP = 2;
+    /**
+     * The operation failed because there was a concurrent edit
+     */
+    private static final int RESULT_FAILURE_CONCURRENT = 3;
+
+    /**
      * The storage system that is protected by this manager
      */
     private final Storage storage;
@@ -317,9 +334,9 @@ class ThreadSafeAccessManager {
      *
      * @param toInsert The access to be inserted
      * @param key      The key to insert at
-     * @return Whether the attempt is successful
+     * @return The result for this operation
      */
-    private boolean listSearchAndInsert(int toInsert, int key) {
+    private int listSearchAndInsert(int toInsert, int key) {
         ThreadSafeAccess accessToInsert = accesses[toInsert];
 
         // find the left node
@@ -334,11 +351,11 @@ class ThreadSafeAccessManager {
             currentNode = stateActiveNext(currentNodeState);
             currentNodeState = accessesState.get(currentNode);
             if (!stateIsActive(currentNodeState))
-                return false;
+                return RESULT_FAILURE_STALE;
             ThreadSafeAccess accessCurrentNode = accesses[currentNode];
             if ((accessToInsert.isWritable() || accessCurrentNode.isWritable()) && !accessToInsert.disjoints(accessCurrentNode))
                 // there is a write overlap
-                return false;
+                return RESULT_FAILURE_OVERLAP;
             if (key < stateKey(currentNodeState))
                 break;
         }
@@ -349,20 +366,22 @@ class ThreadSafeAccessManager {
             currentNode = stateActiveNext(currentNodeState);
             currentNodeState = accessesState.get(currentNode);
             if (!stateIsActive(currentNodeState))
-                return false;
+                return RESULT_FAILURE_STALE;
             if (stateKey(currentNodeState) >= key + accessToInsert.getLength())
                 break;
             ThreadSafeAccess accessCurrentNode = accesses[currentNode];
             if ((accessToInsert.isWritable() || accessCurrentNode.isWritable()) && !accessToInsert.disjoints(accessCurrentNode))
                 // there is a write overlap
-                return false;
+                return RESULT_FAILURE_OVERLAP;
         }
 
         // setup the access to insert
         long toInsertState = accessesState.get(toInsert);
         accessesState.set(toInsert, stateSetNextActive(toInsertState, rightNode));
         // try to insert
-        return (accessesState.compareAndSet(leftNode, leftNodeState, stateSetNextActive(leftNodeState, toInsert)));
+        if (accessesState.compareAndSet(leftNode, leftNodeState, stateSetNextActive(leftNodeState, toInsert)))
+            return RESULT_OK;
+        return RESULT_FAILURE_CONCURRENT;
     }
 
     /**
@@ -373,25 +392,33 @@ class ThreadSafeAccessManager {
      * @param key      The key to insert at
      */
     private void listInsert(int toInsert, int key) {
-        int threadIdentifier = getThreadId();
         while (true) {
+            // gets a thread identifier for the current thread
+            int threadIdentifier = getThreadId();
+            // register this thread as accessing the list
             beginActiveAccess(threadIdentifier);
-            boolean success = listSearchAndInsert(toInsert, key);
-            endActiveAccess(threadIdentifier);
-            poolCleanup(threadIdentifier);
-            if (success)
-                break;
+            try {
+                int result = listSearchAndInsert(toInsert, key);
+                if (result == RESULT_OK)
+                    return;
+            } finally {
+                // unregisters this thread as accessing the list
+                endActiveAccess(threadIdentifier);
+                // participates to the pool cleanup effort
+                poolCleanup(threadIdentifier);
+                // release the thread identifier
+                returnThreadId(threadIdentifier);
+            }
         }
-        returnThreadId(threadIdentifier);
     }
 
     /**
      * Searches the left and right node in the list for the access to be removed and try to mark it as removed
      *
      * @param toRemove The access to be removed
-     * @return Whether the attempt is successful
+     * @return The result for this operation
      */
-    private boolean listSearchAndRemove(int toRemove) {
+    private int listSearchAndRemove(int toRemove) {
         // find the left node
         int leftNode;
         long leftNodeState;
@@ -405,19 +432,19 @@ class ThreadSafeAccessManager {
                 break;
             currentNodeState = accessesState.get(currentNode);
             if (!stateIsActive(currentNodeState))
-                return false;
+                return RESULT_FAILURE_STALE;
         }
 
         // mark as logically deleted
         long oldState = accessesState.get(toRemove);
         long newState = stateSetLogicallyRemoved(oldState);
         if (!accessesState.compareAndSet(toRemove, oldState, newState))
-            return false;
+            return RESULT_FAILURE_CONCURRENT;
         oldState = newState;
 
         // try to remove from the list
         if (!accessesState.compareAndSet(leftNode, leftNodeState, stateSetNextActive(leftNodeState, stateActiveNext(oldState))))
-            return false;
+            return RESULT_FAILURE_CONCURRENT;
 
         // no-longer reachable from the list's head
         // mark the access as returning provided the clearance of current threads
@@ -425,7 +452,7 @@ class ThreadSafeAccessManager {
         newState = stateSetReturning(oldState, currentThreads);
         accessesState.compareAndSet(toRemove, oldState, newState);
         unlockActiveAccesses(currentThreads);
-        return true;
+        return RESULT_OK;
     }
 
     /**
@@ -434,16 +461,24 @@ class ThreadSafeAccessManager {
      * @param toRemove The access to be removed
      */
     private void listRemove(int toRemove) {
-        int threadIdentifier = getThreadId();
         while (true) {
+            // gets a thread identifier for the current thread
+            int threadIdentifier = getThreadId();
+            // register this thread as accessing the list
             beginActiveAccess(threadIdentifier);
-            boolean success = listSearchAndRemove(toRemove);
-            endActiveAccess(threadIdentifier);
-            poolCleanup(threadIdentifier);
-            if (success)
-                break;
+            try {
+                int result = listSearchAndRemove(toRemove);
+                if (result == RESULT_OK)
+                    return;
+            } finally {
+                // unregisters this thread as accessing the list
+                endActiveAccess(threadIdentifier);
+                // participates to the pool cleanup effort
+                poolCleanup(threadIdentifier);
+                // release the thread identifier
+                returnThreadId(threadIdentifier);
+            }
         }
-        returnThreadId(threadIdentifier);
     }
 
     /**
