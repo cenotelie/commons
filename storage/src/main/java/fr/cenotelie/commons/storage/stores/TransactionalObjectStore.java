@@ -238,6 +238,11 @@ public class TransactionalObjectStore extends ObjectStore {
         return transaction.access(object, length, writing);
     }
 
+    @Override
+    public long getSize() {
+        return storage.getSize();
+    }
+
     /**
      * Flushes any outstanding changes to this storage system
      *

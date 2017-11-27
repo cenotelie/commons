@@ -64,6 +64,13 @@ public abstract class ObjectStore implements AutoCloseable {
 
 
     /**
+     * Gets the current size of this store
+     *
+     * @return The current size of this store
+     */
+    public abstract long getSize();
+
+    /**
      * Flushes any outstanding changes to this storage system
      *
      * @throws IOException When an IO error occurred

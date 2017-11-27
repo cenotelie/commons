@@ -239,6 +239,11 @@ public class SimpleObjectStore extends ObjectStore {
     }
 
     @Override
+    public long getSize() {
+        return storage.getSize();
+    }
+
+    @Override
     public void flush() throws IOException {
         storage.flush();
     }
