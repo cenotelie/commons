@@ -17,17 +17,16 @@
 
 package fr.cenotelie.commons.storage.stores;
 
-
 import fr.cenotelie.commons.storage.Access;
 import fr.cenotelie.commons.storage.Constants;
+import fr.cenotelie.commons.storage.Transaction;
 
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
 /**
- * Implements a (long -> long) map that is persisted in a storage system.
- * A persisted map is thread-safe for access and modifications.
+ * Implements a (long -> long) map that is persisted in a transactional storage system.
  * <p>
  * A persisted map is implemented as a B+ tree with Preparatory Operations.
  * Y. Mond and Y. Raz, Concurrency Control in B+ Tree Databases using Preparatory Operations, in Proceedings of VLDB 1985
@@ -44,7 +43,7 @@ import java.util.List;
  *
  * @author Laurent Wouters
  */
-class MapStoreSimple {
+public class TransactionalMap {
     /**
      * The rate of the B+ tree
      */
@@ -116,7 +115,7 @@ class MapStoreSimple {
     /**
      * The backing store
      */
-    private final ObjectStore store;
+    private final TransactionalObjectStore store;
     /**
      * The head entry for the map
      */
@@ -128,7 +127,7 @@ class MapStoreSimple {
      * @param store The backing store
      * @param head  The head entry for the map
      */
-    public MapStoreSimple(ObjectStore store, long head) {
+    public TransactionalMap(TransactionalObjectStore store, long head) {
         this.store = store;
         this.head = head;
     }
@@ -136,12 +135,13 @@ class MapStoreSimple {
     /**
      * Creates a new persisted map
      *
-     * @param store The backing store
+     * @param store       The backing store
+     * @param transaction The transaction to use
      * @return The persisted map
      */
-    public static MapStoreSimple create(ObjectStore store) {
-        long entry = store.allocate(NODE_SIZE);
-        try (Access access = store.access(entry, true)) {
+    public static TransactionalMap create(TransactionalObjectStore store, Transaction transaction) {
+        long entry = store.allocate(transaction, NODE_SIZE);
+        try (Access access = store.access(transaction, entry, true)) {
             // write header
             access.writeLong(Constants.KEY_NULL);
             access.writeChar(NODE_IS_LEAF);
@@ -150,18 +150,19 @@ class MapStoreSimple {
             access.writeLong(0);
             access.writeLong(Constants.KEY_NULL);
         }
-        return new MapStoreSimple(store, entry);
+        return new TransactionalMap(store, entry);
     }
 
     /**
      * Gets the value associated to key
      *
-     * @param key The requested key
-     * @return The associated value, or ObjectStore.KEY_NULL when the key is not present
+     * @param transaction The transaction to use
+     * @param key         The requested key
+     * @return The associated value, or KEY_NULL when the key is not present
      */
-    public long get(long key) {
+    public long get(Transaction transaction, long key) {
         Access accessFather = null;
-        Access accessCurrent = store.access(head, false);
+        Access accessCurrent = store.access(transaction, head, false);
         try {
             while (true) {
                 // inspect the current node
@@ -174,7 +175,7 @@ class MapStoreSimple {
                 if (accessFather != null)
                     accessFather.close();
                 accessFather = accessCurrent;
-                accessCurrent = store.access(next, false);
+                accessCurrent = store.access(transaction, next, false);
             }
         } finally {
             if (accessFather != null)
@@ -190,7 +191,7 @@ class MapStoreSimple {
      * @param accessCurrent The access to the current node
      * @param key           The stage 2 key to look for
      * @param count         The number of entries in the node
-     * @return The associated value, or ObjectStore.KEY_NULL when none is found
+     * @return The associated value, or KEY_NULL when none is found
      */
     private long getOnNode(Access accessCurrent, long key, char count) {
         for (int i = 0; i != count; i++) {
@@ -227,43 +228,42 @@ class MapStoreSimple {
     }
 
     /**
-     * Atomically tries to insert a value in the map for a key
-     * This fails if there already is an entry.
+     * Inserts a value in the map for a key
      *
-     * @param key      The key
-     * @param valueNew The associated value
-     * @return Whether the operation succeeded
+     * @param transaction The transaction to use
+     * @param key         The key
+     * @param valueNew    The associated value
+     * @return The old value, or KEY_NULL if there was none
      */
-    public boolean tryPut(long key, long valueNew) {
-        return compareAndSet(key, Constants.KEY_NULL, valueNew);
+    public long put(Transaction transaction, long key, long valueNew) {
+        return doPut(transaction, key, valueNew);
     }
 
     /**
-     * Atomically tries to remove a value from the map
-     * This fails if there is no value or if the value to remove is different from the expected one.
+     * Removes a value from the map
      *
-     * @param key      The key
-     * @param valueOld The expected value to remove
-     * @return Whether the operation succeeded
+     * @param transaction The transaction to use
+     * @param key         The key
+     * @return The old value, or KEY_NULL if there was none
      */
-    public boolean tryRemove(long key, long valueOld) {
-        return compareAndSet(key, valueOld, Constants.KEY_NULL);
+    public long remove(Transaction transaction, long key) {
+        return doPut(transaction, key, Constants.KEY_NULL);
     }
 
     /**
      * Atomically replaces a value in the map for a key
      * This fails if there is no value for the key, or if the actual value is different from the expected one.
      *
-     * @param key      The key
-     * @param valueOld The old value to replace (ObjectStore.KEY_NULL, if this is expected to be an insertion)
-     * @param valueNew The new value for the key (ObjectStore.KEY_NULL, if this is expected to be a removal)
-     * @return Whether the operation succeeded
+     * @param transaction The transaction to use
+     * @param key         The key
+     * @param valueNew    The new value for the key (KEY_NULL, if this is a removal)
+     * @return The old value, or KEY_NULL if there was none
      */
-    public boolean compareAndSet(long key, long valueOld, long valueNew) {
+    private long doPut(Transaction transaction, long key, long valueNew) {
         Access accessFather = null;
-        Access accessCurrent = store.access(head, true);
+        Access accessCurrent = store.access(transaction, head, true);
         try {
-            inspect(null, accessCurrent, head, valueNew != Constants.KEY_NULL);
+            inspect(transaction, null, accessCurrent, head, valueNew != Constants.KEY_NULL);
             while (true) {
                 // inspect the current node
                 boolean isLeaf = accessCurrent.seek(8).readChar() == NODE_IS_LEAF;
@@ -275,24 +275,27 @@ class MapStoreSimple {
                         long entryValue = accessCurrent.readLong();
                         if (entryKey == key)
                             // found the key
-                            return doCompareAndReplace(accessCurrent, i, count, entryValue, valueOld, valueNew);
+                            return doPut(accessCurrent, i, count, entryValue, valueNew);
                     }
                     // did not find the key, stop here
-                    return doInsert(accessCurrent, count, key, valueOld, valueNew);
+                    if (valueNew != Constants.KEY_NULL)
+                        // do the insert if required
+                        doInsert(accessCurrent, count, key, valueNew);
+                    return Constants.KEY_NULL;
                 }
                 // release the father
                 if (accessFather != null)
                     accessFather.close();
                 // resolve the child
                 long child = getChild(accessCurrent, key, count);
-                Access accessChild = store.access(child, true);
-                boolean hasChanged = inspect(accessCurrent, accessChild, child, valueNew != Constants.KEY_NULL);
+                Access accessChild = store.access(transaction, child, true);
+                boolean hasChanged = inspect(transaction, accessCurrent, accessChild, child, valueNew != Constants.KEY_NULL);
                 while (hasChanged) {
                     accessChild.close();
                     count = accessCurrent.seek(8 + 2).readChar();
                     child = getChild(accessCurrent, key, count);
-                    accessChild = store.access(child, true);
-                    hasChanged = inspect(accessCurrent, accessChild, child, valueNew != Constants.KEY_NULL);
+                    accessChild = store.access(transaction, child, true);
+                    hasChanged = inspect(transaction, accessCurrent, accessChild, child, valueNew != Constants.KEY_NULL);
                 }
                 // rotate
                 accessFather = accessCurrent;
@@ -313,18 +316,17 @@ class MapStoreSimple {
      * @param index         The index of the entry within the node
      * @param count         The number of entries in the node
      * @param entryValue    The current value of the entry
-     * @param valueOld      The old value to replace (ObjectStore.KEY_NULL, if this is expected to be an insertion)
-     * @param valueNew      The new value for the key (ObjectStore.KEY_NULL, if this is expected to be a removal)
-     * @return Whether the operation succeeded
+     * @param valueNew      The new value for the key (KEY_NULL, if this is a removal)
+     *                      The old value, or KEY_NULL if there was none
      */
-    private boolean doCompareAndReplace(Access accessCurrent, int index, char count, long entryValue, long valueOld, long valueNew) {
-        if (entryValue != valueOld)
-            // oops, compare failed
-            return false;
+    private long doPut(Access accessCurrent, int index, char count, long entryValue, long valueNew) {
+        if (entryValue == valueNew)
+            // the existing value is the same as the one to insert
+            return entryValue;
         if (valueNew != Constants.KEY_NULL) {
             // this is a replace
             accessCurrent.skip(-8).writeLong(valueNew);
-            return true;
+            return entryValue;
         } else {
             // this is a removal
             // shift the data to the left
@@ -339,83 +341,71 @@ class MapStoreSimple {
             // update the header
             count--;
             accessCurrent.seek(8 + 2).writeChar(count);
-            return true;
+            return entryValue;
         }
     }
 
     /**
-     * When the requested key is not found in the current leaf node, try to perform an insert
+     * When the requested key is not found in the current leaf node, perform an insert
      *
      * @param accessCurrent The access to the current node
      * @param count         The number of entries in the node
      * @param key           The key
-     * @param valueOld      The old value to replace (ObjectStore.KEY_NULL, if this is expected to be an insertion)
-     * @param valueNew      The new value for the key (ObjectStore.KEY_NULL, if this is expected to be a removal)
-     * @return Whether the operation succeeded
+     * @param valueNew      The new value for the key (KEY_NULL, if this is a removal)
      */
-    private boolean doInsert(Access accessCurrent, char count, long key, long valueOld, long valueNew) {
-        if (valueNew != Constants.KEY_NULL) {
-            // this is an insertion
-            if (valueOld != Constants.KEY_NULL)
-                // expected a value
-                return false;
-            // find the index to insert at
-            int insertAt = count;
-            accessCurrent.seek(NODE_HEADER);
-            for (int i = 0; i != count; i++) {
-                long entryKey = accessCurrent.readLong();
-                accessCurrent.skip(8);
-                if (entryKey > key) {
-                    insertAt = i;
-                    break;
-                }
+    private void doInsert(Access accessCurrent, char count, long key, long valueNew) {
+        // find the index to insert at
+        int insertAt = count;
+        accessCurrent.seek(NODE_HEADER);
+        for (int i = 0; i != count; i++) {
+            long entryKey = accessCurrent.readLong();
+            accessCurrent.skip(8);
+            if (entryKey > key) {
+                insertAt = i;
+                break;
             }
-            // shift the existing data to the right
-            for (int i = count; i != insertAt - 1; i--) {
-                accessCurrent.seek(NODE_HEADER + i * CHILD_SIZE);
-                long entryKey = accessCurrent.readLong();
-                long entryValue = accessCurrent.readLong();
-                accessCurrent.writeLong(entryKey);
-                accessCurrent.writeLong(entryValue);
-            }
-            // write the inserted key-value
-            accessCurrent.seek(NODE_HEADER + insertAt * CHILD_SIZE);
-            accessCurrent.writeLong(key);
-            accessCurrent.writeLong(valueNew);
-            // update the header
-            count++;
-            accessCurrent.seek(8 + 2).writeChar(count);
-            return true;
-        } else {
-            // the entry is not found and the new value is the null key
-            // this is only valid if the expected old value is also null
-            return (valueOld == Constants.KEY_NULL);
         }
+        // shift the existing data to the right
+        for (int i = count; i != insertAt - 1; i--) {
+            accessCurrent.seek(NODE_HEADER + i * CHILD_SIZE);
+            long entryKey = accessCurrent.readLong();
+            long entryValue = accessCurrent.readLong();
+            accessCurrent.writeLong(entryKey);
+            accessCurrent.writeLong(entryValue);
+        }
+        // write the inserted key-value
+        accessCurrent.seek(NODE_HEADER + insertAt * CHILD_SIZE);
+        accessCurrent.writeLong(key);
+        accessCurrent.writeLong(valueNew);
+        // update the header
+        count++;
+        accessCurrent.seek(8 + 2).writeChar(count);
     }
 
     /**
      * Inspect the current node for preparatory operation
      *
+     * @param transaction   The transaction to use
      * @param accessFather  The access to the parent node
      * @param accessCurrent The access to the current node
      * @param current       The entry for the node to split
      * @param isInsert      Whether this is an insert operation
      * @return Whether the tree was modified
      */
-    private boolean inspect(Access accessFather, Access accessCurrent, long current, boolean isInsert) {
+    private boolean inspect(Transaction transaction, Access accessFather, Access accessCurrent, long current, boolean isInsert) {
         boolean isLeaf = accessCurrent.seek(8).readChar() == NODE_IS_LEAF;
         char count = accessCurrent.readChar();
         if (isInsert && count >= 2 * N) {
             // split the current node
             if (accessFather == null) {
                 if (isLeaf)
-                    splitRootLeaf(accessCurrent, current, count);
+                    splitRootLeaf(transaction, accessCurrent, current, count);
                 else
-                    splitRootInternal(accessCurrent, current, count);
+                    splitRootInternal(transaction, accessCurrent, current, count);
             } else if (isLeaf)
-                splitLeaf(accessFather, accessCurrent, current, count);
+                splitLeaf(transaction, accessFather, accessCurrent, current, count);
             else
-                splitInternal(accessFather, accessCurrent, current, count);
+                splitInternal(transaction, accessFather, accessCurrent, current, count);
             return true;
         } else if (!isInsert && accessFather != null && count <= N) {
             // the current node is a candidate for merging
@@ -440,26 +430,26 @@ class MapStoreSimple {
             // try to merge with the neighbour on the right if any
             if (neighbourRight != Constants.KEY_NULL) {
                 boolean freeRight;
-                try (Access accessRight = store.access(neighbourRight, true)) {
+                try (Access accessRight = store.access(transaction, neighbourRight, true)) {
                     freeRight = isLeaf
                             ? tryMergeLeaves(accessFather, accessCurrent, accessRight, indexCurrent, neighbourRight)
                             : tryMergeInternals(accessFather, accessCurrent, accessRight, indexCurrent);
                 }
                 if (freeRight)
-                    store.free(neighbourRight);
+                    store.free(transaction, neighbourRight);
                 return true;
             }
 
             // try to merge with the neighbour on the left if any
             if (neighbourLeft != Constants.KEY_NULL) {
                 boolean freeRight;
-                try (Access accessLeft = store.access(neighbourLeft, true)) {
+                try (Access accessLeft = store.access(transaction, neighbourLeft, true)) {
                     freeRight = isLeaf
                             ? tryMergeLeaves(accessFather, accessLeft, accessCurrent, indexCurrent - 1, current)
                             : tryMergeInternals(accessFather, accessLeft, accessCurrent, indexCurrent - 1);
                 }
                 if (freeRight)
-                    store.free(current);
+                    store.free(transaction, current);
                 return true;
             }
         }
@@ -469,19 +459,20 @@ class MapStoreSimple {
     /**
      * Splits the root node when it is an internal node
      *
+     * @param transaction   The transaction to use
      * @param accessCurrent The access to the current node
      * @param current       The entry for the node to split
      * @param count         The number of keys in the current node
      */
-    private void splitRootInternal(Access accessCurrent, long current, char count) {
+    private void splitRootInternal(Transaction transaction, Access accessCurrent, long current, char count) {
         // number of keys to transfer to the right (not including the fallback pointer)
         int countRight = (count == 2 * N) ? N - 1 : N;
-        long left = store.allocate(NODE_SIZE);
-        long right = store.allocate(NODE_SIZE);
+        long left = store.allocate(transaction, NODE_SIZE);
+        long right = store.allocate(transaction, NODE_SIZE);
         long maxLeft;
         // write the new left node
         accessCurrent.seek(NODE_HEADER);
-        try (Access accessLeft = store.access(left, true)) {
+        try (Access accessLeft = store.access(transaction, left, true)) {
             accessLeft.writeLong(current);
             accessLeft.writeChar((char) 0);
             accessLeft.writeChar((char) N);
@@ -494,7 +485,7 @@ class MapStoreSimple {
             accessLeft.writeLong(accessCurrent.readLong());
         }
         // write the new right node
-        try (Access accessRight = store.access(right, true)) {
+        try (Access accessRight = store.access(transaction, right, true)) {
             accessRight.writeLong(current);
             accessRight.writeChar((char) 0);
             accessRight.writeChar((char) countRight);
@@ -515,18 +506,19 @@ class MapStoreSimple {
     /**
      * Splits the root node when it is a leaf
      *
+     * @param transaction   The transaction to use
      * @param accessCurrent The access to the current node
      * @param current       The entry for the node to split
      * @param count         The number of keys in the current node
      */
-    private void splitRootLeaf(Access accessCurrent, long current, char count) {
+    private void splitRootLeaf(Transaction transaction, Access accessCurrent, long current, char count) {
         // number of keys to transfer to the right (not including the neighbour pointer)
         int countRight = (count == 2 * N) ? N : N + 1;
-        long left = store.allocate(NODE_SIZE);
-        long right = store.allocate(NODE_SIZE);
+        long left = store.allocate(transaction, NODE_SIZE);
+        long right = store.allocate(transaction, NODE_SIZE);
         // write the new left node
         accessCurrent.seek(NODE_HEADER);
-        try (Access accessLeft = store.access(left, true)) {
+        try (Access accessLeft = store.access(transaction, left, true)) {
             accessLeft.writeLong(current);
             accessLeft.writeChar(NODE_IS_LEAF);
             accessLeft.writeChar((char) N);
@@ -540,7 +532,7 @@ class MapStoreSimple {
         }
         // write the new right node
         long rightFirstKey = 0;
-        try (Access accessRight = store.access(right, true)) {
+        try (Access accessRight = store.access(transaction, right, true)) {
             accessRight.writeLong(current);
             accessRight.writeChar(NODE_IS_LEAF);
             accessRight.writeChar((char) countRight);
@@ -568,17 +560,18 @@ class MapStoreSimple {
     /**
      * Splits an internal node (that is not the root)
      *
+     * @param transaction   The transaction to use
      * @param accessFather  The access to the parent node
      * @param accessCurrent The access to the current node
      * @param current       The entry for the node to split
      * @param count         The number of keys in the current node
      */
-    private void splitInternal(Access accessFather, Access accessCurrent, long current, char count) {
+    private void splitInternal(Transaction transaction, Access accessFather, Access accessCurrent, long current, char count) {
         // number of keys to transfer to the right (not including the fallback child pointer)
         int countRight = (count == 2 * N) ? N - 1 : N;
         accessCurrent.seek(NODE_HEADER + (N + 1) * CHILD_SIZE);
-        long right = store.allocate(NODE_SIZE);
-        try (Access accessRight = store.access(right, true)) {
+        long right = store.allocate(transaction, NODE_SIZE);
+        try (Access accessRight = store.access(transaction, right, true)) {
             accessRight.writeLong(current);
             accessRight.writeChar((char) 0);
             accessRight.writeChar((char) countRight);
@@ -599,18 +592,19 @@ class MapStoreSimple {
     /**
      * Splits a leaf node (that is not the root)
      *
+     * @param transaction   The transaction to use
      * @param accessFather  The access to the parent node
      * @param accessCurrent The access to the current node
      * @param current       The entry for the node to split
      * @param count         The number of keys in the current node
      */
-    private void splitLeaf(Access accessFather, Access accessCurrent, long current, char count) {
+    private void splitLeaf(Transaction transaction, Access accessFather, Access accessCurrent, long current, char count) {
         // number of keys to transfer to the right (not including the neighbour pointer)
         int countRight = (count == 2 * N) ? N : N + 1;
         accessCurrent.seek(NODE_HEADER + N * CHILD_SIZE);
-        long right = store.allocate(NODE_SIZE);
+        long right = store.allocate(transaction, NODE_SIZE);
         long rightFirstKey = 0;
-        try (Access accessRight = store.access(right, true)) {
+        try (Access accessRight = store.access(transaction, right, true)) {
             accessRight.writeLong(current);
             accessRight.writeChar(NODE_IS_LEAF);
             accessRight.writeChar((char) countRight);
@@ -1064,28 +1058,31 @@ class MapStoreSimple {
 
     /**
      * Removes all entries from this map
+     *
+     * @param transaction The transaction to use
      */
-    public void clear() {
-        clear(null);
+    public void clear(Transaction transaction) {
+        clear(transaction, null);
     }
 
     /**
      * Removes all entries from this map
      *
-     * @param entries The buffer for removed entries
+     * @param transaction The transaction to use
+     * @param entries     The buffer for removed entries
      */
-    public void clear(List<Entry> entries) {
+    public void clear(Transaction transaction, List<Entry> entries) {
         Stack stack = new Stack();
-        try (Access accessHead = store.access(head, true)) {
+        try (Access accessHead = store.access(transaction, head, true)) {
             // initializes the stack with the content of the head
             clearOnNode(accessHead, stack, entries);
             // deletes the tree, starting with nodes on the stack
             while (!stack.isEmpty()) {
                 long current = stack.pop();
-                try (Access accessCurrent = store.access(current, false)) {
+                try (Access accessCurrent = store.access(transaction, current, false)) {
                     clearOnNode(accessCurrent, stack, entries);
                 }
-                store.free(current);
+                store.free(transaction, current);
             }
             // rewrite the head
             accessHead.seek(8);
@@ -1123,16 +1120,21 @@ class MapStoreSimple {
     /**
      * Gets an iterator over the entries in this map
      *
+     * @param transaction The transaction to use
      * @return An iterator over the entries
      */
-    public Iterator<Entry> entries() {
-        return new EntriesIterator();
+    public Iterator<Entry> entries(Transaction transaction) {
+        return new EntriesIterator(transaction);
     }
 
     /**
      * Implements an iterator over the entries in the B+ tree
      */
     private class EntriesIterator implements Iterator<Entry> {
+        /**
+         * The transaction to use
+         */
+        private final Transaction transaction;
         /**
          * The keys in the current node
          */
@@ -1160,8 +1162,11 @@ class MapStoreSimple {
 
         /**
          * Initializes this iterator
+         *
+         * @param transaction The transaction to use
          */
-        public EntriesIterator() {
+        public EntriesIterator(Transaction transaction) {
+            this.transaction = transaction;
             this.currentKeys = new long[CHILD_COUNT];
             this.currentValues = new long[CHILD_COUNT];
             this.currentCount = 0;
@@ -1176,7 +1181,7 @@ class MapStoreSimple {
          */
         private void findLeafNode() {
             Access accessFather = null;
-            Access accessCurrent = store.access(head, false);
+            Access accessCurrent = store.access(transaction, head, false);
             try {
                 while (true) {
                     // inspect the current node
@@ -1190,7 +1195,7 @@ class MapStoreSimple {
                         if (accessFather != null)
                             accessFather.close();
                         accessFather = accessCurrent;
-                        accessCurrent = store.access(next, false);
+                        accessCurrent = store.access(transaction, next, false);
                     }
                 }
             } finally {
@@ -1227,7 +1232,7 @@ class MapStoreSimple {
             nextIndex++;
             if (nextIndex >= currentCount && currentNeighbour != Constants.KEY_NULL) {
                 // go to next node
-                try (Access access = store.access(currentNeighbour, false)) {
+                try (Access access = store.access(transaction, currentNeighbour, false)) {
                     loadLeafNode(access);
                 }
             }
@@ -1238,7 +1243,7 @@ class MapStoreSimple {
         public void remove() {
             // try to remove the mapping
             // this may fail if the map was modified
-            tryRemove(result.key, result.value);
+            TransactionalMap.this.remove(transaction, result.key);
         }
     }
 }

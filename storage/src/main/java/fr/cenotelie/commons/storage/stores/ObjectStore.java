@@ -29,11 +29,6 @@ import java.io.IOException;
  */
 public abstract class ObjectStore implements AutoCloseable {
     /**
-     * The null entry key, denotes the absence of value for a key
-     */
-    public static final long KEY_NULL = 0xFFFFFFFFFFFFFFFFL;
-
-    /**
      * Allocates an object with the specified size
      *
      * @param size The size of the object to allocate

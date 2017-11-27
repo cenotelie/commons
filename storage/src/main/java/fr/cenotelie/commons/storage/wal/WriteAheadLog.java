@@ -52,7 +52,7 @@ public class WriteAheadLog extends TransactionalStorage {
     /**
      * The magic number for the log's header
      */
-    private static final long LOG_HEADER_MAGIC_NUMBER = 0x0063656e2d77616cL;
+    private static final long LOG_HEADER_MAGIC_NUMBER = 0x0063656e2d77616cL; // cen-wal
 
     /**
      * The size of the pool for pages

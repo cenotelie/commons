@@ -39,4 +39,8 @@ public interface Constants {
      * The mask for the index of a page
      */
     long INDEX_MASK_UPPER = ~INDEX_MASK_LOWER;
+    /**
+     * The null entry key, denotes the absence of value for a key
+     */
+    long KEY_NULL = 0xFFFFFFFFFFFFFFFFL;
 }

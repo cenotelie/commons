@@ -60,9 +60,9 @@ public class ObjectStoreSimple extends ObjectStore {
      */
     private static final int PREAMBLE_HEADER_SIZE = 4 + 4 + 4 + 4;
     /**
-     * The size of an open block entry in the preamble
-     * char: Index of the block
-     * char: Remaining free space
+     * The size of an open pool entry in the preamble
+     * int: the size of objects in this pool
+     * long: The location of the first re-usable object in this pool
      */
     private static final int PREAMBLE_ENTRY_SIZE = 4 + 8;
     /**
