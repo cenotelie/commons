@@ -71,7 +71,7 @@ class SimpleMap {
      * header: the node header
      * entries[entryCount]: the children entries
      */
-    private static final int NODE_SIZE = NODE_HEADER + CHILD_COUNT * CHILD_SIZE;
+    public static final int NODE_SIZE = NODE_HEADER + CHILD_COUNT * CHILD_SIZE;
     /**
      * Marker for leaf nodes
      */
