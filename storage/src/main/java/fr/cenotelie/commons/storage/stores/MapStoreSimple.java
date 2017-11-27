@@ -116,7 +116,7 @@ class MapStoreSimple {
     /**
      * The backing store
      */
-    private final ObjectStore store;
+    private final ObjectStoreSimple store;
     /**
      * The head entry for the map
      */
@@ -128,7 +128,7 @@ class MapStoreSimple {
      * @param store The backing store
      * @param head  The head entry for the map
      */
-    public MapStoreSimple(ObjectStore store, long head) {
+    public MapStoreSimple(ObjectStoreSimple store, long head) {
         this.store = store;
         this.head = head;
     }
@@ -139,7 +139,7 @@ class MapStoreSimple {
      * @param store The backing store
      * @return The persisted map
      */
-    public static MapStoreSimple create(ObjectStore store) {
+    public static MapStoreSimple create(ObjectStoreSimple store) {
         long entry = store.allocate(NODE_SIZE);
         try (Access access = store.access(entry, true)) {
             // write header
