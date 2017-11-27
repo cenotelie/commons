@@ -55,6 +55,30 @@ public class TransactionalObjectStore extends ObjectStore {
     }
 
     /**
+     * Starts a new transaction
+     * The transaction must be ended by a call to the transaction's close method.
+     * The transaction will NOT automatically commit when closed, the commit method should be called before closing.
+     *
+     * @param writable Whether the transaction shall support writing
+     * @return The new transaction
+     */
+    public Transaction newTransaction(boolean writable) {
+        return storage.newTransaction(writable);
+    }
+
+    /**
+     * Starts a new transaction
+     * The transaction must be ended by a call to the transaction's close method.
+     *
+     * @param writable   Whether the transaction shall support writing
+     * @param autocommit Whether this transaction should commit when being closed
+     * @return The new transaction
+     */
+    public Transaction newTransaction(boolean writable, boolean autocommit) {
+        return storage.newTransaction(writable, autocommit);
+    }
+
+    /**
      * Allocates an object with the specified size
      * An attempt is made to reuse an previously freed object of the same size.
      *
