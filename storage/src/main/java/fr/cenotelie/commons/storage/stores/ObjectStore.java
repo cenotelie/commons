@@ -17,7 +17,7 @@
 
 package fr.cenotelie.commons.storage.stores;
 
-import fr.cenotelie.commons.storage.Access;
+import fr.cenotelie.commons.storage.Constants;
 
 import java.io.IOException;
 
@@ -29,28 +29,39 @@ import java.io.IOException;
  */
 public abstract class ObjectStore implements AutoCloseable {
     /**
-     * Allocates an object with the specified size
-     *
-     * @param size The size of the object to allocate
-     * @return The location of the allocated object
+     * Magic identifier of the type of store
      */
-    public abstract long allocate(int size);
-
+    protected static final long MAGIC_ID = 0x63656e2d6f626a73L; // cen-objs
     /**
-     * Frees the object at the specified location
-     *
-     * @param object The location of an object
+     * The size of the header in the preamble block
+     * long: Magic identifier for the store
+     * long: Start offset to free space
+     * int: Number of pools of reusable object pools
      */
-    public abstract void free(long object);
-
+    protected static final int PREAMBLE_HEADER_SIZE = 8 + 8 + 4;
     /**
-     * Access the object at the specified location
-     *
-     * @param object  The location of an object
-     * @param writing Whether to allow writing
-     * @return The access to the object
+     * The size of an open pool entry in the preamble
+     * int: the size of objects in this pool
+     * long: The location of the first re-usable object in this pool
      */
-    public abstract Access access(long object, boolean writing);
+    protected static final int PREAMBLE_ENTRY_SIZE = 4 + 8;
+    /**
+     * The maximum number of pools in this store
+     */
+    protected static final int MAX_POOLS = (Constants.PAGE_SIZE - PREAMBLE_HEADER_SIZE) / PREAMBLE_ENTRY_SIZE;
+    /**
+     * Size of the header for each stored object
+     */
+    public static final int OBJECT_HEADER_SIZE = 2;
+    /**
+     * Minimum size of objects in this store
+     */
+    public static final int OBJECT_MIN_SIZE = 8 - OBJECT_HEADER_SIZE;
+    /**
+     * Maximum size of objects in this store
+     */
+    public static final int OBJECT_MAX_SIZE = Constants.PAGE_SIZE - OBJECT_HEADER_SIZE;
+
 
     /**
      * Flushes any outstanding changes to this storage system

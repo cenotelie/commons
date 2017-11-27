@@ -44,46 +44,6 @@ import java.io.IOException;
  */
 public class ObjectStoreSimple extends ObjectStore {
     /**
-     * Magic identifier of the type of store
-     */
-    private static final int MAGIC_ID = 0x784F574C;
-    /**
-     * The layout version
-     */
-    private static final int LAYOUT_VERSION = 1;
-    /**
-     * The size of the header in the preamble block
-     * int: Magic identifier for the store
-     * int: Layout version
-     * int: Start offset to free space
-     * int: Number of pools of reusable objects
-     */
-    private static final int PREAMBLE_HEADER_SIZE = 4 + 4 + 4 + 4;
-    /**
-     * The size of an open pool entry in the preamble
-     * int: the size of objects in this pool
-     * long: The location of the first re-usable object in this pool
-     */
-    private static final int PREAMBLE_ENTRY_SIZE = 4 + 8;
-    /**
-     * The maximum number of pools in this store
-     */
-    private static final int MAX_POOLS = (Constants.PAGE_SIZE - PREAMBLE_HEADER_SIZE) / PREAMBLE_ENTRY_SIZE;
-    /**
-     * Size of the header for each stored object
-     */
-    public static final int OBJECT_HEADER_SIZE = 2;
-    /**
-     * Minimum size of objects in this store
-     */
-    public static final int OBJECT_MIN_SIZE = 8 - OBJECT_HEADER_SIZE;
-    /**
-     * Maximum size of objects in this store
-     */
-    public static final int OBJECT_MAX_SIZE = Constants.PAGE_SIZE - OBJECT_HEADER_SIZE;
-
-
-    /**
      * The underlying storage system
      */
     private final Storage storage;
@@ -97,22 +57,27 @@ public class ObjectStoreSimple extends ObjectStore {
         this.storage = storage;
         if (storage.isWritable() && storage.getSize() < PREAMBLE_HEADER_SIZE) {
             try (Access access = storage.access(0, PREAMBLE_HEADER_SIZE, true)) {
-                access.writeInt(MAGIC_ID);
-                access.writeInt(LAYOUT_VERSION);
-                access.writeInt(Constants.PAGE_SIZE);
-                access.writeInt((char) 0);
+                access.writeLong(MAGIC_ID);
+                access.writeLong(Constants.PAGE_SIZE);
+                access.writeInt(0);
             }
         }
     }
 
-    @Override
+    /**
+     * Allocates an object with the specified size
+     * An attempt is made to reuse an previously freed object of the same size.
+     *
+     * @param size The size of the object to allocate
+     * @return The location of the allocated object
+     */
     public long allocate(int size) {
         int toAllocate = size < OBJECT_MIN_SIZE ? OBJECT_MIN_SIZE : size;
         if (size > OBJECT_MAX_SIZE)
             throw new IndexOutOfBoundsException();
         try (Access access = storage.access(0, Constants.PAGE_SIZE, true)) {
             // get the number of pools
-            int poolCount = access.seek(12).readInt();
+            int poolCount = access.seek(8 + 8).readInt();
             // look into the pools
             for (int i = 0; i != poolCount; i++) {
                 int poolSize = access.readInt();
@@ -121,7 +86,7 @@ public class ObjectStoreSimple extends ObjectStore {
                     // the pool size fits, try to reuse ...
                     if (poolFirst != 0)
                         // if the pool is not empty
-                        return allocateReuse(access, i, poolFirst, poolSize);
+                        return doAllocateReusable(access, i, poolFirst, poolSize);
                     // failed, stop looking into pools
                     break;
                 }
@@ -129,26 +94,6 @@ public class ObjectStoreSimple extends ObjectStore {
             // fall back to direct allocation from the free space
             return doAllocateDirect(access, toAllocate);
         }
-    }
-
-
-    /**
-     * Tries to allocate an object by reusing the an empty entry in this store
-     *
-     * @param access    The access to the preambule
-     * @param poolIndex The index of the pool to use
-     * @param target    The first element in the pool
-     * @param size      The size of the objects in the pool
-     * @return The key to the object
-     */
-    private long allocateReuse(Access access, int poolIndex, long target, int size) {
-        long next;
-        try (Access accessTarget = storage.access(target, 8, true)) {
-            next = accessTarget.readLong();
-            accessTarget.reset().writeChar((char) size);
-        }
-        access.seek(PREAMBLE_HEADER_SIZE + poolIndex * PREAMBLE_ENTRY_SIZE + 4).writeLong(next);
-        return target + 2;
     }
 
     /**
@@ -169,6 +114,25 @@ public class ObjectStoreSimple extends ObjectStore {
     }
 
     /**
+     * Tries to allocate an object by reusing the an empty entry in this store
+     *
+     * @param access    The access to the preambule
+     * @param poolIndex The index of the pool to use
+     * @param target    The first element in the pool
+     * @param size      The size of the objects in the pool
+     * @return The key to the object
+     */
+    private long doAllocateReusable(Access access, int poolIndex, long target, int size) {
+        long next;
+        try (Access accessTarget = storage.access(target, 8, true)) {
+            next = accessTarget.readLong();
+            accessTarget.reset().writeChar((char) size);
+        }
+        access.seek(PREAMBLE_HEADER_SIZE + poolIndex * PREAMBLE_ENTRY_SIZE + 4).writeLong(next);
+        return target + 2;
+    }
+
+    /**
      * Allocates at the end
      *
      * @param access The access to the preambule
@@ -176,7 +140,7 @@ public class ObjectStoreSimple extends ObjectStore {
      * @return The key to the object
      */
     private long doAllocateDirect(Access access, int size) {
-        long freeSpace = access.seek(8).readInt();
+        long freeSpace = access.seek(8).readLong();
         long target = freeSpace;
         freeSpace += size + OBJECT_HEADER_SIZE;
         if ((freeSpace & Constants.INDEX_MASK_UPPER) != (target & Constants.INDEX_MASK_UPPER)) {
@@ -185,14 +149,18 @@ public class ObjectStoreSimple extends ObjectStore {
             target = freeSpace & Constants.INDEX_MASK_UPPER;
             freeSpace = target + size + OBJECT_HEADER_SIZE;
         }
-        access.seek(8).writeInt((int) freeSpace);
+        access.seek(8).writeLong(freeSpace);
         try (Access accessTarget = storage.access(target, 2, true)) {
             accessTarget.writeChar((char) size);
         }
         return target + 2;
     }
 
-    @Override
+    /**
+     * Frees the object at the specified location
+     *
+     * @param object The location of an object
+     */
     public void free(long object) {
         // reads the length of the object
         int length;
@@ -212,7 +180,7 @@ public class ObjectStoreSimple extends ObjectStore {
         // get the number of pools
         int poolCount;
         try (Access preamble = storage.access(0, PREAMBLE_HEADER_SIZE, true)) {
-            poolCount = preamble.skip(12).readInt();
+            poolCount = preamble.skip(8 + 8).readInt();
 
             if (poolCount > 0) {
                 // at last one pool, try to find the corresponding size
@@ -251,11 +219,17 @@ public class ObjectStoreSimple extends ObjectStore {
                 access2.writeLong(index - 2);
             }
             // increment the pool counter
-            preamble.skip(12).writeInt(poolCount);
+            preamble.skip(8 + 8).writeInt(poolCount);
         }
     }
 
-    @Override
+    /**
+     * Access the object at the specified location
+     *
+     * @param object  The location of an object
+     * @param writing Whether to allow writing
+     * @return The access to the object
+     */
     public Access access(long object, boolean writing) {
         int length;
         try (Access access = storage.access(object - 2, 2, false)) {

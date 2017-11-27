@@ -30,42 +30,7 @@ import java.io.IOException;
  *
  * @author Laurent Wouters
  */
-public class TransactionalObjectStore implements AutoCloseable {
-    /**
-     * Magic identifier of the type of store
-     */
-    private static final long MAGIC_ID = 0x63656e2d6f626a73L; // cen-objs
-    /**
-     * The size of the header in the preamble block
-     * long: Magic identifier for the store
-     * long: Start offset to free space
-     * int: Number of pools of reusable object pools
-     */
-    private static final int PREAMBLE_HEADER_SIZE = 8 + 8 + 4;
-    /**
-     * The size of an open pool entry in the preamble
-     * int: the size of objects in this pool
-     * long: The location of the first re-usable object in this pool
-     */
-    private static final int PREAMBLE_ENTRY_SIZE = 4 + 8;
-    /**
-     * The maximum number of pools in this store
-     */
-    private static final int MAX_POOLS = (Constants.PAGE_SIZE - PREAMBLE_HEADER_SIZE) / PREAMBLE_ENTRY_SIZE;
-    /**
-     * Size of the header for each stored object
-     */
-    public static final int OBJECT_HEADER_SIZE = 2;
-    /**
-     * Minimum size of objects in this store
-     */
-    public static final int OBJECT_MIN_SIZE = 8 - OBJECT_HEADER_SIZE;
-    /**
-     * Maximum size of objects in this store
-     */
-    public static final int OBJECT_MAX_SIZE = Constants.PAGE_SIZE - OBJECT_HEADER_SIZE;
-
-
+public class TransactionalObjectStore extends ObjectStore {
     /**
      * The underlying storage system
      */
