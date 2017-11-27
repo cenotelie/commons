@@ -42,7 +42,7 @@ import java.io.IOException;
  *
  * @author Laurent Wouters
  */
-public class ObjectStoreSimple extends ObjectStore {
+public class SimpleObjectStore extends ObjectStore {
     /**
      * The underlying storage system
      */
@@ -53,7 +53,7 @@ public class ObjectStoreSimple extends ObjectStore {
      *
      * @param storage The underlying storage system
      */
-    public ObjectStoreSimple(Storage storage) {
+    public SimpleObjectStore(Storage storage) {
         this.storage = storage;
         if (storage.isWritable() && storage.getSize() < PREAMBLE_HEADER_SIZE) {
             try (Access access = storage.access(0, PREAMBLE_HEADER_SIZE, true)) {

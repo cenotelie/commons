@@ -44,7 +44,7 @@ import java.util.List;
  *
  * @author Laurent Wouters
  */
-class MapStoreSimple {
+class SimpleMap {
     /**
      * The rate of the B+ tree
      */
@@ -116,7 +116,7 @@ class MapStoreSimple {
     /**
      * The backing store
      */
-    private final ObjectStoreSimple store;
+    private final SimpleObjectStore store;
     /**
      * The head entry for the map
      */
@@ -128,7 +128,7 @@ class MapStoreSimple {
      * @param store The backing store
      * @param head  The head entry for the map
      */
-    public MapStoreSimple(ObjectStoreSimple store, long head) {
+    public SimpleMap(SimpleObjectStore store, long head) {
         this.store = store;
         this.head = head;
     }
@@ -139,7 +139,7 @@ class MapStoreSimple {
      * @param store The backing store
      * @return The persisted map
      */
-    public static MapStoreSimple create(ObjectStoreSimple store) {
+    public static SimpleMap create(SimpleObjectStore store) {
         long entry = store.allocate(NODE_SIZE);
         try (Access access = store.access(entry, true)) {
             // write header
@@ -150,7 +150,7 @@ class MapStoreSimple {
             access.writeLong(0);
             access.writeLong(Constants.KEY_NULL);
         }
-        return new MapStoreSimple(store, entry);
+        return new SimpleMap(store, entry);
     }
 
     /**
