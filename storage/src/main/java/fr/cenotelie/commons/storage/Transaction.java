@@ -79,6 +79,15 @@ public abstract class Transaction implements AutoCloseable {
     }
 
     /**
+     * Gets the thread that runs this transaction
+     *
+     * @return The thread that created and is running this transaction
+     */
+    public Thread getThread() {
+        return thread;
+    }
+
+    /**
      * Gets whether this transaction allows writing to the storage system
      *
      * @return Whether this transaction allows writing to the storage system

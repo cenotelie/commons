@@ -19,6 +19,7 @@ package fr.cenotelie.commons.storage.wal;
 
 import fr.cenotelie.commons.storage.Access;
 import fr.cenotelie.commons.storage.Storage;
+import fr.cenotelie.commons.storage.Transaction;
 import fr.cenotelie.commons.storage.TransactionalStorage;
 import fr.cenotelie.commons.utils.concurrent.DaemonTaskScheduler;
 import fr.cenotelie.commons.utils.logging.Logging;
@@ -28,6 +29,7 @@ import java.text.DateFormat;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
+import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -136,6 +138,10 @@ public class WriteAheadLog extends TransactionalStorage {
      */
     private volatile WalTransaction[] transactions;
     /**
+     * The currently running transactions by thread
+     */
+    private final WeakHashMap<Thread, Transaction> transactionsByThread;
+    /**
      * The number of running transactions
      */
     private volatile int transactionsCount;
@@ -192,6 +198,7 @@ public class WriteAheadLog extends TransactionalStorage {
         for (int i = 0; i != POOL_ACCESSES_SIZE; i++)
             this.accesses[i] = new WalAccess();
         this.transactions = new WalTransaction[TRANSACTIONS_BUFFER];
+        this.transactionsByThread = new WeakHashMap<>();
         this.transactionsCount = 0;
         this.index = new LogTransactionData[INDEX_BUFFER];
         this.indexLength = 0;
@@ -330,12 +337,18 @@ public class WriteAheadLog extends TransactionalStorage {
                 }
             }
             transactionsCount++;
+            transactionsByThread.put(Thread.currentThread(), transaction);
             return transaction;
         } finally {
             stateRelease(STATE_FLAG_TRANSACTIONS_LOCK);
             if (janitorScheduler != null)
                 janitorScheduler.resetWait();
         }
+    }
+
+    @Override
+    public Transaction getTransaction() {
+        return transactionsByThread.get(Thread.currentThread());
     }
 
     /**
@@ -430,6 +443,7 @@ public class WriteAheadLog extends TransactionalStorage {
                 if (transactions[i] == transaction) {
                     transactions[i] = null;
                     transactionsCount--;
+                    transactionsByThread.remove(transaction.getThread());
                     break;
                 }
             }

@@ -72,6 +72,13 @@ public abstract class TransactionalStorage implements AutoCloseable {
     public abstract Transaction newTransaction(boolean writable, boolean autocommit);
 
     /**
+     * Gets the currently running transactions for the current thread
+     *
+     * @return The current transaction, or null if there is none
+     */
+    public abstract Transaction getTransaction();
+
+    /**
      * Closes this resource, relinquishing any underlying resources
      *
      * @throws IOException When an IO error occurred
