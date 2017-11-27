@@ -30,7 +30,7 @@ import java.io.IOException;
  *
  * @author Laurent Wouters
  */
-public class TransactionalObjectStore extends ObjectStore {
+public class ObjectStoreTransactional extends ObjectStore {
     /**
      * The underlying storage system
      */
@@ -41,7 +41,7 @@ public class TransactionalObjectStore extends ObjectStore {
      *
      * @param storage The underlying storage system
      */
-    public TransactionalObjectStore(TransactionalStorage storage) {
+    public ObjectStoreTransactional(TransactionalStorage storage) {
         this.storage = storage;
         if (storage.isWritable() && storage.getSize() < PREAMBLE_HEADER_SIZE) {
             try (Transaction transaction = storage.newTransaction(true, true)) {
@@ -78,15 +78,9 @@ public class TransactionalObjectStore extends ObjectStore {
         return storage.newTransaction(writable, autocommit);
     }
 
-    /**
-     * Allocates an object with the specified size
-     * An attempt is made to reuse an previously freed object of the same size.
-     *
-     * @param transaction The transaction to use
-     * @param size        The size of the object to allocate
-     * @return The location of the allocated object
-     */
-    public long allocate(Transaction transaction, int size) {
+    @Override
+    public long allocate(int size) {
+        Transaction transaction = storage.getTransaction();
         int toAllocate = size < OBJECT_MIN_SIZE ? OBJECT_MIN_SIZE : size;
         if (size > OBJECT_MAX_SIZE)
             throw new IndexOutOfBoundsException();
@@ -111,16 +105,9 @@ public class TransactionalObjectStore extends ObjectStore {
         }
     }
 
-    /**
-     * Allocates an object with the specified size
-     * This method directly allocate the object without looking for reusable space.
-     * Objects allocated with this method cannot be freed later.
-     *
-     * @param transaction The transaction to use
-     * @param size        The size of the object
-     * @return The location of the allocated object
-     */
-    public long allocateDirect(Transaction transaction, int size) {
+    @Override
+    public long allocateDirect(int size) {
+        Transaction transaction = storage.getTransaction();
         int toAllocate = size < OBJECT_MIN_SIZE ? OBJECT_MIN_SIZE : size;
         if (size > OBJECT_MAX_SIZE)
             throw new IndexOutOfBoundsException();
@@ -168,13 +155,9 @@ public class TransactionalObjectStore extends ObjectStore {
         return target + 2;
     }
 
-    /**
-     * Frees the object at the specified location
-     *
-     * @param transaction The transaction to use
-     * @param object      The location of an object
-     */
-    public void free(Transaction transaction, long object) {
+    @Override
+    public void free(long object) {
+        Transaction transaction = storage.getTransaction();
         // reads the length of the object
         int length;
         try (Access access = transaction.access(object - 2, 2, false)) {
@@ -222,15 +205,9 @@ public class TransactionalObjectStore extends ObjectStore {
         }
     }
 
-    /**
-     * Access the object at the specified location
-     *
-     * @param transaction The transaction to use
-     * @param object      The location of an object
-     * @param writing     Whether to allow writing
-     * @return The access to the object
-     */
-    public Access access(Transaction transaction, long object, boolean writing) {
+    @Override
+    public Access access(long object, boolean writing) {
+        Transaction transaction = storage.getTransaction();
         int length;
         try (Access access = transaction.access(object - 2, 2, false)) {
             length = access.readChar();

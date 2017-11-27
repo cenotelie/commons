@@ -18,21 +18,20 @@
 package fr.cenotelie.commons.storage.stores;
 
 import fr.cenotelie.commons.storage.Access;
-import fr.cenotelie.commons.storage.Transaction;
 
 import java.util.Objects;
 
 /**
- * Represents an object stored in a transactional object store
+ * Represents an object that is persisted in a storage system.
  *
  * @param <T> The type of the object
  * @author Laurent Wouters
  */
-public class TransactionalStoredObject<T> {
+public class StoredObject<T> {
     /**
      * The backing store
      */
-    private final TransactionalObjectStore store;
+    private final ObjectStore store;
     /**
      * The entry in the store
      */
@@ -49,7 +48,7 @@ public class TransactionalStoredObject<T> {
      * @param entry    The entry in the store
      * @param mediator The object mediator to use
      */
-    public TransactionalStoredObject(TransactionalObjectStore store, long entry, ObjectMediator<T> mediator) {
+    public StoredObject(ObjectStore store, long entry, ObjectMediator<T> mediator) {
         this.store = store;
         this.entry = entry;
         this.mediator = mediator;
@@ -58,29 +57,27 @@ public class TransactionalStoredObject<T> {
     /**
      * Creates a stored object
      *
-     * @param store       The backing store
-     * @param transaction The transaction to use
-     * @param mediator    The mediator to use
-     * @param initValue   The initial value
-     * @param <T>         The type of the object
+     * @param store     The backing store
+     * @param mediator  The mediator to use
+     * @param initValue The initial value
+     * @param <T>       The type of the object
      * @return The stored object
      */
-    public static <T> TransactionalStoredObject<T> create(TransactionalObjectStore store, Transaction transaction, ObjectMediator<T> mediator, T initValue) {
-        long entry = store.allocate(transaction, mediator.getSerializationSize());
-        try (Access access = store.access(transaction, entry, true)) {
+    public static <T> StoredObject<T> create(ObjectStore store, ObjectMediator<T> mediator, T initValue) {
+        long entry = store.allocate(mediator.getSerializationSize());
+        try (Access access = store.access(entry, true)) {
             mediator.write(access, initValue);
         }
-        return new TransactionalStoredObject<>(store, entry, mediator);
+        return new StoredObject<>(store, entry, mediator);
     }
 
     /**
      * Gets the value
      *
-     * @param transaction The transaction to use
      * @return The value
      */
-    public T get(Transaction transaction) {
-        try (Access access = store.access(transaction, entry, false)) {
+    public T get() {
+        try (Access access = store.access(entry, false)) {
             return mediator.read(access);
         }
     }
@@ -88,11 +85,10 @@ public class TransactionalStoredObject<T> {
     /**
      * Sets the value
      *
-     * @param transaction The transaction to use
-     * @param value       The value to set
+     * @param value The value to set
      */
-    public void set(Transaction transaction, T value) {
-        try (Access access = store.access(transaction, entry, true)) {
+    public void set(T value) {
+        try (Access access = store.access(entry, true)) {
             mediator.write(access, value);
         }
     }
@@ -100,13 +96,12 @@ public class TransactionalStoredObject<T> {
     /**
      * Compares and set the value
      *
-     * @param transaction The transaction to use
-     * @param expected    The expected old value
-     * @param newValue    The new value to set
+     * @param expected The expected old value
+     * @param newValue The new value to set
      * @return Whether the operation succeeded
      */
-    public boolean compareAndSet(Transaction transaction, T expected, T newValue) {
-        try (Access access = store.access(transaction, entry, true)) {
+    public boolean compareAndSet(T expected, T newValue) {
+        try (Access access = store.access(entry, true)) {
             T old = mediator.read(access);
             if (!Objects.equals(expected, old))
                 return false;

@@ -42,7 +42,7 @@ import java.io.IOException;
  *
  * @author Laurent Wouters
  */
-public class SimpleObjectStore extends ObjectStore {
+public class ObjectStoreSimple extends ObjectStore {
     /**
      * The underlying storage system
      */
@@ -53,7 +53,7 @@ public class SimpleObjectStore extends ObjectStore {
      *
      * @param storage The underlying storage system
      */
-    public SimpleObjectStore(Storage storage) {
+    public ObjectStoreSimple(Storage storage) {
         this.storage = storage;
         if (storage.isWritable() && storage.getSize() < PREAMBLE_HEADER_SIZE) {
             try (Access access = storage.access(0, PREAMBLE_HEADER_SIZE, true)) {
@@ -64,13 +64,7 @@ public class SimpleObjectStore extends ObjectStore {
         }
     }
 
-    /**
-     * Allocates an object with the specified size
-     * An attempt is made to reuse an previously freed object of the same size.
-     *
-     * @param size The size of the object to allocate
-     * @return The location of the allocated object
-     */
+    @Override
     public long allocate(int size) {
         int toAllocate = size < OBJECT_MIN_SIZE ? OBJECT_MIN_SIZE : size;
         if (size > OBJECT_MAX_SIZE)
@@ -96,14 +90,7 @@ public class SimpleObjectStore extends ObjectStore {
         }
     }
 
-    /**
-     * Tries to allocate an object of the specified size in this store
-     * This method directly allocate the object without looking for reusable space.
-     * Objects allocated with this method cannot be freed later.
-     *
-     * @param size The size of the object
-     * @return The key to the object, or KEY_NULL if it cannot be allocated
-     */
+    @Override
     public long allocateDirect(int size) {
         int toAllocate = size < OBJECT_MIN_SIZE ? OBJECT_MIN_SIZE : size;
         if (size > OBJECT_MAX_SIZE)
@@ -156,11 +143,7 @@ public class SimpleObjectStore extends ObjectStore {
         return target + 2;
     }
 
-    /**
-     * Frees the object at the specified location
-     *
-     * @param object The location of an object
-     */
+    @Override
     public void free(long object) {
         // reads the length of the object
         int length;
@@ -223,13 +206,7 @@ public class SimpleObjectStore extends ObjectStore {
         }
     }
 
-    /**
-     * Access the object at the specified location
-     *
-     * @param object  The location of an object
-     * @param writing Whether to allow writing
-     * @return The access to the object
-     */
+    @Override
     public Access access(long object, boolean writing) {
         int length;
         try (Access access = storage.access(object - 2, 2, false)) {

@@ -31,7 +31,7 @@ import java.util.Collection;
  *
  * @author Laurent Wouters
  */
-public class SimpleMapTest {
+public class StoredMapTest {
     /**
      * Numbers of threads
      */
@@ -46,8 +46,8 @@ public class SimpleMapTest {
      */
     @Test
     public void testInserts() throws IOException {
-        try (SimpleObjectStore store = new SimpleObjectStore(new InMemoryStore())) {
-            SimpleMap map = SimpleMap.create(store);
+        try (ObjectStoreSimple store = new ObjectStoreSimple(new InMemoryStore())) {
+            StoredMap map = StoredMap.create(store);
             for (int i = 0; i != ENTRIES; i++) {
                 Assert.assertTrue("Failed at " + i, map.tryPut(i, i));
             }
@@ -74,8 +74,8 @@ public class SimpleMapTest {
     public void testConcurrentInserts() throws IOException {
         Collection<Thread> threads = new ArrayList<>();
         final boolean successes[] = new boolean[THREAD_COUNT];
-        try (SimpleObjectStore store = new SimpleObjectStore(new ThreadSafeStorage(new InMemoryStore()))) {
-            final SimpleMap map = SimpleMap.create(store);
+        try (ObjectStoreSimple store = new ObjectStoreSimple(new ThreadSafeStorage(new InMemoryStore()))) {
+            final StoredMap map = StoredMap.create(store);
             for (int i = 0; i != THREAD_COUNT; i++) {
                 final int index = i;
                 Thread thread = new Thread(new Runnable() {

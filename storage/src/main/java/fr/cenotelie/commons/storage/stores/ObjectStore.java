@@ -17,6 +17,7 @@
 
 package fr.cenotelie.commons.storage.stores;
 
+import fr.cenotelie.commons.storage.Access;
 import fr.cenotelie.commons.storage.Constants;
 
 import java.io.IOException;
@@ -62,6 +63,40 @@ public abstract class ObjectStore implements AutoCloseable {
      */
     public static final int OBJECT_MAX_SIZE = Constants.PAGE_SIZE - OBJECT_HEADER_SIZE;
 
+    /**
+     * Allocates an object with the specified size
+     * An attempt is made to reuse an previously freed object of the same size.
+     *
+     * @param size The size of the object to allocate
+     * @return The location of the allocated object
+     */
+    public abstract long allocate(int size);
+
+    /**
+     * Tries to allocate an object of the specified size in this store
+     * This method directly allocate the object without looking for reusable space.
+     * Objects allocated with this method cannot be freed later.
+     *
+     * @param size The size of the object
+     * @return The key to the object, or KEY_NULL if it cannot be allocated
+     */
+    public abstract long allocateDirect(int size);
+
+    /**
+     * Frees the object at the specified location
+     *
+     * @param object The location of an object
+     */
+    public abstract void free(long object);
+
+    /**
+     * Access the object at the specified location
+     *
+     * @param object  The location of an object
+     * @param writing Whether to allow writing
+     * @return The access to the object
+     */
+    public abstract Access access(long object, boolean writing);
 
     /**
      * Gets the current size of this store

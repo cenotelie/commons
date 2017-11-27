@@ -17,10 +17,7 @@
 
 package fr.cenotelie.commons.storage.wal;
 
-import fr.cenotelie.commons.storage.Access;
-import fr.cenotelie.commons.storage.Storage;
-import fr.cenotelie.commons.storage.Transaction;
-import fr.cenotelie.commons.storage.TransactionalStorage;
+import fr.cenotelie.commons.storage.*;
 import fr.cenotelie.commons.utils.concurrent.DaemonTaskScheduler;
 import fr.cenotelie.commons.utils.logging.Logging;
 
@@ -347,8 +344,11 @@ public class WriteAheadLog extends TransactionalStorage {
     }
 
     @Override
-    public Transaction getTransaction() {
-        return transactionsByThread.get(Thread.currentThread());
+    public Transaction getTransaction() throws NoTransactionException {
+        Transaction result = transactionsByThread.get(Thread.currentThread());
+        if (result == null)
+            throw new NoTransactionException();
+        return result;
     }
 
     /**

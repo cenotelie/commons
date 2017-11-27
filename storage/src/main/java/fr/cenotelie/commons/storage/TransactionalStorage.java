@@ -74,9 +74,10 @@ public abstract class TransactionalStorage implements AutoCloseable {
     /**
      * Gets the currently running transactions for the current thread
      *
-     * @return The current transaction, or null if there is none
+     * @return The current transaction
+     * @throws NoTransactionException when the current thread does not use a transaction
      */
-    public abstract Transaction getTransaction();
+    public abstract Transaction getTransaction() throws NoTransactionException;
 
     /**
      * Closes this resource, relinquishing any underlying resources

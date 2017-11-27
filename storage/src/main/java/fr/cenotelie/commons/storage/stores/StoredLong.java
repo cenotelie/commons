@@ -18,18 +18,17 @@
 package fr.cenotelie.commons.storage.stores;
 
 import fr.cenotelie.commons.storage.Access;
-import fr.cenotelie.commons.storage.Transaction;
 
 /**
- * Represents a long value stored in a transactional object store
+ * Represents a long value that is persisted in a storage system.
  *
  * @author Laurent Wouters
  */
-public class TransactionalStoredLong {
+public class StoredLong {
     /**
      * The backing store
      */
-    private final TransactionalObjectStore store;
+    private final ObjectStore store;
     /**
      * The entry in the store
      */
@@ -41,7 +40,7 @@ public class TransactionalStoredLong {
      * @param store The backing store
      * @param entry The entry in the store
      */
-    public TransactionalStoredLong(TransactionalObjectStore store, long entry) {
+    public StoredLong(ObjectStore store, long entry) {
         this.store = store;
         this.entry = entry;
     }
@@ -49,27 +48,25 @@ public class TransactionalStoredLong {
     /**
      * Creates a new persisted value
      *
-     * @param store       The backing store
-     * @param transaction The transaction to use
-     * @param initValue   The initial value
+     * @param store     The backing store
+     * @param initValue The initial value
      * @return The persisted value
      */
-    public static TransactionalStoredLong create(TransactionalObjectStore store, Transaction transaction, long initValue) {
-        long entry = store.allocate(transaction, 8);
-        try (Access access = store.access(transaction, entry, true)) {
+    public static StoredLong create(ObjectStore store, long initValue) {
+        long entry = store.allocate(8);
+        try (Access access = store.access(entry, true)) {
             access.writeLong(initValue);
         }
-        return new TransactionalStoredLong(store, entry);
+        return new StoredLong(store, entry);
     }
 
     /**
      * Gets the value
      *
-     * @param transaction The transaction to use
      * @return The value
      */
-    public long get(Transaction transaction) {
-        try (Access access = store.access(transaction, entry, false)) {
+    public long get() {
+        try (Access access = store.access(entry, false)) {
             return access.readLong();
         }
     }
@@ -77,11 +74,10 @@ public class TransactionalStoredLong {
     /**
      * Sets the value
      *
-     * @param transaction The transaction to use
-     * @param value       The value to set
+     * @param value The value to set
      */
-    public void set(Transaction transaction, long value) {
-        try (Access access = store.access(transaction, entry, true)) {
+    public void set(long value) {
+        try (Access access = store.access(entry, true)) {
             access.writeLong(value);
         }
     }
@@ -89,13 +85,12 @@ public class TransactionalStoredLong {
     /**
      * Compares and set the value
      *
-     * @param transaction The transaction to use
-     * @param expected    The expected old value
-     * @param newValue    The new value to set
+     * @param expected The expected old value
+     * @param newValue The new value to set
      * @return Whether the operation succeeded
      */
-    public boolean compareAndSet(Transaction transaction, long expected, long newValue) {
-        try (Access access = store.access(transaction, entry, true)) {
+    public boolean compareAndSet(long expected, long newValue) {
+        try (Access access = store.access(entry, true)) {
             long old = access.readLong();
             if (expected != old)
                 return false;
@@ -107,11 +102,10 @@ public class TransactionalStoredLong {
     /**
      * Gets the value and increment it
      *
-     * @param transaction The transaction to use
      * @return The value before the increment
      */
-    public long getAndIncrement(Transaction transaction) {
-        try (Access access = store.access(transaction, entry, true)) {
+    public long getAndIncrement() {
+        try (Access access = store.access(entry, true)) {
             long value = access.readLong();
             access.reset().writeLong(value + 1);
             return value;
