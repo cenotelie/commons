@@ -44,7 +44,7 @@ import java.util.List;
  *
  * @author Laurent Wouters
  */
-class StoredMap {
+public class StoredMap {
     /**
      * The rate of the B+ tree
      */
