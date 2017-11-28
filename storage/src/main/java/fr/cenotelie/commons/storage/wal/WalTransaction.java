@@ -20,7 +20,6 @@ package fr.cenotelie.commons.storage.wal;
 import fr.cenotelie.commons.storage.*;
 
 import java.util.Arrays;
-import java.util.ConcurrentModificationException;
 import java.util.Date;
 
 /**
@@ -138,7 +137,7 @@ class WalTransaction extends Transaction {
     }
 
     @Override
-    protected void doCommit() throws ConcurrentModificationException {
+    protected void doCommit() throws ConcurrentWriteException {
         LogTransactionData data = getLogData();
         if (data != null)
             parent.doTransactionCommit(data, endMark);

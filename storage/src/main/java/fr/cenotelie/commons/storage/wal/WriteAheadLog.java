@@ -24,7 +24,6 @@ import fr.cenotelie.commons.utils.logging.Logging;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.util.Arrays;
-import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -365,9 +364,9 @@ public class WriteAheadLog extends TransactionalStorage {
      *
      * @param data    The data of the transaction to commit
      * @param endMark The end mark for this transaction
-     * @throws ConcurrentModificationException when a concurrent transaction already committed conflicting changes to the log
+     * @throws ConcurrentWriteException when a concurrent transaction already committed conflicting changes to the log
      */
-    void doTransactionCommit(LogTransactionData data, long endMark) throws ConcurrentModificationException {
+    void doTransactionCommit(LogTransactionData data, long endMark) throws ConcurrentWriteException {
         while (true) {
             int s = state.get();
             if (s == STATE_CLOSED)
@@ -387,7 +386,7 @@ public class WriteAheadLog extends TransactionalStorage {
                         // this transaction is NOT known to the committing one (after the end-mark)
                         // examine this transaction for concurrent edits
                         if (data.intersects(index[i]))
-                            throw new ConcurrentModificationException();
+                            throw new ConcurrentWriteException();
                     }
                 }
             }
@@ -408,7 +407,7 @@ public class WriteAheadLog extends TransactionalStorage {
             try {
                 log.flush();
             } catch (IOException exception) {
-                throw new RuntimeException(exception);
+                throw new ConcurrentWriteException(exception);
             }
             // adds to the index
             if (indexLength == index.length)
@@ -719,7 +718,7 @@ public class WriteAheadLog extends TransactionalStorage {
             transactions[i].abort();
             try {
                 transactions[i].close();
-            } catch (ConcurrentModificationException exception) {
+            } catch (ConcurrentWriteException exception) {
                 // cannot happen because we aborted the transaction before
             }
         }

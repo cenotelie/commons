@@ -17,10 +17,7 @@
 
 package fr.cenotelie.commons.storage.stores;
 
-import fr.cenotelie.commons.storage.Access;
-import fr.cenotelie.commons.storage.Constants;
-import fr.cenotelie.commons.storage.Transaction;
-import fr.cenotelie.commons.storage.TransactionalStorage;
+import fr.cenotelie.commons.storage.*;
 
 import java.io.IOException;
 
@@ -40,8 +37,9 @@ public class ObjectStoreTransactional extends ObjectStore {
      * Initializes this store
      *
      * @param storage The underlying storage system
+     * @throws ConcurrentWriteException when the initialization of the store failed
      */
-    public ObjectStoreTransactional(TransactionalStorage storage) {
+    public ObjectStoreTransactional(TransactionalStorage storage) throws ConcurrentWriteException {
         this.storage = storage;
         if (storage.isWritable() && storage.getSize() < PREAMBLE_HEADER_SIZE) {
             try (Transaction transaction = storage.newTransaction(true, true)) {
@@ -52,30 +50,6 @@ public class ObjectStoreTransactional extends ObjectStore {
                 }
             }
         }
-    }
-
-    /**
-     * Starts a new transaction
-     * The transaction must be ended by a call to the transaction's close method.
-     * The transaction will NOT automatically commit when closed, the commit method should be called before closing.
-     *
-     * @param writable Whether the transaction shall support writing
-     * @return The new transaction
-     */
-    public Transaction newTransaction(boolean writable) {
-        return storage.newTransaction(writable);
-    }
-
-    /**
-     * Starts a new transaction
-     * The transaction must be ended by a call to the transaction's close method.
-     *
-     * @param writable   Whether the transaction shall support writing
-     * @param autocommit Whether this transaction should commit when being closed
-     * @return The new transaction
-     */
-    public Transaction newTransaction(boolean writable, boolean autocommit) {
-        return storage.newTransaction(writable, autocommit);
     }
 
     @Override

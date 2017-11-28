@@ -17,8 +17,6 @@
 
 package fr.cenotelie.commons.storage;
 
-import java.util.ConcurrentModificationException;
-
 /**
  * Represents a user transaction for a write-ahead log that can be used to perform reading and writing
  * A transaction is expected to be used by one thread only, and is only usable and the thread that created the transaction.
@@ -126,9 +124,9 @@ public abstract class Transaction implements AutoCloseable {
     /**
      * Commits this transaction to the parent log
      *
-     * @throws ConcurrentModificationException when a concurrent transaction already committed conflicting changes to the log
+     * @throws ConcurrentWriteException when a concurrent transaction already committed conflicting changes to the log
      */
-    public void commit() throws ConcurrentModificationException {
+    public void commit() throws ConcurrentWriteException {
         if (thread != Thread.currentThread() && thread.isAlive())
             throw new WrongThreadException();
         if (state != STATE_RUNNING)
@@ -137,7 +135,7 @@ public abstract class Transaction implements AutoCloseable {
         try {
             doCommit();
             state = STATE_COMMITTED;
-        } catch (ConcurrentModificationException exception) {
+        } catch (ConcurrentWriteException exception) {
             // the commit is rejected
             state = STATE_REJECTED;
             throw exception;
@@ -151,9 +149,9 @@ public abstract class Transaction implements AutoCloseable {
     /**
      * Commits this transaction
      *
-     * @throws ConcurrentModificationException when a concurrent transaction already committed conflicting changes
+     * @throws ConcurrentWriteException when a concurrent transaction already committed conflicting changes
      */
-    protected abstract void doCommit() throws ConcurrentModificationException;
+    protected abstract void doCommit() throws ConcurrentWriteException;
 
     /**
      * Aborts this transaction
@@ -169,10 +167,10 @@ public abstract class Transaction implements AutoCloseable {
     /**
      * Closes this transaction and commit the edits (if any) made within this transaction to the write-ahead log
      *
-     * @throws ConcurrentModificationException when a concurrent transaction already committed conflicting changes to the log
+     * @throws ConcurrentWriteException when a concurrent transaction already committed conflicting changes to the log
      */
     @Override
-    public void close() throws ConcurrentModificationException {
+    public void close() throws ConcurrentWriteException {
         if (thread != Thread.currentThread() && thread.isAlive())
             throw new WrongThreadException();
         if (state == STATE_RUNNING) {
