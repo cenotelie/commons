@@ -18,6 +18,7 @@
 package fr.cenotelie.commons.storage.wal;
 
 import fr.cenotelie.commons.storage.Access;
+import fr.cenotelie.commons.storage.ConcurrentWriteException;
 import fr.cenotelie.commons.storage.Constants;
 import fr.cenotelie.commons.storage.Transaction;
 import fr.cenotelie.commons.storage.files.RawFileBuffered;
@@ -27,7 +28,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ConcurrentModificationException;
 
 /**
  * Basic test suite for the Write-ahead log
@@ -190,7 +190,7 @@ public class WriteAheadLogTest {
         boolean catched = false;
         try {
             transaction2.commit();
-        } catch (ConcurrentModificationException exception) {
+        } catch (ConcurrentWriteException exception) {
             catched = true;
         }
         transaction2.close();
