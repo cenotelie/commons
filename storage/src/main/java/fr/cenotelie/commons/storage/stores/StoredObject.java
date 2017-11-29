@@ -27,7 +27,7 @@ import java.util.Objects;
  * @param <T> The type of the object
  * @author Laurent Wouters
  */
-public class StoredObject<T> {
+public class StoredObject<T> extends StoredEntity {
     /**
      * The backing store
      */
@@ -52,6 +52,11 @@ public class StoredObject<T> {
         this.store = store;
         this.entry = entry;
         this.mediator = mediator;
+    }
+
+    @Override
+    public long getLocation() {
+        return entry;
     }
 
     /**

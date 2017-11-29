@@ -44,7 +44,7 @@ import java.util.List;
  *
  * @author Laurent Wouters
  */
-public class StoredMap {
+public class StoredMap extends StoredEntity {
     /**
      * The rate of the B+ tree
      */
@@ -131,6 +131,11 @@ public class StoredMap {
     public StoredMap(ObjectStore store, long head) {
         this.store = store;
         this.head = head;
+    }
+
+    @Override
+    public long getLocation() {
+        return head;
     }
 
     /**

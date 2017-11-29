@@ -128,10 +128,21 @@ public abstract class ObjectStore implements AutoCloseable {
      * Registers a named object in this store
      *
      * @param name   The name for the object
-     * @param object The object's location
-     * @return Whether the object could be registered
+     * @param entity The entity to register
+     * @return The entity
      */
-    public abstract boolean register(String name, long object);
+    public <T extends StoredEntity> T register(String name, T entity) {
+        register(name, entity.getLocation());
+        return entity;
+    }
+
+    /**
+     * Registers a named object in this store
+     *
+     * @param name   The name for the object
+     * @param object The object's location
+     */
+    public abstract void register(String name, long object);
 
     /**
      * Un-registers a named object from this store

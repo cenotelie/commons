@@ -24,7 +24,7 @@ import fr.cenotelie.commons.storage.Access;
  *
  * @author Laurent Wouters
  */
-public class StoredLong {
+public class StoredLong extends StoredEntity {
     /**
      * The backing store
      */
@@ -43,6 +43,11 @@ public class StoredLong {
     public StoredLong(ObjectStore store, long entry) {
         this.store = store;
         this.entry = entry;
+    }
+
+    @Override
+    public long getLocation() {
+        return entry;
     }
 
     /**

@@ -218,28 +218,27 @@ public class ObjectStoreSimple extends ObjectStore {
     }
 
     @Override
-    public boolean register(String name, long object) {
+    public void register(String name, long object) {
         int registered;
         try (Access preamble = storage.access(0, PREAMBLE_HEADER_SIZE, true)) {
             registered = preamble.seek(8 + 8 + 4).readInt();
             if (registered >= MAX_REGISTERED)
-                return false;
+                throw new IndexOutOfBoundsException();
             long id = ByteUtils.toLong(name);
             try (Access access = storage.access(Constants.PAGE_SIZE, Constants.PAGE_SIZE, true)) {
                 for (int i = 0; i != MAX_REGISTERED; i++) {
                     long itemLocation = access.skip(8).readLong();
                     if (itemLocation == 0) {
                         // reuse this entry
-                        access.seek(-REGISTRY_ITEM_SIZE);
+                        access.skip(-REGISTRY_ITEM_SIZE);
                         access.writeLong(id);
                         access.writeLong(object);
                         preamble.seek(8 + 8 + 4).writeInt(registered + 1);
-                        return true;
+                        return;
                     }
                 }
             }
         }
-        return false;
     }
 
     @Override
@@ -263,7 +262,7 @@ public class ObjectStoreSimple extends ObjectStore {
                             return Constants.KEY_NULL;
                         continue;
                     }
-                    access.seek(-REGISTRY_ITEM_SIZE);
+                    access.skip(-REGISTRY_ITEM_SIZE);
                     access.writeLong(0);
                     access.writeLong(0);
                     preamble.seek(8 + 8 + 4).writeInt(registered - 1);
