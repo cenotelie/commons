@@ -179,7 +179,7 @@ public class RawFileSplit extends RawFile {
                 files[filesCount - 1] = factory.newStorage(new File(directory, fileName(filesCount - 1)), writable);
             total += files[filesCount - 1].getSize();
             return total;
-        } catch (Throwable exception) {
+        } catch (IOException exception) {
             throw new RuntimeException(exception);
         } finally {
             state.set(STATE_READY);
@@ -369,7 +369,7 @@ public class RawFileSplit extends RawFile {
         }
         try {
             return doAcquireEndpointAt(index);
-        } catch (Throwable exception) {
+        } catch (IOException exception) {
             throw new RuntimeException(exception);
         } finally {
             state.set(STATE_READY);

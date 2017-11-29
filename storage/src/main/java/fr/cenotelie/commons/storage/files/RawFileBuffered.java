@@ -293,7 +293,7 @@ public class RawFileBuffered extends RawFile {
             throw new IndexOutOfBoundsException();
         try {
             return getBlockFor(index);
-        } catch (Throwable exception) {
+        } catch (IOException exception) {
             throw new RuntimeException(exception);
         }
     }
@@ -447,9 +447,8 @@ public class RawFileBuffered extends RawFile {
                         return target;
                     }
                 }
-            } catch (Throwable exception) {
+            } finally {
                 state.set(STATE_READY);
-                throw exception;
             }
         }
     }
