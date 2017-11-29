@@ -356,7 +356,7 @@ public class RawFileBuffered extends RawFile {
             // get the last block
             RawFileBlockTS target = blocks[count];
             // try to reserve it
-            switch (target.reserve(targetLocation, channel, size.get(), tick())) {
+            switch (target.reserve(targetLocation, channel, tick())) {
                 case RawFileBlockTS.RESERVE_RESULT_READY:
                     // same block and location, but another thread ...
                     if (target.use(targetLocation, tick()))

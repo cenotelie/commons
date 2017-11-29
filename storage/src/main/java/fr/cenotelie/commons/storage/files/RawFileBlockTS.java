@@ -106,12 +106,11 @@ class RawFileBlockTS extends RawFileBlock {
      *
      * @param location The location for the block
      * @param channel  The originating file channel
-     * @param fileSize The current size of the file
      * @param time     The current time
      * @return The reservation status
      * @throws IOException When an IO error occurred
      */
-    public int reserve(long location, FileChannel channel, long fileSize, long time) throws IOException {
+    public int reserve(long location, FileChannel channel, long time) throws IOException {
         while (true) {
             int current = state.get();
             if (current >= BLOCK_STATE_READY) {
@@ -134,7 +133,7 @@ class RawFileBlockTS extends RawFileBlock {
                     continue;
                 // the block was free and is now reserved
                 try {
-                    doSetup(location, channel, fileSize, time);
+                    doSetup(location, channel, time);
                 } finally {
                     state.compareAndSet(BLOCK_STATE_RESERVED, BLOCK_STATE_READY);
                 }
@@ -148,11 +147,10 @@ class RawFileBlockTS extends RawFileBlock {
      *
      * @param location The location for the block
      * @param channel  The originating file channel
-     * @param fileSize The current size of the file
      * @param time     The current time
      * @throws IOException When an IO error occurred
      */
-    private void doSetup(long location, FileChannel channel, long fileSize, long time) throws IOException {
+    private void doSetup(long location, FileChannel channel, long time) throws IOException {
         this.location = location;
         if (this.buffer == null)
             this.buffer = new byte[Constants.PAGE_SIZE];
@@ -160,8 +158,9 @@ class RawFileBlockTS extends RawFileBlock {
             zeroes(0, Constants.PAGE_SIZE);
         this.isDirty = false;
         touch(time);
-        if (this.location < fileSize)
-            load(channel, (this.location + Constants.PAGE_SIZE) <= fileSize ? Constants.PAGE_SIZE : (int) (fileSize - this.location));
+        long size = channel.size();
+        if (this.location < size)
+            load(channel, (this.location + Constants.PAGE_SIZE) <= size ? Constants.PAGE_SIZE : (int) (size - this.location));
     }
 
     /**
@@ -249,7 +248,7 @@ class RawFileBlockTS extends RawFileBlock {
             }
         }
         try {
-            doSetup(location, channel, fileSize, time);
+            doSetup(location, channel, time);
         } finally {
             state.set(BLOCK_STATE_READY);
         }
