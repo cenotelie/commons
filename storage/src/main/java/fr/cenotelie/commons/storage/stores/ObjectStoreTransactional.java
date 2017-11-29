@@ -209,6 +209,7 @@ public class ObjectStoreTransactional extends ObjectStore {
                         access.writeLong(id);
                         access.writeLong(object);
                         preamble.seek(8 + 8 + 4).writeInt(registered + 1);
+                        return;
                     }
                 }
             }
