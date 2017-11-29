@@ -113,7 +113,7 @@ class WalPage extends Endpoint {
                 access.readBytes(buffer, 0, length);
             }
             if (length < Constants.PAGE_SIZE)
-                Arrays.fill(buffer, length, Constants.PAGE_SIZE - length, (byte) 0);
+                Arrays.fill(buffer, length, Constants.PAGE_SIZE, (byte) 0);
         } else {
             Arrays.fill(buffer, (byte) 0);
         }
