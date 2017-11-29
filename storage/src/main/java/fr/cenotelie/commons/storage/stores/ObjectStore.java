@@ -25,6 +25,20 @@ import java.io.IOException;
 /**
  * An object store enables the storage of serialized objects in a storage system.
  * An object store is backend by an underlying storage system.
+ * <p>
+ * In an object store, the first page is reserved for metadata about the store and reusable objects:
+ * -- preambule
+ * - long: magic identifier
+ * - long: Starting location of the free space
+ * - int: Number of pools of reusable object pools
+ * -- pools, array of:
+ * - int: the size of objects in this pool
+ * - long: The location of the first re-usable object in this pool
+ * <p>
+ * The second page is reserved for metadata about registered named objects:
+ * -- array of registered named items:
+ * - long: item's identifier
+ * - long: item's location
  *
  * @author Laurent Wouters
  */
@@ -36,10 +50,11 @@ public abstract class ObjectStore implements AutoCloseable {
     /**
      * The size of the header in the preamble block
      * long: Magic identifier for the store
-     * long: Start offset to free space
+     * long: Starting location of the free space
      * int: Number of pools of reusable object pools
+     * int: Number of registered named objects
      */
-    protected static final int PREAMBLE_HEADER_SIZE = 8 + 8 + 4;
+    protected static final int PREAMBLE_HEADER_SIZE = 8 + 8 + 4 + 4;
     /**
      * The size of an open pool entry in the preamble
      * int: the size of objects in this pool
@@ -50,6 +65,17 @@ public abstract class ObjectStore implements AutoCloseable {
      * The maximum number of pools in this store
      */
     protected static final int MAX_POOLS = (Constants.PAGE_SIZE - PREAMBLE_HEADER_SIZE) / PREAMBLE_ENTRY_SIZE;
+    /**
+     * The size of a registry item for a named object:
+     * long: item's identifier
+     * long: item's location
+     */
+    protected static final int REGISTRY_ITEM_SIZE = 8 + 8;
+    /**
+     * The maximum number of registered objects
+     */
+    protected static final int MAX_REGISTERED = Constants.PAGE_SIZE / REGISTRY_ITEM_SIZE;
+
     /**
      * Size of the header for each stored object
      */
@@ -97,6 +123,31 @@ public abstract class ObjectStore implements AutoCloseable {
      * @return The access to the object
      */
     public abstract Access access(long object, boolean writing);
+
+    /**
+     * Registers a named object in this store
+     *
+     * @param name   The name for the object
+     * @param object The object's location
+     * @return Whether the object could be registered
+     */
+    public abstract boolean register(String name, long object);
+
+    /**
+     * Un-registers a named object from this store
+     *
+     * @param name The name for the object
+     * @return The object's location, or KEY_NULL if it was not registered
+     */
+    public abstract long unregister(String name);
+
+    /**
+     * Gets the object registered under the specified name
+     *
+     * @param name The name of the object
+     * @return The object's location, or KEY_NULL if it was not registered
+     */
+    public abstract long getObject(String name);
 
     /**
      * Gets the current size of this store

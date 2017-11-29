@@ -112,7 +112,7 @@ class WalPageEdits {
     private void shiftEditsRight(int from) {
         if (editsCount == edits.length)
             edits = Arrays.copyOf(edits, edits.length * 2);
-        for (int i = editsCount; i != from; i++) {
+        for (int i = editsCount; i != from; i--) {
             edits[i] = edits[i - 1];
         }
     }

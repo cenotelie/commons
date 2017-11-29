@@ -20,6 +20,7 @@ package fr.cenotelie.commons.storage.stores;
 import fr.cenotelie.commons.storage.Access;
 import fr.cenotelie.commons.storage.Constants;
 import fr.cenotelie.commons.storage.Storage;
+import fr.cenotelie.commons.utils.ByteUtils;
 
 import java.io.IOException;
 
@@ -58,7 +59,8 @@ public class ObjectStoreSimple extends ObjectStore {
         if (storage.isWritable() && storage.getSize() < PREAMBLE_HEADER_SIZE) {
             try (Access access = storage.access(0, PREAMBLE_HEADER_SIZE, true)) {
                 access.writeLong(MAGIC_ID);
-                access.writeLong(Constants.PAGE_SIZE);
+                access.writeLong(Constants.PAGE_SIZE * 2);
+                access.writeInt(0);
                 access.writeInt(0);
             }
         }
@@ -213,6 +215,89 @@ public class ObjectStoreSimple extends ObjectStore {
             length = access.readChar();
         }
         return storage.access(object, length, writing);
+    }
+
+    @Override
+    public boolean register(String name, long object) {
+        int registered;
+        try (Access preamble = storage.access(0, PREAMBLE_HEADER_SIZE, true)) {
+            registered = preamble.seek(8 + 8 + 4).readInt();
+            if (registered >= MAX_REGISTERED)
+                return false;
+            long id = ByteUtils.toLong(name);
+            try (Access access = storage.access(Constants.PAGE_SIZE, Constants.PAGE_SIZE, true)) {
+                for (int i = 0; i != MAX_REGISTERED; i++) {
+                    long itemLocation = access.skip(8).readLong();
+                    if (itemLocation == 0) {
+                        // reuse this entry
+                        access.seek(-REGISTRY_ITEM_SIZE);
+                        access.writeLong(id);
+                        access.writeLong(object);
+                        preamble.seek(8 + 8 + 4).writeInt(registered + 1);
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public long unregister(String name) {
+        int registered;
+        try (Access preamble = storage.access(0, PREAMBLE_HEADER_SIZE, true)) {
+            registered = preamble.seek(8 + 8 + 4).readInt();
+            if (registered == 0)
+                return Constants.KEY_NULL;
+            long id = ByteUtils.toLong(name);
+            try (Access access = storage.access(Constants.PAGE_SIZE, Constants.PAGE_SIZE, true)) {
+                int found = 0;
+                for (int i = 0; i != MAX_REGISTERED; i++) {
+                    long itemId = access.readLong();
+                    long itemLocation = access.readLong();
+                    if (itemLocation == 0)
+                        continue;
+                    if (itemId != id) {
+                        found++;
+                        if (found == registered)
+                            return Constants.KEY_NULL;
+                        continue;
+                    }
+                    access.seek(-REGISTRY_ITEM_SIZE);
+                    access.writeLong(0);
+                    access.writeLong(0);
+                    preamble.seek(8 + 8 + 4).writeInt(registered - 1);
+                    return itemLocation;
+                }
+            }
+        }
+        return Constants.KEY_NULL;
+    }
+
+    @Override
+    public long getObject(String name) {
+        int registered;
+        try (Access preamble = storage.access(0, PREAMBLE_HEADER_SIZE, false)) {
+            registered = preamble.seek(8 + 8 + 4).readInt();
+        }
+        if (registered == 0)
+            return Constants.KEY_NULL;
+        long id = ByteUtils.toLong(name);
+        try (Access access = storage.access(Constants.PAGE_SIZE, Constants.PAGE_SIZE, false)) {
+            int found = 0;
+            for (int i = 0; i != MAX_REGISTERED; i++) {
+                long itemId = access.readLong();
+                long itemLocation = access.readLong();
+                if (itemLocation == 0)
+                    continue;
+                if (itemId == id)
+                    return itemLocation;
+                found++;
+                if (found == registered)
+                    break;
+            }
+        }
+        return Constants.KEY_NULL;
     }
 
     @Override

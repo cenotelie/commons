@@ -24,6 +24,40 @@ package fr.cenotelie.commons.utils;
  */
 public class ByteUtils {
     /**
+     * Converts a string a long value equivalent to the first 8 bytes of the UTF-8 serialization of the value.
+     * The resulting long value is padded with leading 0s if the name is not long enough.
+     *
+     * @param value The value to convert
+     * @return The long value
+     */
+    public static long toLong(String value) {
+        if (value == null || value.isEmpty())
+            return 0;
+        String from = value.length() > 8 ? value.substring(0, 8) : value;
+        byte[] bytes = from.getBytes(IOUtils.UTF8);
+        switch (bytes.length) {
+            case 0:
+                return 0;
+            case 1:
+                return getLong((byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, bytes[0]);
+            case 2:
+                return getLong((byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, bytes[0], bytes[1]);
+            case 3:
+                return getLong((byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, bytes[0], bytes[1], bytes[2]);
+            case 4:
+                return getLong((byte) 0, (byte) 0, (byte) 0, (byte) 0, bytes[0], bytes[1], bytes[2], bytes[3]);
+            case 5:
+                return getLong((byte) 0, (byte) 0, (byte) 0, bytes[0], bytes[1], bytes[2], bytes[3], bytes[4]);
+            case 6:
+                return getLong((byte) 0, (byte) 0, bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]);
+            case 7:
+                return getLong((byte) 0, bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6]);
+            default:
+                return getLong(bytes, 0);
+        }
+    }
+
+    /**
      * Gets a char value from a buffer
      *
      * @param buffer The buffer
