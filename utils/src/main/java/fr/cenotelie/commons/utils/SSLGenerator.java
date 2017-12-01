@@ -54,17 +54,15 @@ public class SSLGenerator {
                     "-validity", "3650", "-storetype", "JKS",
                     "-keystore", target.getAbsolutePath()};
             final Process process = Runtime.getRuntime().exec(command);
-            new Thread(new Runnable() {
-                public void run() {
-                    try (InputStream inStream = process.getInputStream()) {
-                        InputStreamReader reader = new InputStreamReader(inStream);
-                        Scanner scan = new Scanner(reader);
-                        while (scan.hasNextLine()) {
-                            System.out.println(scan.nextLine());
-                        }
-                    } catch (IOException exception) {
-                        Logging.get().error(exception);
+            new Thread(() -> {
+                try (InputStream inStream = process.getInputStream()) {
+                    InputStreamReader reader = new InputStreamReader(inStream);
+                    Scanner scan = new Scanner(reader);
+                    while (scan.hasNextLine()) {
+                        System.out.println(scan.nextLine());
                     }
+                } catch (IOException exception) {
+                    Logging.get().error(exception);
                 }
             }).start();
             try (OutputStream outStream = process.getOutputStream()) {

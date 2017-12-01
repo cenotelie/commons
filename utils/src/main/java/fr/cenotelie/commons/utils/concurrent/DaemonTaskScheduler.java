@@ -52,7 +52,7 @@ public class DaemonTaskScheduler implements AutoCloseable {
     /**
      * The thread that will run the task
      */
-    private Thread thread;
+    private final Thread thread;
     /**
      * The current command for the thread
      */
@@ -77,28 +77,12 @@ public class DaemonTaskScheduler implements AutoCloseable {
             throw new IllegalArgumentException();
         int id = COUNTER.getAndIncrement();
         this.task = task;
-        this.thread = new Thread(new SafeRunnable() {
-            @Override
-            public void doRun() {
-                daemonMain();
-            }
-
-            @Override
-            protected void onRunFailed(Throwable throwable) {
-                // the daemon thread failed
-                daemonRestart();
-            }
-        }, DaemonTaskScheduler.class.getCanonicalName() + ".Thread." + id);
+        this.thread = new Thread(this::daemonMain, DaemonTaskScheduler.class.getCanonicalName() + ".Thread." + id);
         this.command = new AtomicInteger(COMMAND_WAIT);
         this.waitPeriod = period;
         this.signal = period == 0 ? null : new CyclicBarrier(2);
         this.thread.start();
-        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-            @Override
-            public void run() {
-                close();
-            }
-        }, DaemonTaskScheduler.class.getCanonicalName() + ".shutdown." + id));
+        Runtime.getRuntime().addShutdownHook(new Thread(this::close, DaemonTaskScheduler.class.getCanonicalName() + ".shutdown." + id));
     }
 
     /**
@@ -199,28 +183,6 @@ public class DaemonTaskScheduler implements AutoCloseable {
                     thread.interrupt();
             }
         }
-    }
-
-    /**
-     * When the daemon thread has failed for some reason, restart it
-     */
-    private void daemonRestart() {
-        thread = new Thread(new SafeRunnable() {
-            @Override
-            public void doRun() {
-                daemonMain();
-            }
-
-            @Override
-            protected void onRunFailed(Throwable throwable) {
-                // the daemon thread failed
-                daemonRestart();
-            }
-        }, DaemonTaskScheduler.class.getCanonicalName() + ".Thread." + COUNTER.getAndIncrement());
-        command.set(COMMAND_WAIT);
-        if (signal != null)
-            signal.reset();
-        thread.start();
     }
 
     @Override

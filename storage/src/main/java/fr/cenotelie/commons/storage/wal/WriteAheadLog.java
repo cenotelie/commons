@@ -201,12 +201,7 @@ public class WriteAheadLog extends TransactionalStorage {
         this.indexLastCommitted = -1;
         this.indexSequencer = new AtomicLong(0);
         if (useJanitor)
-            this.janitorScheduler = new DaemonTaskScheduler(new Runnable() {
-                @Override
-                public void run() {
-                    janitorMain(false);
-                }
-            }, JANITOR_PERIOD);
+            this.janitorScheduler = new DaemonTaskScheduler(this::cleanup, JANITOR_PERIOD);
         else
             this.janitorScheduler = null;
     }
@@ -685,7 +680,7 @@ public class WriteAheadLog extends TransactionalStorage {
     /**
      * Kills the orphaned transactions
      */
-    private void janitorKillOrphans() {
+    private void cleanupKillOrphans() {
         // cleanup dead transactions
         while (true) {
             int s = state.get();
@@ -725,12 +720,20 @@ public class WriteAheadLog extends TransactionalStorage {
     }
 
     /**
-     * The main method for the janitor
+     * Manually cleanups this log and trigger a checkpoint if necessary
+     * This method will NOT force the execution of a checkpoint.
+     */
+    public void cleanup() {
+        cleanup(false);
+    }
+
+    /**
+     * Manually cleanups this log and trigger a checkpoint if necessary
      *
      * @param forceCheckpoint Whether to force the execution of a checkpoint
      */
-    private void janitorMain(boolean forceCheckpoint) {
-        janitorKillOrphans();
+    public void cleanup(boolean forceCheckpoint) {
+        cleanupKillOrphans();
         // should we execute a checkpoint?
         if (forceCheckpoint || indexLength >= INDEX_TRIGGER || log.getSize() > LOG_SIZE_TRIGGER) {
             // the condition are met to trigger a checkpoint
@@ -740,23 +743,6 @@ public class WriteAheadLog extends TransactionalStorage {
                 Logging.get().error(exception);
             }
         }
-    }
-
-    /**
-     * Manually runs the janitor's task once
-     * This method will NOT force the execution of a checkpoint.
-     */
-    public void cleanup() {
-        janitorMain(false);
-    }
-
-    /**
-     * Manually runs the janitor's task once
-     *
-     * @param forceCheckpoint Whether to force the execution of a checkpoint
-     */
-    public void cleanup(boolean forceCheckpoint) {
-        janitorMain(forceCheckpoint);
     }
 
     @Override
@@ -777,7 +763,7 @@ public class WriteAheadLog extends TransactionalStorage {
             if (janitorScheduler != null)
                 janitorScheduler.close();
             // execute a last checkpoint before closing
-            janitorMain(true);
+            cleanup(true);
             storage.close();
             log.close();
         } finally {

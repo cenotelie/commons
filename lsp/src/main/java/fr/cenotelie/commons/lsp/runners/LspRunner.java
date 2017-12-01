@@ -88,12 +88,7 @@ public abstract class LspRunner {
             }
         });
         // register hook for shutdown events
-        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-            @Override
-            public void run() {
-                doSignalClose();
-            }
-        }, LspRunnerStdStreams.class.getCanonicalName() + ".shutdown"));
+        Runtime.getRuntime().addShutdownHook(new Thread(this::doSignalClose, LspRunnerStdStreams.class.getCanonicalName() + ".shutdown"));
 
         doRun();
         doClose();

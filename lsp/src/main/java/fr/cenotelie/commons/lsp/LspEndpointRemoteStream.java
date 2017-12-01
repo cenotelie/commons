@@ -22,7 +22,6 @@ import fr.cenotelie.commons.jsonrpc.JsonRpcContext;
 import fr.cenotelie.commons.utils.IOUtils;
 import fr.cenotelie.commons.utils.TextUtils;
 import fr.cenotelie.commons.utils.api.*;
-import fr.cenotelie.commons.utils.concurrent.SafeRunnable;
 import fr.cenotelie.commons.utils.json.Json;
 import fr.cenotelie.commons.utils.json.JsonParser;
 import fr.cenotelie.commons.utils.logging.BufferedLogger;
@@ -123,18 +122,7 @@ public class LspEndpointRemoteStream extends JsonRpcClientBase implements LspEnd
         this.input = input;
         this.output = output;
         this.debug = debug;
-        this.thread = new Thread(new SafeRunnable() {
-            @Override
-            public void doRun() {
-                threadListen();
-                onListenerEnded();
-            }
-
-            @Override
-            protected void onRunFailed(Throwable throwable) {
-                onListenerEnded();
-            }
-        }, LspEndpointRemoteStream.class.getCanonicalName() + ".Thread." + COUNTER.getAndIncrement());
+        this.thread = new Thread(this::threadListen, LspEndpointRemoteStream.class.getCanonicalName() + ".Thread." + COUNTER.getAndIncrement());
         this.mustExit = new AtomicBoolean(false);
         this.thread.start();
         this.response = new AtomicReference<>(null);
@@ -247,32 +235,38 @@ public class LspEndpointRemoteStream extends JsonRpcClientBase implements LspEnd
      * Main method for the listening thread
      */
     private void threadListen() {
-        while (!mustExit.get() && !thread.isInterrupted()) {
-            try {
-                int length = threadReadHeaderLength();
-                if (length < 0)
-                    return;
-                if (threadSkipUntilPayload() < 0)
-                    return;
-                byte[] payload = threadReadPayload(length);
-                if (payload == null)
-                    return;
-                String content = new String(payload, IOUtils.UTF8);
-                printDebug("==> " + content);
-                threadHandlePayload(content);
-            } catch (Exception exception) {
-                // stream has been closed
-                if (debug != null) {
-                    PrintWriter writer = new PrintWriter(debug);
-                    exception.printStackTrace(writer);
-                    try {
-                        debug.flush();
-                    } catch (IOException exception2) {
-                        // do nothing
+        try {
+            while (!mustExit.get() && !thread.isInterrupted()) {
+                try {
+                    int length = threadReadHeaderLength();
+                    if (length < 0)
+                        return;
+                    if (threadSkipUntilPayload() < 0)
+                        return;
+                    byte[] payload = threadReadPayload(length);
+                    if (payload == null)
+                        return;
+                    String content = new String(payload, IOUtils.UTF8);
+                    printDebug("==> " + content);
+                    threadHandlePayload(content);
+                } catch (Exception exception) {
+                    // stream has been closed
+                    if (debug != null) {
+                        PrintWriter writer = new PrintWriter(debug);
+                        exception.printStackTrace(writer);
+                        try {
+                            debug.flush();
+                        } catch (IOException exception2) {
+                            // do nothing
+                        }
                     }
+                    return;
                 }
-                return;
             }
+        } catch (Throwable throwable) {
+            Logging.get().error(throwable);
+        } finally {
+            onListenerEnded();
         }
     }
 

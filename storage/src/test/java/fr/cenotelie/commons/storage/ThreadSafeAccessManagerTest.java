@@ -54,19 +54,16 @@ public class ThreadSafeAccessManagerTest {
         for (int i = 0; i != THREAD_COUNT; i++) {
             final int index = i;
             failures[i] = false;
-            Thread thread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    for (int i = 0; i != ACCESSES_COUNT; i++) {
-                        int location = random.nextInt() & 0xFFFF;
-                        int length = random.nextInt() & 0x00FF;
-                        if (length == 0)
-                            length = 1;
-                        try (Access access = manager.get(location, length, false)) {
-                            if (location != access.getLocation() || length != access.getLength()) {
-                                failures[index] = true;
-                                return;
-                            }
+            Thread thread = new Thread(() -> {
+                for (int j = 0; j != ACCESSES_COUNT; j++) {
+                    int location = random.nextInt() & 0xFFFF;
+                    int length = random.nextInt() & 0x00FF;
+                    if (length == 0)
+                        length = 1;
+                    try (Access access = manager.get(location, length, false)) {
+                        if (location != access.getLocation() || length != access.getLength()) {
+                            failures[index] = true;
+                            return;
                         }
                     }
                 }
