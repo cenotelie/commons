@@ -50,7 +50,7 @@ public class CombiningIterator<X, Y> implements Iterator<Couple<X, Y>> {
     /**
      * The adapter to get an iterator of Y for each X item
      */
-    protected final Adapter<Iterator<Y>> adapter;
+    protected final Adapter<X, Iterator<Y>> adapter;
 
     /**
      * Initializes this iterator
@@ -58,7 +58,7 @@ public class CombiningIterator<X, Y> implements Iterator<Couple<X, Y>> {
      * @param leftIterator The iterator of values on the left
      * @param adapter      The adapter to get an iterator of Y for each X item
      */
-    public CombiningIterator(Iterator<X> leftIterator, Adapter<Iterator<Y>> adapter) {
+    public CombiningIterator(Iterator<X> leftIterator, Adapter<X, Iterator<Y>> adapter) {
         this.current = new Couple<>();
         this.leftIterator = leftIterator;
         this.adapter = adapter;

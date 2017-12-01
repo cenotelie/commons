@@ -34,12 +34,7 @@ public class AdaptingIteratorTest {
     @Test
     public void test_same_size() {
         Iterator<Integer> origin = Arrays.asList(content).iterator();
-        AdaptingIterator<Integer, Integer> iterator = new AdaptingIterator<>(origin, new Adapter<Integer>() {
-            @Override
-            public <X> Integer adapt(X element) {
-                return (Integer) element;
-            }
-        });
+        AdaptingIterator<Integer, Integer> iterator = new AdaptingIterator<>(origin, element -> element);
         int count = 0;
         while (iterator.hasNext()) {
             count++;
@@ -51,12 +46,7 @@ public class AdaptingIteratorTest {
     @Test
     public void test_identity() {
         Iterator<Integer> origin = Arrays.asList(content).iterator();
-        AdaptingIterator<Integer, Integer> iterator = new AdaptingIterator<>(origin, new Adapter<Integer>() {
-            @Override
-            public <X> Integer adapt(X element) {
-                return (Integer) element;
-            }
-        });
+        AdaptingIterator<Integer, Integer> iterator = new AdaptingIterator<>(origin, element -> element);
         int index = 0;
         while (iterator.hasNext()) {
             Assert.assertEquals(content[index], iterator.next());
@@ -67,12 +57,7 @@ public class AdaptingIteratorTest {
     @Test
     public void test_adaptation() {
         Iterator<Integer> origin = Arrays.asList(content).iterator();
-        AdaptingIterator<String, Integer> iterator = new AdaptingIterator<>(origin, new Adapter<String>() {
-            @Override
-            public <X> String adapt(X element) {
-                return element.toString();
-            }
-        });
+        AdaptingIterator<String, Integer> iterator = new AdaptingIterator<>(origin, Object::toString);
         int index = 0;
         while (iterator.hasNext()) {
             Assert.assertEquals(content[index].toString(), iterator.next());

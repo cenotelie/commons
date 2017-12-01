@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Tests for the combining iterator
@@ -33,12 +34,9 @@ public class CombiningIteratorTest {
 
     @Test
     public void test_0x0_size() {
-        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(new SingleIterator<Integer>(null), new Adapter<Iterator<Integer>>() {
-            @Override
-            public <X> Iterator<Integer> adapt(X element) {
-                return new SingleIterator<>(null);
-            }
-        });
+        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(
+                new SingleIterator<Integer>(null),
+                element -> new SingleIterator<>(null));
 
         int count = 0;
         while (iterator.hasNext()) {
@@ -50,12 +48,9 @@ public class CombiningIteratorTest {
 
     @Test
     public void test_0x1_size() {
-        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(new SingleIterator<Integer>(null), new Adapter<Iterator<Integer>>() {
-            @Override
-            public <X> Iterator<Integer> adapt(X element) {
-                return new SingleIterator<>(0);
-            }
-        });
+        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(
+                new SingleIterator<Integer>(null),
+                element -> new SingleIterator<>(0));
 
         int count = 0;
         while (iterator.hasNext()) {
@@ -67,12 +62,9 @@ public class CombiningIteratorTest {
 
     @Test
     public void test_0xn_size() {
-        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(new SingleIterator<Integer>(null), new Adapter<Iterator<Integer>>() {
-            @Override
-            public <X> Iterator<Integer> adapt(X element) {
-                return Arrays.asList(content).iterator();
-            }
-        });
+        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(
+                new SingleIterator<Integer>(null),
+                element -> Arrays.asList(content).iterator());
 
         int count = 0;
         while (iterator.hasNext()) {
@@ -84,12 +76,9 @@ public class CombiningIteratorTest {
 
     @Test
     public void test_1x0_size() {
-        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(new SingleIterator<>(0), new Adapter<Iterator<Integer>>() {
-            @Override
-            public <X> Iterator<Integer> adapt(X element) {
-                return new SingleIterator<>(null);
-            }
-        });
+        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(
+                new SingleIterator<>(0),
+                element -> new SingleIterator<>(null));
 
         int count = 0;
         while (iterator.hasNext()) {
@@ -101,12 +90,9 @@ public class CombiningIteratorTest {
 
     @Test
     public void test_1x1_size() {
-        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(new SingleIterator<>(0), new Adapter<Iterator<Integer>>() {
-            @Override
-            public <X> Iterator<Integer> adapt(X element) {
-                return new SingleIterator<>(0);
-            }
-        });
+        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(
+                new SingleIterator<>(0),
+                element -> new SingleIterator<>(0));
 
         int count = 0;
         while (iterator.hasNext()) {
@@ -118,12 +104,9 @@ public class CombiningIteratorTest {
 
     @Test
     public void test_1xn_size() {
-        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(new SingleIterator<>(0), new Adapter<Iterator<Integer>>() {
-            @Override
-            public <X> Iterator<Integer> adapt(X element) {
-                return Arrays.asList(content).iterator();
-            }
-        });
+        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(
+                new SingleIterator<>(0),
+                element -> Arrays.asList(content).iterator());
 
         int count = 0;
         while (iterator.hasNext()) {
@@ -135,12 +118,9 @@ public class CombiningIteratorTest {
 
     @Test
     public void test_nx0_size() {
-        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(Arrays.asList(content).iterator(), new Adapter<Iterator<Integer>>() {
-            @Override
-            public <X> Iterator<Integer> adapt(X element) {
-                return new SingleIterator<>(null);
-            }
-        });
+        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(
+                Arrays.asList(content).iterator(),
+                element -> new SingleIterator<>(null));
 
         int count = 0;
         while (iterator.hasNext()) {
@@ -152,12 +132,9 @@ public class CombiningIteratorTest {
 
     @Test
     public void test_nx1_size() {
-        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(Arrays.asList(content).iterator(), new Adapter<Iterator<Integer>>() {
-            @Override
-            public <X> Iterator<Integer> adapt(X element) {
-                return new SingleIterator<>(0);
-            }
-        });
+        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(
+                Arrays.asList(content).iterator(),
+                element -> new SingleIterator<>(0));
 
         int count = 0;
         while (iterator.hasNext()) {
@@ -169,12 +146,9 @@ public class CombiningIteratorTest {
 
     @Test
     public void test_nxn_size() {
-        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(Arrays.asList(content).iterator(), new Adapter<Iterator<Integer>>() {
-            @Override
-            public <X> Iterator<Integer> adapt(X element) {
-                return Arrays.asList(content).iterator();
-            }
-        });
+        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(
+                Arrays.asList(content).iterator(),
+                element -> Arrays.asList(content).iterator());
 
         int count = 0;
         while (iterator.hasNext()) {
@@ -186,12 +160,9 @@ public class CombiningIteratorTest {
 
     @Test
     public void test_1x1_content() {
-        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(new SingleIterator<>(0), new Adapter<Iterator<Integer>>() {
-            @Override
-            public <X> Iterator<Integer> adapt(X element) {
-                return new SingleIterator<>(0);
-            }
-        });
+        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(
+                new SingleIterator<>(0),
+                element -> new SingleIterator<>(0));
 
         while (iterator.hasNext()) {
             Couple<Integer, Integer> couple = iterator.next();
@@ -202,12 +173,9 @@ public class CombiningIteratorTest {
 
     @Test
     public void test_1xn_content() {
-        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(new SingleIterator<>(0), new Adapter<Iterator<Integer>>() {
-            @Override
-            public <X> Iterator<Integer> adapt(X element) {
-                return Arrays.asList(content).iterator();
-            }
-        });
+        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(
+                new SingleIterator<>(0),
+                element -> Arrays.asList(content).iterator());
 
         int index = 0;
         while (iterator.hasNext()) {
@@ -220,12 +188,9 @@ public class CombiningIteratorTest {
 
     @Test
     public void test_nx1_content() {
-        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(Arrays.asList(content).iterator(), new Adapter<Iterator<Integer>>() {
-            @Override
-            public <X> Iterator<Integer> adapt(X element) {
-                return new SingleIterator<>(0);
-            }
-        });
+        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(
+                Arrays.asList(content).iterator(),
+                element -> new SingleIterator<>(0));
 
         int index = 0;
         while (iterator.hasNext()) {
@@ -238,12 +203,9 @@ public class CombiningIteratorTest {
 
     @Test
     public void test_nxn_content() {
-        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(Arrays.asList(content).iterator(), new Adapter<Iterator<Integer>>() {
-            @Override
-            public <X> Iterator<Integer> adapt(X element) {
-                return Arrays.asList(content).iterator();
-            }
-        });
+        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(
+                Arrays.asList(content).iterator(),
+                element -> Arrays.asList(content).iterator());
 
         int indexX = 0;
         int indexY = 0;
@@ -261,16 +223,13 @@ public class CombiningIteratorTest {
 
     @Test
     public void test_nxn_parameters() {
-        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(Arrays.asList(content).iterator(), new Adapter<Iterator<Integer>>() {
-            private int index = 0;
-
-            @Override
-            public <X> Iterator<Integer> adapt(X element) {
-                Assert.assertEquals(content[index], element);
-                index++;
-                return Arrays.asList(content).iterator();
-            }
-        });
+        final AtomicInteger index = new AtomicInteger(0);
+        Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(
+                Arrays.asList(content).iterator(),
+                element -> {
+                    Assert.assertEquals(content[index.getAndIncrement()], element);
+                    return Arrays.asList(content).iterator();
+                });
 
         int count = 0;
         while (iterator.hasNext()) {

@@ -34,7 +34,7 @@ public class AdaptingIterator<T, X> implements Iterator<T> {
     /**
      * The adapter for translating the element
      */
-    protected final Adapter<T> adapter;
+    protected final Adapter<X, T> adapter;
 
     /**
      * Initializes this iterator
@@ -42,7 +42,7 @@ public class AdaptingIterator<T, X> implements Iterator<T> {
      * @param content The inner iterator
      * @param adapter The adapter to use
      */
-    public AdaptingIterator(Iterator<X> content, Adapter<T> adapter) {
+    public AdaptingIterator(Iterator<X> content, Adapter<X, T> adapter) {
         this.content = content;
         this.adapter = adapter;
     }

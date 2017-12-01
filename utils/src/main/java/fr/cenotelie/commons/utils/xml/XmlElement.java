@@ -18,7 +18,6 @@
 package fr.cenotelie.commons.utils.xml;
 
 import fr.cenotelie.commons.utils.TextUtils;
-import fr.cenotelie.commons.utils.collections.Adapter;
 import fr.cenotelie.commons.utils.collections.AdaptingIterator;
 import fr.cenotelie.commons.utils.collections.Couple;
 import fr.cenotelie.commons.utils.http.URIUtils;
@@ -302,15 +301,9 @@ public class XmlElement implements Iterable<XmlElement> {
      * @return An iterator over the remaining attributes of this element
      */
     public Iterator<Couple<String, String>> getAttributes() {
-        return new AdaptingIterator<>(attributes.keySet().iterator(), new Adapter<Couple<String, String>>() {
-            @Override
-            public <X> Couple<String, String> adapt(X element) {
-                Couple<String, String> result = new Couple<>();
-                result.x = (String) element;
-                result.y = attributes.get(element).getNodeValue();
-                return result;
-            }
-        });
+        return new AdaptingIterator<>(
+                attributes.keySet().iterator(),
+                element -> new Couple<>(element, attributes.get(element).getNodeValue()));
     }
 
     /**

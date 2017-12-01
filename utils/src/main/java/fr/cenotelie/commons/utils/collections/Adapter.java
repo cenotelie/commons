@@ -20,16 +20,16 @@ package fr.cenotelie.commons.utils.collections;
 /**
  * Adapts elements from one type to another
  *
+ * @param <S> The type to adapt from
  * @param <T> The type to adapt to
  * @author Laurent Wouters
  */
-public interface Adapter<T> {
+public interface Adapter<S, T> {
     /**
      * Adapts the specified element
      *
      * @param element The element to adapt
-     * @param <X>     The type of the element to adapt
      * @return The adapted element
      */
-    <X> T adapt(X element);
+    T adapt(S element);
 }
