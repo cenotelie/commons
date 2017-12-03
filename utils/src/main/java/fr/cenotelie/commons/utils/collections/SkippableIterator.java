@@ -28,7 +28,7 @@ public class SkippableIterator<T> implements Iterator<T> {
     /**
      * The original iterator
      */
-    protected final Iterator<T> original;
+    protected final Iterator<? extends T> original;
     /**
      * The next item
      */
@@ -43,7 +43,7 @@ public class SkippableIterator<T> implements Iterator<T> {
      *
      * @param original The original iterator
      */
-    public SkippableIterator(Iterator<T> original) {
+    public SkippableIterator(Iterator<? extends T> original) {
         this.original = original;
         this.mustFindNext = true;
     }

@@ -29,7 +29,7 @@ public class ConcatenatedIterator<T> implements Iterator<T> {
     /**
      * The inner iterators
      */
-    protected final Iterator<T>[] content;
+    protected final Iterator<? extends T>[] content;
     /**
      * The index of the current iterator
      */
@@ -37,14 +37,14 @@ public class ConcatenatedIterator<T> implements Iterator<T> {
     /**
      * The iterator of the current result
      */
-    protected Iterator<T> currentIterator;
+    protected Iterator<? extends T> currentIterator;
 
     /**
      * Initializes this iterator
      *
      * @param content The inner iterators
      */
-    public ConcatenatedIterator(Iterator<T>[] content) {
+    public ConcatenatedIterator(Iterator<? extends T>[] content) {
         this.content = content;
         this.index = 0;
         while (index != content.length && !content[index].hasNext())
