@@ -161,7 +161,18 @@ public abstract class Transaction implements AutoCloseable {
             throw new WrongThreadException();
         if (state != STATE_RUNNING)
             throw new IllegalStateException();
-        state = STATE_ABORTED;
+        try {
+            doAbort();
+        } finally {
+            state = STATE_ABORTED;
+        }
+    }
+
+    /**
+     * Underlying work to abort this transaction
+     */
+    protected void doAbort() {
+        // nothing to do here
     }
 
     /**
