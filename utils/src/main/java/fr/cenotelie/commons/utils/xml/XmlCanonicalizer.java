@@ -22,7 +22,6 @@ import org.w3c.dom.NodeList;
 
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -94,12 +93,7 @@ public class XmlCanonicalizer {
         for (int i = 0; i != node.getAttributes().getLength(); i++) {
             attributes.add(node.getAttributes().item(i));
         }
-        Collections.sort(attributes, new Comparator<Node>() {
-            @Override
-            public int compare(Node node1, Node node2) {
-                return node1.getNodeName().compareTo(node2.getNodeName());
-            }
-        });
+        attributes.sort(Comparator.comparing(Node::getNodeName));
         for (Node attribute : attributes)
             onAttribute(attribute);
         output.write('>');

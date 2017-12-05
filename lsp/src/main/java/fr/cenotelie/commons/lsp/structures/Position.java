@@ -32,22 +32,12 @@ public class Position implements Serializable, Comparable<Position> {
     /**
      * The in-order comparator of positions
      */
-    public static final Comparator<Position> COMPARATOR_ORDER = new Comparator<Position>() {
-        @Override
-        public int compare(Position p1, Position p2) {
-            return p1.compareTo(p2);
-        }
-    };
+    public static final Comparator<Position> COMPARATOR_ORDER = Position::compareTo;
 
     /**
      * The inverse order comparator of positions
      */
-    public static final Comparator<Position> COMPARATOR_INVERSE = new Comparator<Position>() {
-        @Override
-        public int compare(Position p1, Position p2) {
-            return p2.compareTo(p1);
-        }
-    };
+    public static final Comparator<Position> COMPARATOR_INVERSE = Comparator.reverseOrder();
 
     /**
      * Line position in a document (zero-based).

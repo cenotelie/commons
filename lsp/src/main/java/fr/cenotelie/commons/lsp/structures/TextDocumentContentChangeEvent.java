@@ -33,29 +33,23 @@ public class TextDocumentContentChangeEvent implements Serializable {
     /**
      * The in-order comparator of events
      */
-    public static final Comparator<TextDocumentContentChangeEvent> COMPARATOR_ORDER = new Comparator<TextDocumentContentChangeEvent>() {
-        @Override
-        public int compare(TextDocumentContentChangeEvent event1, TextDocumentContentChangeEvent event2) {
-            if (event1.range == null)
-                return -1;
-            if (event2.range == null)
-                return 1;
-            return event1.range.getStart().compareTo(event2.getRange().getStart());
-        }
+    public static final Comparator<TextDocumentContentChangeEvent> COMPARATOR_ORDER = (event1, event2) -> {
+        if (event1.range == null)
+            return -1;
+        if (event2.range == null)
+            return 1;
+        return event1.range.getStart().compareTo(event2.getRange().getStart());
     };
 
     /**
      * The inverse order comparator of events
      */
-    public static final Comparator<TextDocumentContentChangeEvent> COMPARATOR_INVERSE = new Comparator<TextDocumentContentChangeEvent>() {
-        @Override
-        public int compare(TextDocumentContentChangeEvent event1, TextDocumentContentChangeEvent event2) {
-            if (event2.range == null)
-                return -1;
-            if (event1.range == null)
-                return 1;
-            return event2.range.getStart().compareTo(event1.getRange().getStart());
-        }
+    public static final Comparator<TextDocumentContentChangeEvent> COMPARATOR_INVERSE = (event1, event2) -> {
+        if (event2.range == null)
+            return -1;
+        if (event1.range == null)
+            return 1;
+        return event2.range.getStart().compareTo(event1.getRange().getStart());
     };
 
 

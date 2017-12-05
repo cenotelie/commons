@@ -32,22 +32,12 @@ public class TextEdit implements Serializable {
     /**
      * The in-order comparator of text edits
      */
-    public static final Comparator<TextEdit> COMPARATOR_ORDER = new Comparator<TextEdit>() {
-        @Override
-        public int compare(TextEdit edit1, TextEdit edit2) {
-            return edit1.getRange().getStart().compareTo(edit2.getRange().getStart());
-        }
-    };
+    public static final Comparator<TextEdit> COMPARATOR_ORDER = Comparator.comparing(edit -> edit.getRange().getStart());
 
     /**
      * The inverse order comparator of text edits
      */
-    public static final Comparator<TextEdit> COMPARATOR_INVERSE = new Comparator<TextEdit>() {
-        @Override
-        public int compare(TextEdit edit1, TextEdit edit2) {
-            return edit2.getRange().getStart().compareTo(edit1.getRange().getStart());
-        }
-    };
+    public static final Comparator<TextEdit> COMPARATOR_INVERSE = COMPARATOR_ORDER.reversed();
 
     /**
      * The range of the text document to be manipulated.

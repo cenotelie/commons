@@ -32,22 +32,12 @@ public class Range implements Serializable {
     /**
      * The in-order comparator of ranges
      */
-    public static final Comparator<Range> COMPARATOR_ORDER = new Comparator<Range>() {
-        @Override
-        public int compare(Range r1, Range r2) {
-            return r1.getStart().compareTo(r2.getStart());
-        }
-    };
+    public static final Comparator<Range> COMPARATOR_ORDER = Comparator.comparing(Range::getStart);
 
     /**
      * The inverse order comparator of ranges
      */
-    public static final Comparator<Range> COMPARATOR_INVERSE = new Comparator<Range>() {
-        @Override
-        public int compare(Range r1, Range r2) {
-            return r2.getStart().compareTo(r1.getStart());
-        }
-    };
+    public static final Comparator<Range> COMPARATOR_INVERSE = COMPARATOR_ORDER.reversed();
 
     /**
      * The range's start position.
