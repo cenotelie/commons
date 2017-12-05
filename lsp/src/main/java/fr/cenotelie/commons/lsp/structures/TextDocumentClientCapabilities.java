@@ -17,36 +17,29 @@
 
 package fr.cenotelie.commons.lsp.structures;
 
+import fr.cenotelie.commons.utils.json.JsonDeserializer;
+import fr.cenotelie.hime.redist.ASTNode;
+
 /**
- * The different kinds of symbols
+ * Text document specific client capabilities, defines capabilities the editor / tool provides on text documents
  *
  * @author Laurent Wouters
  */
-public interface SymbolKind {
-    int FILE = 1;
-    int MODULE = 2;
-    int NAMESPACE = 3;
-    int PACKAGE = 4;
-    int CLASS = 5;
-    int METHOD = 6;
-    int PROPERTY = 7;
-    int FIELD = 8;
-    int CONSTRUCTOR = 9;
-    int ENUM = 10;
-    int INTERFACE = 11;
-    int FUNCTION = 12;
-    int VARIABLE = 13;
-    int CONSTANT = 14;
-    int STRING = 15;
-    int NUMBER = 16;
-    int BOOLEAN = 17;
-    int ARRAY = 18;
-    int OBJECT = 19;
-    int KEY = 20;
-    int NULL = 21;
-    int ENUM_MEMBER = 22;
-    int STRUCT = 23;
-    int EVENT = 24;
-    int OPERATOR = 25;
-    int TYPE_PARAMETER = 26;
+public class TextDocumentClientCapabilities extends Capabilities {
+    /**
+     * Initializes this structure
+     */
+    public TextDocumentClientCapabilities() {
+        super();
+    }
+
+    /**
+     * Initializes this structure
+     *
+     * @param definition   The serialized definition
+     * @param deserializer The deserializer to use
+     */
+    public TextDocumentClientCapabilities(ASTNode definition, JsonDeserializer deserializer) {
+        super(definition, deserializer);
+    }
 }

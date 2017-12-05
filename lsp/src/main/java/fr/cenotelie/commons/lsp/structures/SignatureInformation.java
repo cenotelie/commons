@@ -19,6 +19,8 @@ package fr.cenotelie.commons.lsp.structures;
 
 import fr.cenotelie.commons.utils.Serializable;
 import fr.cenotelie.commons.utils.TextUtils;
+import fr.cenotelie.commons.utils.json.Json;
+import fr.cenotelie.commons.utils.json.JsonParser;
 import fr.cenotelie.hime.redist.ASTNode;
 
 /**
@@ -37,7 +39,7 @@ public class SignatureInformation implements Serializable {
      * The human-readable doc-comment of this signature.
      * Will be shown in the UI but can be omitted.
      */
-    private final String documentation;
+    private final Object documentation;
     /**
      * The parameters of this signature
      */
@@ -57,7 +59,7 @@ public class SignatureInformation implements Serializable {
      *
      * @return The human-readable doc-comment of this signature
      */
-    public String getDocumentation() {
+    public Object getDocumentation() {
         return documentation;
     }
 
@@ -76,7 +78,7 @@ public class SignatureInformation implements Serializable {
      * @param label The label of this signature
      */
     public SignatureInformation(String label) {
-        this(label, null, null);
+        this(label, (String) null, null);
     }
 
     /**
@@ -86,6 +88,16 @@ public class SignatureInformation implements Serializable {
      * @param documentation The human-readable doc-comment of this signature
      */
     public SignatureInformation(String label, String documentation) {
+        this(label, documentation, null);
+    }
+
+    /**
+     * Initializes this structure
+     *
+     * @param label         The label of this signature
+     * @param documentation The human-readable doc-comment of this signature
+     */
+    public SignatureInformation(String label, MarkupContent documentation) {
         this(label, documentation, null);
     }
 
@@ -105,11 +117,24 @@ public class SignatureInformation implements Serializable {
     /**
      * Initializes this structure
      *
+     * @param label         The label of this signature
+     * @param documentation The human-readable doc-comment of this signature
+     * @param parameters    The parameters of this signature
+     */
+    public SignatureInformation(String label, MarkupContent documentation, ParameterInformation[] parameters) {
+        this.label = label;
+        this.documentation = documentation;
+        this.parameters = parameters;
+    }
+
+    /**
+     * Initializes this structure
+     *
      * @param definition The serialized definition
      */
     public SignatureInformation(ASTNode definition) {
         String label = "";
-        String documentation = null;
+        Object documentation = null;
         ParameterInformation[] parameters = null;
         for (ASTNode child : definition.getChildren()) {
             ASTNode nodeMemberName = child.getChildren().get(0);
@@ -123,8 +148,12 @@ public class SignatureInformation implements Serializable {
                     break;
                 }
                 case "documentation": {
-                    documentation = TextUtils.unescape(nodeValue.getValue());
-                    documentation = documentation.substring(1, documentation.length() - 1);
+                    if (nodeValue.getSymbol().getID() == JsonParser.ID.object)
+                        documentation = new MarkupContent(nodeValue);
+                    else {
+                        String value = TextUtils.unescape(nodeValue.getValue());
+                        documentation = value.substring(1, value.length() - 1);
+                    }
                     break;
                 }
                 case "parameters": {
@@ -153,9 +182,8 @@ public class SignatureInformation implements Serializable {
         builder.append(TextUtils.escapeStringJSON(label));
         builder.append("\"");
         if (documentation != null) {
-            builder.append(", \"documentation\": \"");
-            builder.append(TextUtils.escapeStringJSON(documentation));
-            builder.append("\"");
+            builder.append(", \"documentation\": ");
+            Json.serialize(builder, documentation);
         }
         if (parameters != null) {
             builder.append(", \"parameters\": [");

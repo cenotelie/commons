@@ -47,7 +47,7 @@ public class CompletionItem implements Serializable {
     /**
      * A human-readable string that represents a doc-comment.
      */
-    private String documentation;
+    private Object documentation;
     /**
      * A string that should be used when comparing this item with other items.
      * When `falsy` the label is used.
@@ -130,7 +130,7 @@ public class CompletionItem implements Serializable {
      *
      * @return The human-readable string that represents a doc-comment
      */
-    public String getDocumentation() {
+    public Object getDocumentation() {
         return documentation;
     }
 
@@ -140,6 +140,15 @@ public class CompletionItem implements Serializable {
      * @param documentation The human-readable string that represents a doc-comment
      */
     public void setDocumentation(String documentation) {
+        this.documentation = documentation;
+    }
+
+    /**
+     * Sets the human-readable string that represents a doc-comment
+     *
+     * @param documentation The human-readable string that represents a doc-comment
+     */
+    public void setDocumentation(MarkupContent documentation) {
         this.documentation = documentation;
     }
 
@@ -318,7 +327,7 @@ public class CompletionItem implements Serializable {
         String label = "";
         int kind = CompletionItemKind.TEXT;
         String detail = null;
-        String documentation = null;
+        Object documentation = null;
         String sortText = null;
         String filterText = null;
         String insertText = null;
@@ -348,8 +357,12 @@ public class CompletionItem implements Serializable {
                     break;
                 }
                 case "documentation": {
-                    documentation = TextUtils.unescape(nodeValue.getValue());
-                    documentation = documentation.substring(1, documentation.length() - 1);
+                    if (nodeValue.getSymbol().getID() == JsonParser.ID.object)
+                        documentation = new MarkupContent(nodeValue);
+                    else {
+                        String value = TextUtils.unescape(nodeValue.getValue());
+                        documentation = value.substring(1, value.length() - 1);
+                    }
                     break;
                 }
                 case "sortText": {
@@ -430,9 +443,8 @@ public class CompletionItem implements Serializable {
             builder.append("\"");
         }
         if (documentation != null) {
-            builder.append(", \"documentation\": \"");
-            builder.append(TextUtils.escapeStringJSON(documentation));
-            builder.append("\"");
+            builder.append(", \"documentation\": ");
+            Json.serialize(builder, documentation);
         }
         if (sortText != null) {
             builder.append(", \"sortText\": \"");

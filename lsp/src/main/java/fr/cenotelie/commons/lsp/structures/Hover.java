@@ -19,6 +19,7 @@ package fr.cenotelie.commons.lsp.structures;
 
 import fr.cenotelie.commons.utils.Serializable;
 import fr.cenotelie.commons.utils.TextUtils;
+import fr.cenotelie.commons.utils.json.Json;
 import fr.cenotelie.commons.utils.json.JsonLexer;
 import fr.cenotelie.commons.utils.json.JsonParser;
 import fr.cenotelie.hime.redist.ASTNode;
@@ -32,7 +33,7 @@ public class Hover implements Serializable {
     /**
      * The hover's content
      */
-    private final MarkedString[] contents;
+    private final Object contents;
     /**
      * An optional range inside a text document that is used to visualize a hover, e.g. by changing the background color.
      */
@@ -43,7 +44,7 @@ public class Hover implements Serializable {
      *
      * @return The hover's content
      */
-    public MarkedString[] getContents() {
+    public Object getContents() {
         return contents;
     }
 
@@ -58,17 +59,10 @@ public class Hover implements Serializable {
 
     /**
      * Initializes this structure
-     */
-    public Hover() {
-        this(new MarkedString[0], null);
-    }
-
-    /**
-     * Initializes this structure
      *
      * @param content The hover's content
      */
-    public Hover(MarkedString content) {
+    public Hover(MarkupContent content) {
         this(content, null);
     }
 
@@ -78,26 +72,7 @@ public class Hover implements Serializable {
      * @param content The hover's content
      * @param range   The range inside a text document that is used to visualize a hover
      */
-    public Hover(MarkedString content, Range range) {
-        this(new MarkedString[]{content}, range);
-    }
-
-    /**
-     * Initializes this structure
-     *
-     * @param content The hover's content
-     */
-    public Hover(MarkedString[] content) {
-        this(content, null);
-    }
-
-    /**
-     * Initializes this structure
-     *
-     * @param content The hover's content
-     * @param range   The range inside a text document that is used to visualize a hover
-     */
-    public Hover(MarkedString[] content, Range range) {
+    public Hover(MarkupContent content, Range range) {
         this.contents = content;
         this.range = range;
     }
@@ -108,7 +83,7 @@ public class Hover implements Serializable {
      * @param definition The serialized definition
      */
     public Hover(ASTNode definition) {
-        MarkedString[] contents = null;
+        Object contents = null;
         Range range = null;
         for (ASTNode child : definition.getChildren()) {
             ASTNode nodeMemberName = child.getChildren().get(0);
@@ -118,12 +93,27 @@ public class Hover implements Serializable {
             switch (name) {
                 case "contents": {
                     if (nodeValue.getSymbol().getID() == JsonParser.ID.array) {
-                        contents = new MarkedString[nodeValue.getChildren().size()];
+                        Object[] array = new Object[nodeValue.getChildren().size()];
                         int index = 0;
                         for (ASTNode nodeItem : nodeValue.getChildren())
-                            contents[index++] = loadMarkedString(nodeItem);
-                    } else {
-                        contents = new MarkedString[]{loadMarkedString(nodeValue)};
+                            array[index++] = loadMarkedString(nodeItem);
+                        contents = array;
+                    } else if (nodeValue.getSymbol().getID() == JsonLexer.ID.LITERAL_STRING) {
+                        contents = new MarkedStringMarkdown(nodeValue);
+                    } else if (nodeValue.getSymbol().getID() == JsonParser.ID.object) {
+                        if (nodeValue.getChildren().isEmpty())
+                            break;
+                        nodeMemberName = nodeValue.getChildren().get(0).getChildren().get(0);
+                        name = TextUtils.unescape(nodeMemberName.getValue());
+                        name = name.substring(1, name.length() - 1);
+                        switch (name) {
+                            case "kind":
+                                contents = new MarkupContent(nodeValue);
+                                break;
+                            case "language":
+                                contents = new MarkedStringCodeBlock(nodeValue);
+                                break;
+                        }
                     }
                     break;
                 }
@@ -133,7 +123,7 @@ public class Hover implements Serializable {
                 }
             }
         }
-        this.contents = contents == null ? new MarkedString[0] : contents;
+        this.contents = contents;
         this.range = range;
     }
 
@@ -162,19 +152,7 @@ public class Hover implements Serializable {
     public String serializedJSON() {
         StringBuilder builder = new StringBuilder();
         builder.append("{\"contents\": ");
-        if (contents.length == 0)
-            builder.append("[]");
-        else if (contents.length == 1)
-            builder.append(contents[0].serializedJSON());
-        else {
-            builder.append("[");
-            for (int i = 0; i != contents.length; i++) {
-                if (i == 0)
-                    builder.append(", ");
-                builder.append(contents[i].serializedJSON());
-            }
-            builder.append("]");
-        }
+        Json.serialize(contents);
         if (range != null) {
             builder.append(", \"range\": ");
             builder.append(range.serializedJSON());

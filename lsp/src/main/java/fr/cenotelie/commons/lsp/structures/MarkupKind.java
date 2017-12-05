@@ -18,35 +18,19 @@
 package fr.cenotelie.commons.lsp.structures;
 
 /**
- * The different kinds of symbols
+ * Describes the content type that a client supports in various result literals like `Hover`, `ParameterInfo` or `CompletionItem`.
+ * Please note that `MarkupKinds` must not start with a `$`. This kinds are reserved for internal usage.
  *
  * @author Laurent Wouters
  */
-public interface SymbolKind {
-    int FILE = 1;
-    int MODULE = 2;
-    int NAMESPACE = 3;
-    int PACKAGE = 4;
-    int CLASS = 5;
-    int METHOD = 6;
-    int PROPERTY = 7;
-    int FIELD = 8;
-    int CONSTRUCTOR = 9;
-    int ENUM = 10;
-    int INTERFACE = 11;
-    int FUNCTION = 12;
-    int VARIABLE = 13;
-    int CONSTANT = 14;
-    int STRING = 15;
-    int NUMBER = 16;
-    int BOOLEAN = 17;
-    int ARRAY = 18;
-    int OBJECT = 19;
-    int KEY = 20;
-    int NULL = 21;
-    int ENUM_MEMBER = 22;
-    int STRUCT = 23;
-    int EVENT = 24;
-    int OPERATOR = 25;
-    int TYPE_PARAMETER = 26;
+public interface MarkupKind {
+    /**
+     * Plain text is supported as a content format
+     */
+    String PLAIN_TEXT = "plaintext";
+
+    /**
+     * Markdown is supported as a content format
+     */
+    String MARKDOWN = "markdown";
 }

@@ -41,4 +41,11 @@ public interface CompletionItemKind {
     int COLOR = 16;
     int FILE = 17;
     int REFERENCE = 18;
+    int FOLDER = 19;
+    int ENUM_MEMBER = 20;
+    int CONSTANT = 21;
+    int STRUCT = 22;
+    int EVENT = 23;
+    int OPERATOR = 24;
+    int TYPE_PARAMETER = 25;
 }

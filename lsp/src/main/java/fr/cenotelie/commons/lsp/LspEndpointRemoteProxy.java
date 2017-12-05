@@ -86,7 +86,7 @@ public class LspEndpointRemoteProxy extends JsonRpcClientBase implements LspEndp
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         // do nothing
     }
 }
