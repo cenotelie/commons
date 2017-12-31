@@ -17,10 +17,7 @@
 
 package fr.cenotelie.commons.lsp.engine;
 
-import fr.cenotelie.commons.lsp.structures.Hover;
-import fr.cenotelie.commons.lsp.structures.MarkedString;
-import fr.cenotelie.commons.lsp.structures.Position;
-import fr.cenotelie.commons.lsp.structures.Range;
+import fr.cenotelie.commons.lsp.structures.*;
 
 /**
  * The default hover data provider that is based on the found symbols
@@ -50,10 +47,10 @@ public class DocumentHoverProviderDefault implements DocumentHoverProvider {
     @Override
     public Hover getHoverData(Document document, Position position) {
         Symbol symbol = workspace.getSymbols().getSymbolAt(document.getUri(), position);
-        MarkedString documentation = symbol.getDocumentation();
+        MarkupContent documentation = symbol.getDocumentation();
         Range range = symbol.getRangeAt(document.getUri(), position);
         return new Hover(
-                documentation == null ? new MarkedString[0] : new MarkedString[]{documentation},
+                documentation == null ? new MarkupContent(MarkupKind.PLAIN_TEXT, "") : documentation,
                 range
         );
     }

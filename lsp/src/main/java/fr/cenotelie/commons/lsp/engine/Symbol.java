@@ -18,7 +18,7 @@
 package fr.cenotelie.commons.lsp.engine;
 
 import fr.cenotelie.commons.lsp.structures.Location;
-import fr.cenotelie.commons.lsp.structures.MarkedString;
+import fr.cenotelie.commons.lsp.structures.MarkupContent;
 import fr.cenotelie.commons.lsp.structures.Position;
 import fr.cenotelie.commons.lsp.structures.Range;
 
@@ -48,7 +48,7 @@ public class Symbol {
     /**
      * The documentation for this symbol
      */
-    private MarkedString documentation;
+    private MarkupContent documentation;
     /**
      * The various definitions of this symbol by the URI of the defining files
      */
@@ -118,7 +118,7 @@ public class Symbol {
      *
      * @return The documentation for this symbol
      */
-    public MarkedString getDocumentation() {
+    public MarkupContent getDocumentation() {
         return documentation;
     }
 
@@ -222,7 +222,7 @@ public class Symbol {
      *
      * @param documentation The documentation for this symbol
      */
-    public void setDocumentation(MarkedString documentation) {
+    public void setDocumentation(MarkupContent documentation) {
         this.documentation = documentation;
     }
 
@@ -242,11 +242,7 @@ public class Symbol {
      * @param location The location in the document
      */
     public void addDefinition(String uri, Range location) {
-        Collection<Range> locations = definitions.get(uri);
-        if (locations == null) {
-            locations = new ArrayList<>();
-            definitions.put(uri, locations);
-        }
+        Collection<Range> locations = definitions.computeIfAbsent(uri, k -> new ArrayList<>());
         locations.add(location);
     }
 
@@ -257,11 +253,7 @@ public class Symbol {
      * @param location The location in the document
      */
     public void addReference(String uri, Range location) {
-        Collection<Range> locations = references.get(uri);
-        if (locations == null) {
-            locations = new ArrayList<>();
-            references.put(uri, locations);
-        }
+        Collection<Range> locations = references.computeIfAbsent(uri, k -> new ArrayList<>());
         locations.add(location);
     }
 

@@ -434,10 +434,10 @@ public class Workspace {
     public Hover getHover(TextDocumentPositionParams parameters) {
         Document document = documents.get(parameters.getTextDocument().getUri());
         if (document == null)
-            return new Hover();
+            return new Hover(new MarkupContent(MarkupKind.PLAIN_TEXT, ""));
         DocumentHoverProvider service = getServiceHoverProvider(document);
         if (service == null)
-            return new Hover();
+            return new Hover(new MarkupContent(MarkupKind.PLAIN_TEXT, ""));
         return service.getHoverData(document, parameters.getPosition());
     }
 
