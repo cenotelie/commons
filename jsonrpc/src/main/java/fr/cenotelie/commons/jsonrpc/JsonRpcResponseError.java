@@ -76,6 +76,25 @@ public class JsonRpcResponseError implements JsonRpcResponse {
         return new JsonRpcResponseError(identifier, -32603, "Invalid Error", null);
     }
 
+    /**
+     * Creates an error for an un-initialized server error
+     *
+     * @param identifier The identifier of the request
+     * @return The error
+     */
+    public static JsonRpcResponseError newServerNotInitialized(String identifier) {
+        return new JsonRpcResponseError(identifier, -32002, "Server not initialized", null);
+    }
+
+    /**
+     * Creates an error for an unknown error
+     *
+     * @param identifier The identifier of the request
+     * @return The error
+     */
+    public static JsonRpcResponseError newUnknownError(String identifier) {
+        return new JsonRpcResponseError(identifier, -32001, "Server not initialized", null);
+    }
 
     /**
      * The identifier for the corresponding request

@@ -152,7 +152,7 @@ public class Hover implements Serializable {
     public String serializedJSON() {
         StringBuilder builder = new StringBuilder();
         builder.append("{\"contents\": ");
-        Json.serialize(contents);
+        Json.serialize(builder, contents);
         if (range != null) {
             builder.append(", \"range\": ");
             builder.append(range.serializedJSON());

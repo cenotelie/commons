@@ -123,8 +123,8 @@ public class MarkupContent implements Serializable {
     public String serializedJSON() {
         return "{\"kind\": \"" +
                 TextUtils.escapeStringJSON(kind) +
-                "\", \"content\": " +
+                "\", \"content\": \"" +
                 TextUtils.escapeStringJSON(content) +
-                "}";
+                "\"}";
     }
 }
