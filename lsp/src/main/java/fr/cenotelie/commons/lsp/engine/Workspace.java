@@ -416,7 +416,7 @@ public class Workspace {
         if (item.getData() == null)
             return item;
         SerializedUnknown data = (SerializedUnknown) item.getData();
-        Document document = documents.get((String) data.getValueFor("documentUri"));
+        Document document = documents.get(data.getValueFor("documentUri"));
         if (document == null)
             return item;
         DocumentCompleter completer = getServiceCompleter(document);
@@ -550,7 +550,7 @@ public class Workspace {
     public CodeLens resolveCodeLens(CodeLens lens) {
         if (lens.getData() == null)
             return lens;
-        Document document = documents.get((String) lens.getData());
+        Document document = documents.get(lens.getData());
         if (document == null)
             return lens;
         DocumentLensProvider service = getServiceLensProvider(document);

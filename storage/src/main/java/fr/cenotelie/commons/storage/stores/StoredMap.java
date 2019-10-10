@@ -84,6 +84,7 @@ public class StoredMap extends StoredEntity {
      * The head entry for the map
      */
     private final long head;
+
     /**
      * Initializes this map
      *
@@ -788,8 +789,6 @@ public class StoredMap extends StoredEntity {
         long firstKey = 0;
         for (int i = 0; i != transferred; i++) {
             long key = left.readLong();
-            if (i == 0)
-                firstKey = 0;
             right.writeLong(key);
             right.writeLong(left.readLong());
         }
@@ -936,8 +935,6 @@ public class StoredMap extends StoredEntity {
         long firstKey = 0;
         for (int i = 0; i != transferred; i++) {
             long key = left.readLong();
-            if (i == 0)
-                firstKey = 0;
             right.writeLong(key);
             right.writeLong(left.readLong());
         }

@@ -96,6 +96,7 @@ public class HttpConnection implements Closeable {
      * Login/Password for the endpoint, if any, used for an HTTP Basic authentication
      */
     private final String authToken;
+
     /**
      * Initializes this connection
      *

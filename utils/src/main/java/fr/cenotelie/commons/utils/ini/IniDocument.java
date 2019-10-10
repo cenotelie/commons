@@ -419,8 +419,6 @@ public class IniDocument {
                 case STATE_SECTION_TITLE_AFTER: {
                     if (isLineEnding(c)) {
                         state = STATE_INIT;
-                    } else if (isWhitespace(c)) {
-                        state = STATE_SECTION_TITLE_AFTER;
                     } else if (isCommentStart(c)) {
                         state = STATE_COMMENT;
                     }

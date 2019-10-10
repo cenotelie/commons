@@ -42,6 +42,8 @@ public class JsonDeserializer {
      * @return The de-serialized object
      */
     public Object deserialize(ASTNode definition, Object context) {
+        if (definition == null)
+            return null;
         switch (definition.getSymbol().getID()) {
             case JsonParser.ID.array: {
                 List<Object> value = new ArrayList<>();

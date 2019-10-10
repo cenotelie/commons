@@ -295,7 +295,7 @@ public class LspEndpointRemoteStream extends JsonRpcClientBase implements LspEnd
         // we read the header name
         // read the colon
         int value = input.read();
-        if (mustExit.get() && thread.isInterrupted() || value < 0 || value != 0x3A)
+        if (mustExit.get() && thread.isInterrupted() || value != 0x3A)
             // not the colon => exit
             return -1;
 

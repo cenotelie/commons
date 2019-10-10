@@ -67,7 +67,7 @@ public class MetricBase implements Metric {
         this.name = name;
         this.unit = unit;
         this.snapshotTTL = snapshotTTL;
-        this.hints = (hints == null || hints.length == 0) ? (Collection) Collections.emptyList() : Collections.unmodifiableCollection(Arrays.asList(hints));
+        this.hints = (hints == null || hints.length == 0) ? Collections.emptyList() : Collections.unmodifiableCollection(Arrays.asList(hints));
     }
 
     /**

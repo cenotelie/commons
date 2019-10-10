@@ -157,7 +157,6 @@ public class DaemonTaskScheduler implements AutoCloseable {
                 Thread.sleep(waitPeriod);
             } catch (InterruptedException exception) {
                 // interrupted, clear and resume
-                thread.isInterrupted();
             }
         }
     }

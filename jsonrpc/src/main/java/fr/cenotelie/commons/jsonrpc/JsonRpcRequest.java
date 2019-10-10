@@ -83,7 +83,7 @@ public class JsonRpcRequest implements Serializable {
     /**
      * Gets whether this request is a notification
      *
-     * @return hether this request is a notification
+     * @return whether this request is a notification
      */
     public boolean isNotification() {
         return identifier == null;

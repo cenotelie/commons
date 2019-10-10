@@ -90,6 +90,9 @@ public class LspUtils {
         } catch (NumberFormatException exception) {
             return null;
         }
+        if (length < 0) {
+            return null;
+        }
         message = message.substring(index + EOL.length());
         if (message.startsWith(HEADER_CONTENT_TYPE)) {
             index = message.indexOf(EOL, HEADER_CONTENT_TYPE.length() + 1);

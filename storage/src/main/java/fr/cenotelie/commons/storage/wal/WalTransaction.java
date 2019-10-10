@@ -58,6 +58,7 @@ class WalTransaction extends Transaction {
      * The sequence number attributed to this transaction
      */
     private long sequenceNumber;
+
     /**
      * Initializes this transaction
      *

@@ -113,7 +113,6 @@ public class RewindableTextStream {
             return 0;
         }
         if (ringStart != ringNextEntry) {
-            atEnd = false;
             char value = ring[ringStart++];
             if (ringStart == RING_SIZE) {
                 ringStart = 0;

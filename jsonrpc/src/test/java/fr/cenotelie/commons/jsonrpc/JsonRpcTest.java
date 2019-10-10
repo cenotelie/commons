@@ -43,7 +43,7 @@ public class JsonRpcTest {
                 if (!"subtract".equals(request.getMethod()))
                     return JsonRpcResponseError.newMethodNotFound(request.getIdentifier());
                 Object params = request.getParams();
-                if (params == null || !(params instanceof Collection))
+                if (!(params instanceof Collection))
                     return JsonRpcResponseError.newInvalidParameters(request.getIdentifier());
                 Object[] values = ((Collection) params).toArray();
                 if (values.length != 2 || !(values[0] instanceof Integer) || !(values[1] instanceof Integer))
@@ -72,7 +72,7 @@ public class JsonRpcTest {
                 if (!"subtract".equals(request.getMethod()))
                     return JsonRpcResponseError.newMethodNotFound(request.getIdentifier());
                 Object params = request.getParams();
-                if (params == null || !(params instanceof Collection))
+                if (!(params instanceof Collection))
                     return JsonRpcResponseError.newInvalidParameters(request.getIdentifier());
                 Object[] values = ((Collection) params).toArray();
                 if (values.length != 2 || !(values[0] instanceof Integer) || !(values[1] instanceof Integer))
@@ -101,12 +101,12 @@ public class JsonRpcTest {
                 if (!"subtract".equals(request.getMethod()))
                     return JsonRpcResponseError.newMethodNotFound(request.getIdentifier());
                 Object params = request.getParams();
-                if (params == null || !(params instanceof SerializedUnknown))
+                if (!(params instanceof SerializedUnknown))
                     return JsonRpcResponseError.newInvalidParameters(request.getIdentifier());
                 Object subtrahend = ((SerializedUnknown) params).getValueFor("subtrahend");
                 Object minuend = ((SerializedUnknown) params).getValueFor("minuend");
-                if (subtrahend == null || !(subtrahend instanceof Integer)
-                        || minuend == null || !(minuend instanceof Integer))
+                if (!(subtrahend instanceof Integer)
+                        || !(minuend instanceof Integer))
                     return JsonRpcResponseError.newInvalidParameters(request.getIdentifier());
                 int result = ((Integer) minuend) - (Integer) subtrahend;
                 return new JsonRpcResponseResult<>(request.getIdentifier(), result);
@@ -136,7 +136,7 @@ public class JsonRpcTest {
                 if (!"update".equals(request.getMethod()))
                     return JsonRpcResponseError.newMethodNotFound(request.getIdentifier());
                 Object params = request.getParams();
-                if (params == null || !(params instanceof Collection))
+                if (!(params instanceof Collection))
                     return JsonRpcResponseError.newInvalidParameters(request.getIdentifier());
                 return null;
             }

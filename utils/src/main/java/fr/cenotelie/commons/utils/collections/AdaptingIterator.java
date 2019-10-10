@@ -28,7 +28,7 @@ import java.util.Iterator;
  */
 public class AdaptingIterator<T, X> implements Iterator<T> {
     /**
-     * The innner iterator
+     * The inner iterator
      */
     protected final Iterator<? extends X> content;
     /**

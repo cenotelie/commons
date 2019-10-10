@@ -91,7 +91,7 @@ public class DocumentVersion {
                     // invalid
                     return null;
                 } else {
-                    return new DocumentVersion(nextNumber, DocumentContentProvider.getContent(events[1].getText()));
+                    return new DocumentVersion(nextNumber, DocumentContentProvider.getContent(events[i].getText()));
                 }
             }
         }

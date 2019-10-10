@@ -266,7 +266,7 @@ public class ReplyUtils {
         if (kind == null)
             return new ReplyFailure("Unexpected JSON format");
         if (ReplyApiError.class.getCanonicalName().equals(kind))
-            return new ReplyApiError(ReplyApiError.parseApiError(nodePayload), message);
+            return new ReplyApiError(ReplyApiError.parseApiError(root), message);
         if (ReplyException.class.getCanonicalName().equals(kind))
             return new ReplyException(null); // exception not preserved
         if (ReplyExpiredSession.class.getCanonicalName().equals(kind))

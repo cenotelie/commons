@@ -57,6 +57,7 @@ public class JsonParser extends LRkParser {
      */
     private static final Symbol[] virtuals = {
     };
+
     /**
      * Initializes a new instance of the parser
      *

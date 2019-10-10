@@ -28,7 +28,7 @@ import fr.cenotelie.hime.redist.ASTNode;
 public class LspClientRequestDeserializer extends JsonDeserializer {
     @Override
     public Object deserializeObject(ASTNode definition, Object context) {
-        if (context != null && (context instanceof String))
+        if ((context instanceof String))
             return deserializeObject(definition, (String) context);
         return super.deserializeObject(definition, context);
     }
