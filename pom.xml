@@ -26,9 +26,9 @@
         </developer>
     </developers>
     <scm>
-        <connection>scm:hg:https://bitbucket.org/cenotelie/commons</connection>
-        <developerConnection>scm:hg:ssh://hg@bitbucket.org:cenotelie/commons</developerConnection>
-        <url>https://bitbucket.org/cenotelie/commons</url>
+        <connection>scm:git:https://github.com/cenotelie/commons</connection>
+        <developerConnection>scm:git:ssh://git@github.com/cenotelie/commons</developerConnection>
+        <url>https://github.com/cenotelie/commons</url>
         <tag>HEAD</tag>
     </scm>
     <distributionManagement>
@@ -162,7 +162,7 @@
                 <version>1.4</version>
                 <executions>
                     <execution>
-                        <id>generate-changeset</id>
+                        <id>git-commit</id>
                         <phase>validate</phase>
                         <goals>
                             <goal>create</goal>
