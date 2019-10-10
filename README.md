@@ -1,6 +1,6 @@
 # Cénotélie Commons #
 
-[![Build Status](https://dev.azure.com/cenotelie/cenotelie/_apis/build/status/cenotelie.commons&branchName=master)](https://dev.azure.com/cenoteliue/cenotelie/_build/latest?definitionId=3&branchName=master)
+[![Build Status](https://dev.azure.com/cenotelie/cenotelie/_apis/build/status/cenotelie.commons?branchName=master)](https://dev.azure.com/cenotelie/cenotelie/_build/latest?definitionId=7&branchName=master)
 
 Cénotélie Commons is a set of useful Java API that can be leveraged for other projects.
 Commons provides general utility APIs and implementation of other specifications, most notably:
