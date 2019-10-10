@@ -139,7 +139,7 @@
                 <configuration>
                     <instructions>
                         <Bundle-Product-Link>${project.url}</Bundle-Product-Link>
-                        <Bundle-SCM-Tag>${changeSet}</Bundle-SCM-Tag>
+                        <Bundle-SCM-Tag>${buildNumber}</Bundle-SCM-Tag>
                         <Bundle-Build-Tag>${env.BUILD_TAG}</Bundle-Build-Tag>
                         <Bundle-Build-Timestamp>${timestamp}</Bundle-Build-Timestamp>
                     </instructions>
@@ -153,6 +153,7 @@
                 <configuration>
                     <serverId>ossrh</serverId>
                     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
                 </configuration>
             </plugin>
             <plugin>
@@ -164,7 +165,7 @@
                         <id>generate-changeset</id>
                         <phase>validate</phase>
                         <goals>
-                            <goal>hgchangeset</goal>
+                            <goal>create</goal>
                         </goals>
                     </execution>
                     <execution>
