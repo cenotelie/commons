@@ -3,7 +3,7 @@
     <groupId>fr.cenotelie.commons</groupId>
     <artifactId>commons-top</artifactId>
     <packaging>pom</packaging>
-    <version>2.1.1-SNAPSHOT</version>
+    <version>2.1.1</version>
     <name>Cénotélie Commons</name>
     <description>Commons API for Java projects</description>
     <url>https://cenotelie.fr/commons</url>
@@ -29,7 +29,7 @@
         <connection>scm:git:https://github.com/cenotelie/commons</connection>
         <developerConnection>scm:git:ssh://git@github.com/cenotelie/commons</developerConnection>
         <url>https://github.com/cenotelie/commons</url>
-        <tag>HEAD</tag>
+        <tag>v2.1.1</tag>
     </scm>
     <distributionManagement>
         <snapshotRepository>
