@@ -126,6 +126,7 @@ public abstract class ObjectStore implements AutoCloseable {
     /**
      * Registers a named object in this store
      *
+     * @param <T>    The type of stored entity
      * @param name   The name for the object
      * @param entity The entity to register
      * @return The entity

@@ -26,7 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Implements a (long -> long) map that is persisted in a storage system.
+ * Implements a (long -&gt; long) map that is persisted in a storage system.
  * A persisted map is thread-safe for access and modifications.
  * <p>
  * A persisted map is implemented as a B+ tree with Preparatory Operations.
@@ -34,7 +34,7 @@ import java.util.List;
  * <p>
  * n is the rate of the tree
  * Invariant: The number of keys (k) of a node is in [n-1, 2n+1].
- * => The number of keys of a node is in [n, 2n+2].
+ * =&gt; The number of keys of a node is in [n, 2n+2].
  * Invariant: Exception to the above is the root node.
  * Invariant: A node that is not a leaf has at most k keys and k+1 children.
  * Invariant: The keyed data are all at the leaves.
