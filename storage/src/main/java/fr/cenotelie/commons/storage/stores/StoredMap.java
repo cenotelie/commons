@@ -76,43 +76,6 @@ public class StoredMap extends StoredEntity {
      * Marker for leaf nodes
      */
     private static final char NODE_IS_LEAF = 1;
-
-    /**
-     * Represents an entry in this map
-     */
-    public static class Entry {
-        /**
-         * The key for this entry
-         */
-        public long key;
-        /**
-         * The value associated to the key
-         */
-        public long value;
-
-        /**
-         * Initializes this entry
-         *
-         * @param key   The key for this entry
-         * @param value The value associated to the key
-         */
-        public Entry(long key, long value) {
-            this.key = key;
-            this.value = value;
-        }
-
-        /**
-         * Resets this entry
-         *
-         * @param key   The key for this entry
-         * @param value The value associated to the key
-         */
-        private void reset(long key, long value) {
-            this.key = key;
-            this.value = value;
-        }
-    }
-
     /**
      * The backing store
      */
@@ -121,7 +84,6 @@ public class StoredMap extends StoredEntity {
      * The head entry for the map
      */
     private final long head;
-
     /**
      * Initializes this map
      *
@@ -131,11 +93,6 @@ public class StoredMap extends StoredEntity {
     public StoredMap(ObjectStore store, long head) {
         this.store = store;
         this.head = head;
-    }
-
-    @Override
-    public long getLocation() {
-        return head;
     }
 
     /**
@@ -156,6 +113,11 @@ public class StoredMap extends StoredEntity {
             access.writeLong(Constants.KEY_NULL);
         }
         return new StoredMap(store, entry);
+    }
+
+    @Override
+    public long getLocation() {
+        return head;
     }
 
     /**
@@ -1009,65 +971,6 @@ public class StoredMap extends StoredEntity {
     }
 
     /**
-     * The stack for visiting the nodes in the tree
-     */
-    private static class Stack {
-        /**
-         * The stack's items
-         */
-        public long[] items;
-        /**
-         * The stack's head (index of the top item)
-         * -1 when the stack is empty
-         */
-        public int head;
-
-        /**
-         * Initializes this stack
-         */
-        public Stack() {
-            this.items = new long[CHILD_COUNT * 2];
-            this.head = -1;
-        }
-
-        /**
-         * Gets whether the stack is empty
-         *
-         * @return Whether the stack is empty
-         */
-        public boolean isEmpty() {
-            return head == -1;
-        }
-
-        /**
-         * Pops the stack's head
-         *
-         * @return The top item
-         */
-        public long pop() {
-            return items[head--];
-        }
-
-        /**
-         * Pushes the children of the current node represented by its access to the specified stack
-         *
-         * @param accessCurrent The access to the current node
-         */
-        private void pushChildren(Access accessCurrent) {
-            char count = accessCurrent.seek(8 + 2).readChar();
-            while (head + count + 1 >= items.length) {
-                items = Arrays.copyOf(items, items.length + CHILD_COUNT);
-            }
-            for (int i = 0; i != count; i++) {
-                items[++head] = accessCurrent.skip(8).readLong();
-            }
-            long value = accessCurrent.skip(8).readLong();
-            if (value != Constants.KEY_NULL)
-                items[++head] = value;
-        }
-    }
-
-    /**
      * Removes all entries from this map
      */
     public void clear() {
@@ -1135,6 +1038,101 @@ public class StoredMap extends StoredEntity {
     }
 
     /**
+     * Represents an entry in this map
+     */
+    public static class Entry {
+        /**
+         * The key for this entry
+         */
+        public long key;
+        /**
+         * The value associated to the key
+         */
+        public long value;
+
+        /**
+         * Initializes this entry
+         *
+         * @param key   The key for this entry
+         * @param value The value associated to the key
+         */
+        public Entry(long key, long value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        /**
+         * Resets this entry
+         *
+         * @param key   The key for this entry
+         * @param value The value associated to the key
+         */
+        private void reset(long key, long value) {
+            this.key = key;
+            this.value = value;
+        }
+    }
+
+    /**
+     * The stack for visiting the nodes in the tree
+     */
+    private static class Stack {
+        /**
+         * The stack's items
+         */
+        public long[] items;
+        /**
+         * The stack's head (index of the top item)
+         * -1 when the stack is empty
+         */
+        public int head;
+
+        /**
+         * Initializes this stack
+         */
+        public Stack() {
+            this.items = new long[CHILD_COUNT * 2];
+            this.head = -1;
+        }
+
+        /**
+         * Gets whether the stack is empty
+         *
+         * @return Whether the stack is empty
+         */
+        public boolean isEmpty() {
+            return head == -1;
+        }
+
+        /**
+         * Pops the stack's head
+         *
+         * @return The top item
+         */
+        public long pop() {
+            return items[head--];
+        }
+
+        /**
+         * Pushes the children of the current node represented by its access to the specified stack
+         *
+         * @param accessCurrent The access to the current node
+         */
+        private void pushChildren(Access accessCurrent) {
+            char count = accessCurrent.seek(8 + 2).readChar();
+            while (head + count + 1 >= items.length) {
+                items = Arrays.copyOf(items, items.length + CHILD_COUNT);
+            }
+            for (int i = 0; i != count; i++) {
+                items[++head] = accessCurrent.skip(8).readLong();
+            }
+            long value = accessCurrent.skip(8).readLong();
+            if (value != Constants.KEY_NULL)
+                items[++head] = value;
+        }
+    }
+
+    /**
      * Implements an iterator over the entries in the B+ tree
      */
     private class EntriesIterator implements Iterator<Entry> {
@@ -1147,6 +1145,10 @@ public class StoredMap extends StoredEntity {
          */
         private final long[] currentValues;
         /**
+         * The result structure
+         */
+        private final Entry result;
+        /**
          * The current number of key-value mappings in the current node
          */
         private int currentCount;
@@ -1158,10 +1160,6 @@ public class StoredMap extends StoredEntity {
          * The next index in the current node
          */
         private int nextIndex;
-        /**
-         * The result structure
-         */
-        private final Entry result;
 
         /**
          * Initializes this iterator

@@ -17,13 +17,13 @@
 
 package fr.cenotelie.commons.jsonrpc;
 
-import org.junit.Assert;
-import org.junit.Test;
 import fr.cenotelie.commons.utils.api.Reply;
 import fr.cenotelie.commons.utils.api.ReplyResult;
 import fr.cenotelie.commons.utils.api.ReplyResultCollection;
 import fr.cenotelie.commons.utils.api.ReplySuccess;
 import fr.cenotelie.commons.utils.json.SerializedUnknown;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -215,7 +215,7 @@ public class JsonRpcTest {
         JsonRpcResponse response = ((ReplyResult<JsonRpcResponse>) reply).getData();
         Assert.assertTrue(response instanceof JsonRpcResponseError);
         JsonRpcResponseError error = (JsonRpcResponseError) response;
-        Assert.assertEquals(null, error.getIdentifier());
+        Assert.assertNull(error.getIdentifier());
         Assert.assertEquals(-32700, error.getCode());
         Assert.assertEquals("Parse error", error.getMessage());
     }
@@ -241,7 +241,7 @@ public class JsonRpcTest {
         JsonRpcResponse response = ((ReplyResult<JsonRpcResponse>) reply).getData();
         Assert.assertTrue(response instanceof JsonRpcResponseError);
         JsonRpcResponseError error = (JsonRpcResponseError) response;
-        Assert.assertEquals(null, error.getIdentifier());
+        Assert.assertNull(error.getIdentifier());
         Assert.assertEquals(-32600, error.getCode());
         Assert.assertEquals("Invalid Request", error.getMessage());
     }
@@ -270,7 +270,7 @@ public class JsonRpcTest {
         JsonRpcResponse response = ((ReplyResult<JsonRpcResponse>) reply).getData();
         Assert.assertTrue(response instanceof JsonRpcResponseError);
         JsonRpcResponseError error = (JsonRpcResponseError) response;
-        Assert.assertEquals(null, error.getIdentifier());
+        Assert.assertNull(error.getIdentifier());
         Assert.assertEquals(-32700, error.getCode());
         Assert.assertEquals("Parse error", error.getMessage());
     }
@@ -296,7 +296,7 @@ public class JsonRpcTest {
         JsonRpcResponse response = ((ReplyResult<JsonRpcResponse>) reply).getData();
         Assert.assertTrue(response instanceof JsonRpcResponseError);
         JsonRpcResponseError error = (JsonRpcResponseError) response;
-        Assert.assertEquals(null, error.getIdentifier());
+        Assert.assertNull(error.getIdentifier());
         Assert.assertEquals(-32600, error.getCode());
         Assert.assertEquals("Invalid Request", error.getMessage());
     }
@@ -324,7 +324,7 @@ public class JsonRpcTest {
         JsonRpcResponse response = responses.iterator().next();
         Assert.assertTrue(response instanceof JsonRpcResponseError);
         JsonRpcResponseError error = (JsonRpcResponseError) response;
-        Assert.assertEquals(null, error.getIdentifier());
+        Assert.assertNull(error.getIdentifier());
         Assert.assertEquals(-32600, error.getCode());
         Assert.assertEquals("Invalid Request", error.getMessage());
     }
@@ -352,7 +352,7 @@ public class JsonRpcTest {
         for (JsonRpcResponse response : responses) {
             Assert.assertTrue(response instanceof JsonRpcResponseError);
             JsonRpcResponseError error = (JsonRpcResponseError) response;
-            Assert.assertEquals(null, error.getIdentifier());
+            Assert.assertNull(error.getIdentifier());
             Assert.assertEquals(-32600, error.getCode());
             Assert.assertEquals("Invalid Request", error.getMessage());
         }
@@ -410,7 +410,7 @@ public class JsonRpcTest {
 
         response = iterator.next();
         Assert.assertTrue(response.isError());
-        Assert.assertEquals(null, response.getIdentifier());
+        Assert.assertNull(response.getIdentifier());
         Assert.assertEquals(-32600, ((JsonRpcResponseError) response).getCode());
 
         response = iterator.next();

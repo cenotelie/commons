@@ -31,6 +31,13 @@ public class ReplyExpiredSession implements Reply {
     private static ReplyExpiredSession INSTANCE = null;
 
     /**
+     * Initializes this instance
+     */
+    private ReplyExpiredSession() {
+
+    }
+
+    /**
      * Gets the singleton instance
      *
      * @return The singleton instance
@@ -39,13 +46,6 @@ public class ReplyExpiredSession implements Reply {
         if (INSTANCE == null)
             INSTANCE = new ReplyExpiredSession();
         return INSTANCE;
-    }
-
-    /**
-     * Initializes this instance
-     */
-    private ReplyExpiredSession() {
-
     }
 
     @Override

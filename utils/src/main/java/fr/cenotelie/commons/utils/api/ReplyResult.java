@@ -33,21 +33,21 @@ public class ReplyResult<T> implements Reply {
     private final T data;
 
     /**
-     * Gets the payload
-     *
-     * @return The payload
-     */
-    public T getData() {
-        return data;
-    }
-
-    /**
      * Initializes this result
      *
      * @param data The payload
      */
     public ReplyResult(T data) {
         this.data = data;
+    }
+
+    /**
+     * Gets the payload
+     *
+     * @return The payload
+     */
+    public T getData() {
+        return data;
     }
 
     @Override

@@ -38,24 +38,6 @@ public class Unregistration implements Serializable {
     private final String method;
 
     /**
-     * Gets the id used to unregister the request or notification.
-     *
-     * @return The id used to unregister the request or notification.
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * Gets the method / capability to unregister for
-     *
-     * @return The method / capability to unregister for
-     */
-    public String getMethod() {
-        return method;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param id     The id used to unregister the request or notification.
@@ -94,6 +76,24 @@ public class Unregistration implements Serializable {
         }
         this.id = id;
         this.method = method;
+    }
+
+    /**
+     * Gets the id used to unregister the request or notification.
+     *
+     * @return The id used to unregister the request or notification.
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * Gets the method / capability to unregister for
+     *
+     * @return The method / capability to unregister for
+     */
+    public String getMethod() {
+        return method;
     }
 
     @Override

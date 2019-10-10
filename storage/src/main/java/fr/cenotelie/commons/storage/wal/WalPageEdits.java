@@ -64,6 +64,37 @@ class WalPageEdits {
     }
 
     /**
+     * Gets an edit's index
+     *
+     * @param edit An edit
+     * @return The index of the edit
+     */
+    public static int editIndex(long edit) {
+        return (int) (edit >>> 32);
+    }
+
+    /**
+     * Gets an edit's length
+     *
+     * @param edit An edit
+     * @return The length of the edit
+     */
+    public static int editLength(long edit) {
+        return (int) (edit & 0xFFFFFFFFL);
+    }
+
+    /**
+     * Gets an edit
+     *
+     * @param index  The index of the edit
+     * @param length The length of the edit
+     * @return The edit
+     */
+    private static long edit(int index, int length) {
+        return (ByteUtils.uLong(index) << 32) | ByteUtils.uLong(length);
+    }
+
+    /**
      * Registers a new edit made to this page
      *
      * @param index  The index of the edit in this page
@@ -191,36 +222,5 @@ class WalPageEdits {
             result += SERIALIZATION_SIZE_EDIT_HEADER + editLength(edits[i]);
         }
         return result;
-    }
-
-    /**
-     * Gets an edit's index
-     *
-     * @param edit An edit
-     * @return The index of the edit
-     */
-    public static int editIndex(long edit) {
-        return (int) (edit >>> 32);
-    }
-
-    /**
-     * Gets an edit's length
-     *
-     * @param edit An edit
-     * @return The length of the edit
-     */
-    public static int editLength(long edit) {
-        return (int) (edit & 0xFFFFFFFFL);
-    }
-
-    /**
-     * Gets an edit
-     *
-     * @param index  The index of the edit
-     * @param length The length of the edit
-     * @return The edit
-     */
-    private static long edit(int index, int length) {
-        return (ByteUtils.uLong(index) << 32) | ByteUtils.uLong(length);
     }
 }

@@ -35,15 +35,6 @@ public class DidChangeConfigurationParams implements Serializable {
     private final Object settings;
 
     /**
-     * Gets the actual changed settings
-     *
-     * @return The actual changed settings
-     */
-    public Object getSettings() {
-        return settings;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param settings The actual changed settings
@@ -65,14 +56,20 @@ public class DidChangeConfigurationParams implements Serializable {
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "settings": {
-                    settings = deserializer.deserialize(nodeValue, this);
-                    break;
-                }
+            if ("settings".equals(name)) {
+                settings = deserializer.deserialize(nodeValue, this);
             }
         }
         this.settings = settings;
+    }
+
+    /**
+     * Gets the actual changed settings
+     *
+     * @return The actual changed settings
+     */
+    public Object getSettings() {
+        return settings;
     }
 
     @Override

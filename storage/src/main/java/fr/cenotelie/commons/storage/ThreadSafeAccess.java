@@ -24,13 +24,13 @@ package fr.cenotelie.commons.storage;
  */
 class ThreadSafeAccess extends Access {
     /**
-     * The parent manager
-     */
-    private final ThreadSafeAccessManager manager;
-    /**
      * The identifier of this access for the parent manager
      */
     final int identifier;
+    /**
+     * The parent manager
+     */
+    private final ThreadSafeAccessManager manager;
 
     /**
      * Initializes this access

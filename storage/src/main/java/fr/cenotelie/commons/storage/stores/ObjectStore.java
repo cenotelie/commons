@@ -44,6 +44,18 @@ import java.io.IOException;
  */
 public abstract class ObjectStore implements AutoCloseable {
     /**
+     * Size of the header for each stored object
+     */
+    public static final int OBJECT_HEADER_SIZE = 2;
+    /**
+     * Minimum size of objects in this store
+     */
+    public static final int OBJECT_MIN_SIZE = 8 - OBJECT_HEADER_SIZE;
+    /**
+     * Maximum size of objects in this store
+     */
+    public static final int OBJECT_MAX_SIZE = Constants.PAGE_SIZE - OBJECT_HEADER_SIZE;
+    /**
      * Magic identifier of the type of store
      */
     protected static final long MAGIC_ID = 0x63656e2d6f626a73L; // cen-objs
@@ -75,19 +87,6 @@ public abstract class ObjectStore implements AutoCloseable {
      * The maximum number of registered objects
      */
     protected static final int MAX_REGISTERED = Constants.PAGE_SIZE / REGISTRY_ITEM_SIZE;
-
-    /**
-     * Size of the header for each stored object
-     */
-    public static final int OBJECT_HEADER_SIZE = 2;
-    /**
-     * Minimum size of objects in this store
-     */
-    public static final int OBJECT_MIN_SIZE = 8 - OBJECT_HEADER_SIZE;
-    /**
-     * Maximum size of objects in this store
-     */
-    public static final int OBJECT_MAX_SIZE = Constants.PAGE_SIZE - OBJECT_HEADER_SIZE;
 
     /**
      * Allocates an object with the specified size

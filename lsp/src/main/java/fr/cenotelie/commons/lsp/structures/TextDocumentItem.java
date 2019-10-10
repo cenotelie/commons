@@ -45,42 +45,6 @@ public class TextDocumentItem implements Serializable {
     private final String text;
 
     /**
-     * Gets the text document's URI.
-     *
-     * @return The text document's URI.
-     */
-    public String getUri() {
-        return uri;
-    }
-
-    /**
-     * Gets the text document's language identifier.
-     *
-     * @return The text document's language identifier.
-     */
-    public String getLanguageId() {
-        return languageId;
-    }
-
-    /**
-     * Gets the version number of this document
-     *
-     * @return The version number of this document
-     */
-    public int getVersion() {
-        return version;
-    }
-
-    /**
-     * Gets the content of the opened text document.
-     *
-     * @return The content of the opened text document.
-     */
-    public String getText() {
-        return text;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param uri        The text document's URI.
@@ -136,6 +100,42 @@ public class TextDocumentItem implements Serializable {
         this.languageId = languageId;
         this.version = version;
         this.text = text;
+    }
+
+    /**
+     * Gets the text document's URI.
+     *
+     * @return The text document's URI.
+     */
+    public String getUri() {
+        return uri;
+    }
+
+    /**
+     * Gets the text document's language identifier.
+     *
+     * @return The text document's language identifier.
+     */
+    public String getLanguageId() {
+        return languageId;
+    }
+
+    /**
+     * Gets the version number of this document
+     *
+     * @return The version number of this document
+     */
+    public int getVersion() {
+        return version;
+    }
+
+    /**
+     * Gets the content of the opened text document.
+     *
+     * @return The content of the opened text document.
+     */
+    public String getText() {
+        return text;
     }
 
     @Override

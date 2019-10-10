@@ -33,15 +33,6 @@ public class DidChangeWatchedFilesParams implements Serializable {
     private final FileEvent[] changes;
 
     /**
-     * Gets the actual file events
-     *
-     * @return The actual file events
-     */
-    public FileEvent[] getChanges() {
-        return changes;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param changes The actual file events
@@ -62,17 +53,23 @@ public class DidChangeWatchedFilesParams implements Serializable {
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "changes": {
-                    changes = new FileEvent[nodeValue.getChildren().size()];
-                    int index = 0;
-                    for (ASTNode change : nodeValue.getChildren())
-                        changes[index++] = new FileEvent(change);
-                    break;
-                }
+            if ("changes".equals(name)) {
+                changes = new FileEvent[nodeValue.getChildren().size()];
+                int index = 0;
+                for (ASTNode change : nodeValue.getChildren())
+                    changes[index++] = new FileEvent(change);
             }
         }
         this.changes = changes;
+    }
+
+    /**
+     * Gets the actual file events
+     *
+     * @return The actual file events
+     */
+    public FileEvent[] getChanges() {
+        return changes;
     }
 
     @Override

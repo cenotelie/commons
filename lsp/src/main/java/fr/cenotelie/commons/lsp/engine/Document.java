@@ -48,6 +48,20 @@ public class Document {
     private DocumentAnalysis lastSuccessfulAnalysis;
 
     /**
+     * Initializes this document
+     *
+     * @param uri         The document's URI
+     * @param languageId  The language's identifier for this document
+     * @param versionInit The initial version number for this document
+     * @param text        The full text of the document
+     */
+    public Document(String uri, String languageId, int versionInit, String text) {
+        this.uri = uri;
+        this.languageId = languageId;
+        this.currentVersion = new DocumentVersion(versionInit, DocumentContentProvider.getContent(text));
+    }
+
+    /**
      * Gets the document's URI
      *
      * @return The document's URI
@@ -84,15 +98,6 @@ public class Document {
     }
 
     /**
-     * Gets the last successful analysis of this document
-     *
-     * @return The last successful analysis of this document
-     */
-    public DocumentAnalysis getLastSuccessfulAnalysis() {
-        return lastSuccessfulAnalysis;
-    }
-
-    /**
      * Sets the result of the last analysis performed on this document
      *
      * @param analysis The last performed analysis
@@ -104,17 +109,12 @@ public class Document {
     }
 
     /**
-     * Initializes this document
+     * Gets the last successful analysis of this document
      *
-     * @param uri         The document's URI
-     * @param languageId  The language's identifier for this document
-     * @param versionInit The initial version number for this document
-     * @param text        The full text of the document
+     * @return The last successful analysis of this document
      */
-    public Document(String uri, String languageId, int versionInit, String text) {
-        this.uri = uri;
-        this.languageId = languageId;
-        this.currentVersion = new DocumentVersion(versionInit, DocumentContentProvider.getContent(text));
+    public DocumentAnalysis getLastSuccessfulAnalysis() {
+        return lastSuccessfulAnalysis;
     }
 
     /**

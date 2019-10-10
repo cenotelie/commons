@@ -40,24 +40,6 @@ public class ExecuteCommandParams implements Serializable {
     private final Object[] arguments;
 
     /**
-     * Gets the identifier of the actual command handler
-     *
-     * @return The identifier of the actual command handler
-     */
-    public String getCommand() {
-        return command;
-    }
-
-    /**
-     * Gets the arguments that the command should be invoked with
-     *
-     * @return The arguments that the command should be invoked with
-     */
-    public Object[] getArguments() {
-        return arguments;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param command The identifier of the actual command handler
@@ -111,6 +93,24 @@ public class ExecuteCommandParams implements Serializable {
         }
         this.command = command == null ? "" : command;
         this.arguments = arguments;
+    }
+
+    /**
+     * Gets the identifier of the actual command handler
+     *
+     * @return The identifier of the actual command handler
+     */
+    public String getCommand() {
+        return command;
+    }
+
+    /**
+     * Gets the arguments that the command should be invoked with
+     *
+     * @return The arguments that the command should be invoked with
+     */
+    public Object[] getArguments() {
+        return arguments;
     }
 
     @Override

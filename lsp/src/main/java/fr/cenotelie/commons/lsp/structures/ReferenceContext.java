@@ -33,15 +33,6 @@ public class ReferenceContext implements Serializable {
     private final boolean includeDeclaration;
 
     /**
-     * Gets whether to include the declaration of the current symbol
-     *
-     * @return Whether to include the declaration of the current symbol
-     */
-    public boolean includeDeclaration() {
-        return includeDeclaration;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param includeDeclaration Whether to include the declaration of the current symbol
@@ -62,14 +53,20 @@ public class ReferenceContext implements Serializable {
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "includeDeclaration": {
-                    includeDeclaration = Boolean.parseBoolean(nodeValue.getValue());
-                    break;
-                }
+            if ("includeDeclaration".equals(name)) {
+                includeDeclaration = Boolean.parseBoolean(nodeValue.getValue());
             }
         }
         this.includeDeclaration = includeDeclaration;
+    }
+
+    /**
+     * Gets whether to include the declaration of the current symbol
+     *
+     * @return Whether to include the declaration of the current symbol
+     */
+    public boolean includeDeclaration() {
+        return includeDeclaration;
     }
 
     @Override

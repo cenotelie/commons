@@ -45,42 +45,6 @@ public class CodeLens implements Serializable {
     private Object data;
 
     /**
-     * Gets the range in which this code lens is valid. Should only span a single line
-     *
-     * @return The range in which this code lens is valid. Should only span a single line
-     */
-    public Range getRange() {
-        return range;
-    }
-
-    /**
-     * Gets the command this code lens represents
-     *
-     * @return The command this code lens represents
-     */
-    public Command getCommand() {
-        return command;
-    }
-
-    /**
-     * Gets the data entry field that is preserved on a code lens item between a code lens and a code lens resolve request
-     *
-     * @return The data entry field that is preserved on a code lens item between a code lens and a code lens resolve request
-     */
-    public Object getData() {
-        return data;
-    }
-
-    /**
-     * Sets the data entry field that is preserved on a code lens item between a code lens and a code lens resolve request
-     *
-     * @param data The data entry field that is preserved on a code lens item between a code lens and a code lens resolve request
-     */
-    public void setData(Object data) {
-        this.data = data;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param range The range in which this code lens is valid. Should only span a single line
@@ -144,6 +108,42 @@ public class CodeLens implements Serializable {
         }
         this.range = range != null ? range : new Range(new Position(0, 0), new Position(0, 0));
         this.command = command;
+        this.data = data;
+    }
+
+    /**
+     * Gets the range in which this code lens is valid. Should only span a single line
+     *
+     * @return The range in which this code lens is valid. Should only span a single line
+     */
+    public Range getRange() {
+        return range;
+    }
+
+    /**
+     * Gets the command this code lens represents
+     *
+     * @return The command this code lens represents
+     */
+    public Command getCommand() {
+        return command;
+    }
+
+    /**
+     * Gets the data entry field that is preserved on a code lens item between a code lens and a code lens resolve request
+     *
+     * @return The data entry field that is preserved on a code lens item between a code lens and a code lens resolve request
+     */
+    public Object getData() {
+        return data;
+    }
+
+    /**
+     * Sets the data entry field that is preserved on a code lens item between a code lens and a code lens resolve request
+     *
+     * @param data The data entry field that is preserved on a code lens item between a code lens and a code lens resolve request
+     */
+    public void setData(Object data) {
         this.data = data;
     }
 

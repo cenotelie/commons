@@ -46,33 +46,6 @@ public class Command implements Serializable {
     private final Object[] arguments;
 
     /**
-     * Gets the title of the command, like `save`.
-     *
-     * @return Title of the command, like `save`.
-     */
-    public String getTitle() {
-        return title;
-    }
-
-    /**
-     * Gets the identifier of the actual command handler.
-     *
-     * @return The identifier of the actual command handler.
-     */
-    public String getCommand() {
-        return command;
-    }
-
-    /**
-     * Gets the arguments that the command handler should be invoked with.
-     *
-     * @return Arguments that the command handler should be invoked with.
-     */
-    public Object[] getArguments() {
-        return arguments;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param title     Title of the command, like `save`.
@@ -124,6 +97,33 @@ public class Command implements Serializable {
         this.title = title;
         this.command = command;
         this.arguments = arguments;
+    }
+
+    /**
+     * Gets the title of the command, like `save`.
+     *
+     * @return Title of the command, like `save`.
+     */
+    public String getTitle() {
+        return title;
+    }
+
+    /**
+     * Gets the identifier of the actual command handler.
+     *
+     * @return The identifier of the actual command handler.
+     */
+    public String getCommand() {
+        return command;
+    }
+
+    /**
+     * Gets the arguments that the command handler should be invoked with.
+     *
+     * @return Arguments that the command handler should be invoked with.
+     */
+    public Object[] getArguments() {
+        return arguments;
     }
 
     @Override

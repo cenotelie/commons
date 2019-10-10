@@ -44,10 +44,8 @@ public abstract class TransactionalStorage implements AutoCloseable {
 
     /**
      * Flushes any outstanding changes to this storage system
-     *
-     * @throws IOException When an IO error occurred
      */
-    public abstract void flush() throws IOException;
+    public abstract void flush();
 
     /**
      * Starts a new transaction

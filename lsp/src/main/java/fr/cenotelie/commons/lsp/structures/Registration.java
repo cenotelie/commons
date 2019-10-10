@@ -44,33 +44,6 @@ public class Registration implements Serializable {
     private final Object registerOptions;
 
     /**
-     * Gets the id used to register the request
-     *
-     * @return The id used to register the request
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * Gets the method / capability to register for
-     *
-     * @return The method / capability to register for
-     */
-    public String getMethod() {
-        return method;
-    }
-
-    /**
-     * Gets the options necessary for the registration
-     *
-     * @return The options necessary for the registration
-     */
-    public Object getRegisterOptions() {
-        return registerOptions;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param id              The id used to register the request
@@ -118,6 +91,33 @@ public class Registration implements Serializable {
         this.id = id;
         this.method = method;
         this.registerOptions = registerOptions;
+    }
+
+    /**
+     * Gets the id used to register the request
+     *
+     * @return The id used to register the request
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * Gets the method / capability to register for
+     *
+     * @return The method / capability to register for
+     */
+    public String getMethod() {
+        return method;
+    }
+
+    /**
+     * Gets the options necessary for the registration
+     *
+     * @return The options necessary for the registration
+     */
+    public Object getRegisterOptions() {
+        return registerOptions;
     }
 
     @Override

@@ -54,7 +54,7 @@ public class RawFileSplitTest extends RawFileTest {
     }
 
     @Override
-    protected RawFile reopen(RawFile old, boolean writable) throws IOException {
+    protected RawFile reopen(RawFile old, boolean writable) {
         return new RawFileSplit(
                 old.getSystemFile(),
                 "test",

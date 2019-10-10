@@ -33,15 +33,6 @@ public class CodeLensRegistrationOptions extends TextDocumentRegistrationOptions
     private final boolean resolveProvider;
 
     /**
-     * Gets whether the server provides support to resolve code lenses
-     *
-     * @return Whether the server provides support to resolve code lenses
-     */
-    public boolean getResolveProvider() {
-        return resolveProvider;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param documentSelector A document selector to identify the scope of the registration
@@ -65,21 +56,28 @@ public class CodeLensRegistrationOptions extends TextDocumentRegistrationOptions
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "resolveProvider": {
-                    if (nodeValue.getSymbol().getID() == JsonLexer.ID.LITERAL_TRUE)
-                        resolveProvider = true;
-                    else if (nodeValue.getSymbol().getID() == JsonLexer.ID.LITERAL_FALSE)
-                        resolveProvider = false;
-                    else {
-                        String value = TextUtils.unescape(nodeValue.getValue());
-                        value = value.substring(1, value.length() - 1);
-                        resolveProvider = value.equalsIgnoreCase("true");
-                    }
+            if ("resolveProvider".equals(name)) {
+                if (nodeValue.getSymbol().getID() == JsonLexer.ID.LITERAL_TRUE)
+                    resolveProvider = true;
+                else if (nodeValue.getSymbol().getID() == JsonLexer.ID.LITERAL_FALSE)
+                    resolveProvider = false;
+                else {
+                    String value = TextUtils.unescape(nodeValue.getValue());
+                    value = value.substring(1, value.length() - 1);
+                    resolveProvider = value.equalsIgnoreCase("true");
                 }
             }
         }
         this.resolveProvider = resolveProvider;
+    }
+
+    /**
+     * Gets whether the server provides support to resolve code lenses
+     *
+     * @return Whether the server provides support to resolve code lenses
+     */
+    public boolean getResolveProvider() {
+        return resolveProvider;
     }
 
     @Override

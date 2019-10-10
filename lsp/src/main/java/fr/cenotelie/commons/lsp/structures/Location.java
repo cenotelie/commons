@@ -37,24 +37,6 @@ public class Location implements Serializable {
     private final Range range;
 
     /**
-     * Gets the document's URI
-     *
-     * @return The document's URI
-     */
-    public String getUri() {
-        return uri;
-    }
-
-    /**
-     * Gets the range in the document
-     *
-     * @return The range in the document
-     */
-    public Range getRange() {
-        return range;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param uri   The document's URI
@@ -92,6 +74,24 @@ public class Location implements Serializable {
         }
         this.uri = uri;
         this.range = range != null ? range : new Range(new Position(0, 0), new Position(0, 0));
+    }
+
+    /**
+     * Gets the document's URI
+     *
+     * @return The document's URI
+     */
+    public String getUri() {
+        return uri;
+    }
+
+    /**
+     * Gets the range in the document
+     *
+     * @return The range in the document
+     */
+    public Range getRange() {
+        return range;
     }
 
     @Override

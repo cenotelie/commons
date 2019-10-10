@@ -48,53 +48,6 @@ public class FormattingOptions implements Serializable {
     private final Map<String, Object> properties;
 
     /**
-     * Gets the size of a tab in spaces
-     *
-     * @return The size of a tab in spaces
-     */
-    public int getTabSize() {
-        return tabSize;
-    }
-
-    /**
-     * Gets whether to prefer spaces over tabs
-     *
-     * @return Whether to prefer spaces over tabs
-     */
-    public boolean isInsertSpaces() {
-        return insertSpaces;
-    }
-
-    /**
-     * Gets the properties of this object
-     *
-     * @return The properties
-     */
-    public Collection<String> getProperties() {
-        return properties.keySet();
-    }
-
-    /**
-     * Gets the value associated to a property
-     *
-     * @param property The property
-     * @return The associated value, or null if the property is not present
-     */
-    public Object getValueFor(String property) {
-        return properties.get(property);
-    }
-
-    /**
-     * Adds a property to this object
-     *
-     * @param property The property's name
-     * @param value    The property's associated value
-     */
-    public void addProperty(String property, Object value) {
-        properties.put(property, value);
-    }
-
-    /**
      * Initializes this structure
      *
      * @param tabSize      Size of a tab in spaces
@@ -143,6 +96,53 @@ public class FormattingOptions implements Serializable {
         }
         this.tabSize = tabSize;
         this.insertSpaces = insertSpaces;
+    }
+
+    /**
+     * Gets the size of a tab in spaces
+     *
+     * @return The size of a tab in spaces
+     */
+    public int getTabSize() {
+        return tabSize;
+    }
+
+    /**
+     * Gets whether to prefer spaces over tabs
+     *
+     * @return Whether to prefer spaces over tabs
+     */
+    public boolean isInsertSpaces() {
+        return insertSpaces;
+    }
+
+    /**
+     * Gets the properties of this object
+     *
+     * @return The properties
+     */
+    public Collection<String> getProperties() {
+        return properties.keySet();
+    }
+
+    /**
+     * Gets the value associated to a property
+     *
+     * @param property The property
+     * @return The associated value, or null if the property is not present
+     */
+    public Object getValueFor(String property) {
+        return properties.get(property);
+    }
+
+    /**
+     * Adds a property to this object
+     *
+     * @param property The property's name
+     * @param value    The property's associated value
+     */
+    public void addProperty(String property, Object value) {
+        properties.put(property, value);
     }
 
     @Override

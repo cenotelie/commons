@@ -57,50 +57,6 @@ public class ReplyApiError implements Reply {
     }
 
     /**
-     * Gets the supplementary message for this error
-     *
-     * @return The supplementary message for this error
-     */
-    public String getSupplementaryMessage() {
-        return message;
-    }
-
-    /**
-     * Gets the API error to report
-     *
-     * @return The API error to report
-     */
-    public ApiError getError() {
-        return error;
-    }
-
-    @Override
-    public boolean isSuccess() {
-        return false;
-    }
-
-    @Override
-    public String getMessage() {
-        return error.getMessage();
-    }
-
-    @Override
-    public String serializedString() {
-        return "ERROR: " + error.getMessage();
-    }
-
-    @Override
-    public String serializedJSON() {
-        return "{\"type\": \"" +
-                TextUtils.escapeStringJSON(Reply.class.getCanonicalName()) +
-                "\", \"kind\": \"" +
-                TextUtils.escapeStringJSON(ReplyApiError.class.getSimpleName()) +
-                "\", \"isSuccess\": false, \"message\": \"" +
-                TextUtils.escapeStringJSON(message != null ? message : "") +
-                "\", \"payload\": " + error.serializedJSON() + "}";
-    }
-
-    /**
      * Loads an API error from its AST definition
      *
      * @param root The root of the AST definition
@@ -157,5 +113,49 @@ public class ReplyApiError implements Reply {
             }
         }
         return null;
+    }
+
+    /**
+     * Gets the supplementary message for this error
+     *
+     * @return The supplementary message for this error
+     */
+    public String getSupplementaryMessage() {
+        return message;
+    }
+
+    /**
+     * Gets the API error to report
+     *
+     * @return The API error to report
+     */
+    public ApiError getError() {
+        return error;
+    }
+
+    @Override
+    public boolean isSuccess() {
+        return false;
+    }
+
+    @Override
+    public String getMessage() {
+        return error.getMessage();
+    }
+
+    @Override
+    public String serializedString() {
+        return "ERROR: " + error.getMessage();
+    }
+
+    @Override
+    public String serializedJSON() {
+        return "{\"type\": \"" +
+                TextUtils.escapeStringJSON(Reply.class.getCanonicalName()) +
+                "\", \"kind\": \"" +
+                TextUtils.escapeStringJSON(ReplyApiError.class.getSimpleName()) +
+                "\", \"isSuccess\": false, \"message\": \"" +
+                TextUtils.escapeStringJSON(message != null ? message : "") +
+                "\", \"payload\": " + error.serializedJSON() + "}";
     }
 }

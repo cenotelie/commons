@@ -38,24 +38,6 @@ public class DidSaveTextDocumentParams implements Serializable {
     private final String text;
 
     /**
-     * Gets the document that was saved
-     *
-     * @return The document that was saved
-     */
-    public TextDocumentIdentifier getTextDocument() {
-        return textDocument;
-    }
-
-    /**
-     * Gets the content when saved
-     *
-     * @return The content when saved
-     */
-    public String getText() {
-        return text;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param textDocument The document that was saved
@@ -93,6 +75,24 @@ public class DidSaveTextDocumentParams implements Serializable {
         }
         this.textDocument = textDocument;
         this.text = text;
+    }
+
+    /**
+     * Gets the document that was saved
+     *
+     * @return The document that was saved
+     */
+    public TextDocumentIdentifier getTextDocument() {
+        return textDocument;
+    }
+
+    /**
+     * Gets the content when saved
+     *
+     * @return The content when saved
+     */
+    public String getText() {
+        return text;
     }
 
     @Override

@@ -40,24 +40,6 @@ public class DocumentOnTypeFormattingRegistrationOptions implements Serializable
     private final String[] moreTriggerCharacter;
 
     /**
-     * Gets the first character on which formatting should be triggered
-     *
-     * @return The first character on which formatting should be triggered
-     */
-    public String getFirstTriggerCharacter() {
-        return firstTriggerCharacter;
-    }
-
-    /**
-     * Gets more trigger characters
-     *
-     * @return More trigger characters
-     */
-    public String[] getMoreTriggerCharacter() {
-        return moreTriggerCharacter;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param triggerCharacter The trigger character
@@ -127,6 +109,24 @@ public class DocumentOnTypeFormattingRegistrationOptions implements Serializable
         }
         this.firstTriggerCharacter = firstTriggerCharacter;
         this.moreTriggerCharacter = moreTriggerCharacter;
+    }
+
+    /**
+     * Gets the first character on which formatting should be triggered
+     *
+     * @return The first character on which formatting should be triggered
+     */
+    public String getFirstTriggerCharacter() {
+        return firstTriggerCharacter;
+    }
+
+    /**
+     * Gets more trigger characters
+     *
+     * @return More trigger characters
+     */
+    public String[] getMoreTriggerCharacter() {
+        return moreTriggerCharacter;
     }
 
     @Override

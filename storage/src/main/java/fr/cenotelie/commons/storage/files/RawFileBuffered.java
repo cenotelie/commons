@@ -108,6 +108,22 @@ public class RawFileBuffered extends RawFile {
     }
 
     /**
+     * Get the file channel for this file
+     *
+     * @param file     The file location
+     * @param writable Whether the file can be written to
+     * @return The file channel
+     * @throws IOException When the file cannot be accessed
+     */
+    private static FileChannel newChannel(File file, boolean writable) throws IOException {
+        if (file.exists() && !file.canWrite())
+            writable = false;
+        return !writable
+                ? FileChannel.open(file.toPath(), StandardOpenOption.READ)
+                : FileChannel.open(file.toPath(), StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE);
+    }
+
+    /**
      * Gets the current size of the file channel
      *
      * @return The current size
@@ -124,22 +140,6 @@ public class RawFileBuffered extends RawFile {
      */
     private long tick() {
         return time.incrementAndGet();
-    }
-
-    /**
-     * Get the file channel for this file
-     *
-     * @param file     The file location
-     * @param writable Whether the file can be written to
-     * @return The file channel
-     * @throws IOException When the file cannot be accessed
-     */
-    private static FileChannel newChannel(File file, boolean writable) throws IOException {
-        if (file.exists() && !file.canWrite())
-            writable = false;
-        return !writable
-                ? FileChannel.open(file.toPath(), StandardOpenOption.READ)
-                : FileChannel.open(file.toPath(), StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE);
     }
 
     @Override
@@ -305,13 +305,11 @@ public class RawFileBuffered extends RawFile {
 
     @Override
     public void close() throws IOException {
-        while (true) {
+        do {
             int s = state.get();
             if (s == STATE_CLOSED)
                 throw new IllegalStateException();
-            if (state.compareAndSet(STATE_READY, STATE_CLOSED))
-                break;
-        }
+        } while (!state.compareAndSet(STATE_READY, STATE_CLOSED));
         channel.close();
     }
 
@@ -405,13 +403,11 @@ public class RawFileBuffered extends RawFile {
      * @throws IOException When an IO error occurred
      */
     private RawFileBlockTS getBlockWhenNotFound(long targetLocation) throws IOException {
-        while (true) {
+        do {
             int s = state.get();
             if (s == STATE_CLOSED)
                 throw new IllegalStateException();
-            if (state.compareAndSet(STATE_READY, STATE_BUSY))
-                break;
-        }
+        } while (!state.compareAndSet(STATE_READY, STATE_BUSY));
 
         // lookup and reclaim the oldest block
         while (true) {
@@ -440,7 +436,7 @@ public class RawFileBuffered extends RawFile {
                 if (target.getLastHit() == oldestTime // the time did not change
                         && target.getLocation() == oldestLocation // still the same location
                         && target.reclaim(targetLocation, channel, size.get(), tick()) // try to reclaim
-                        ) {
+                ) {
                     if (target.use(targetLocation, tick())) {
                         // we got the block
                         state.set(STATE_READY);

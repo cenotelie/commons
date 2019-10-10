@@ -33,15 +33,6 @@ public class DidOpenTextDocumentParams implements Serializable {
     private final TextDocumentItem textDocument;
 
     /**
-     * Gets the document that was opened
-     *
-     * @return The document that was opened
-     */
-    public TextDocumentItem getTextDocument() {
-        return textDocument;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param textDocument The document that was opened
@@ -62,14 +53,20 @@ public class DidOpenTextDocumentParams implements Serializable {
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "textDocument": {
-                    textDocument = new TextDocumentItem(nodeValue);
-                    break;
-                }
+            if ("textDocument".equals(name)) {
+                textDocument = new TextDocumentItem(nodeValue);
             }
         }
         this.textDocument = textDocument;
+    }
+
+    /**
+     * Gets the document that was opened
+     *
+     * @return The document that was opened
+     */
+    public TextDocumentItem getTextDocument() {
+        return textDocument;
     }
 
     @Override

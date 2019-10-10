@@ -33,15 +33,6 @@ public class DocumentSymbolParams implements Serializable {
     private final TextDocumentIdentifier textDocument;
 
     /**
-     * Gets the text document
-     *
-     * @return The text document
-     */
-    public TextDocumentIdentifier getTextDocument() {
-        return textDocument;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param textDocument The text document
@@ -62,14 +53,20 @@ public class DocumentSymbolParams implements Serializable {
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "textDocument": {
-                    textDocument = new TextDocumentIdentifier(nodeValue);
-                    break;
-                }
+            if ("textDocument".equals(name)) {
+                textDocument = new TextDocumentIdentifier(nodeValue);
             }
         }
         this.textDocument = textDocument;
+    }
+
+    /**
+     * Gets the text document
+     *
+     * @return The text document
+     */
+    public TextDocumentIdentifier getTextDocument() {
+        return textDocument;
     }
 
     @Override

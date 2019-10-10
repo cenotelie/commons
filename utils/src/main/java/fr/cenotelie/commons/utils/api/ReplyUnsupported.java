@@ -31,6 +31,12 @@ public class ReplyUnsupported implements Reply {
     private static ReplyUnsupported INSTANCE = null;
 
     /**
+     * Initializes this reply
+     */
+    private ReplyUnsupported() {
+    }
+
+    /**
      * Gets the singleton instance
      *
      * @return The singleton instance
@@ -39,12 +45,6 @@ public class ReplyUnsupported implements Reply {
         if (INSTANCE == null)
             INSTANCE = new ReplyUnsupported();
         return INSTANCE;
-    }
-
-    /**
-     * Initializes this reply
-     */
-    private ReplyUnsupported() {
     }
 
     @Override

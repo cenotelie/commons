@@ -31,46 +31,6 @@ import java.util.Date;
  */
 class WalTransaction extends Transaction {
     /**
-     * Represents a virtual storage system to use for providing snapshot access through this (isolated) transaction
-     */
-    private class SnapshotStorage extends Storage {
-        @Override
-        public boolean isWritable() {
-            return WalTransaction.this.writable;
-        }
-
-        @Override
-        public long getSize() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean cut(long from, long to) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void flush() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Endpoint acquireEndpointAt(long index) {
-            return WalTransaction.this.acquirePage(index);
-        }
-
-        @Override
-        public void releaseEndpoint(Endpoint endpoint) {
-            // do nothing here, the pages are returned at the end of the transaction
-        }
-
-        @Override
-        public void close() {
-            throw new UnsupportedOperationException();
-        }
-    }
-
-    /**
      * The parent write-ahead log
      */
     private final WriteAheadLog parent;
@@ -98,7 +58,6 @@ class WalTransaction extends Transaction {
      * The sequence number attributed to this transaction
      */
     private long sequenceNumber;
-
     /**
      * Initializes this transaction
      *
@@ -204,5 +163,45 @@ class WalTransaction extends Transaction {
             pages = Arrays.copyOf(pages, pages.length * 2);
         pages[pagesCount] = parent.acquirePage(location, endMark);
         return pages[pagesCount++];
+    }
+
+    /**
+     * Represents a virtual storage system to use for providing snapshot access through this (isolated) transaction
+     */
+    private class SnapshotStorage extends Storage {
+        @Override
+        public boolean isWritable() {
+            return WalTransaction.this.writable;
+        }
+
+        @Override
+        public long getSize() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean cut(long from, long to) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void flush() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Endpoint acquireEndpointAt(long index) {
+            return WalTransaction.this.acquirePage(index);
+        }
+
+        @Override
+        public void releaseEndpoint(Endpoint endpoint) {
+            // do nothing here, the pages are returned at the end of the transaction
+        }
+
+        @Override
+        public void close() {
+            throw new UnsupportedOperationException();
+        }
     }
 }

@@ -35,21 +35,9 @@ import java.util.*;
  */
 public class XmlElement implements Iterable<XmlElement> {
     /**
-     * The parent contextual element
-     */
-    private XmlElement parent;
-    /**
      * The represented XML element node
      */
     private final Element node;
-    /**
-     * The node complete IRI
-     */
-    private String nodeIRI;
-    /**
-     * The current list of attributes
-     */
-    private Map<String, Node> attributes;
     /**
      * IRI of the document's parent
      */
@@ -58,6 +46,18 @@ public class XmlElement implements Iterable<XmlElement> {
      * Maps of the current namespaces
      */
     private final Map<String, String> namespaces;
+    /**
+     * The parent contextual element
+     */
+    private XmlElement parent;
+    /**
+     * The node complete IRI
+     */
+    private String nodeIRI;
+    /**
+     * The current list of attributes
+     */
+    private Map<String, Node> attributes;
     /**
      * The current XML namespace
      */
@@ -70,6 +70,36 @@ public class XmlElement implements Iterable<XmlElement> {
      * The current language
      */
     private String language;
+
+    /**
+     * Initializes this root node
+     *
+     * @param node     The represented XML node
+     * @param resource The resource's URI
+     */
+    public XmlElement(Element node, String resource) {
+        this.node = node;
+        this.resource = resource;
+        this.namespaces = new HashMap<>();
+        init();
+    }
+
+    /**
+     * Initializes this node with a parent node
+     *
+     * @param parent The parent contextual node
+     * @param node   The represented XML node
+     */
+    public XmlElement(XmlElement parent, Element node) {
+        this.parent = parent;
+        this.node = node;
+        this.resource = parent.resource;
+        this.namespaces = new HashMap<>();
+        this.currentNamespace = parent.currentNamespace;
+        this.baseURI = parent.baseURI;
+        this.language = parent.language;
+        init();
+    }
 
     /**
      * Gets the IRI of this node
@@ -168,36 +198,6 @@ public class XmlElement implements Iterable<XmlElement> {
      */
     public TextPosition getPositionOpeningEnd() {
         return (TextPosition) node.getUserData(Xml.KEY_POSITION_OPENING_END);
-    }
-
-    /**
-     * Initializes this root node
-     *
-     * @param node     The represented XML node
-     * @param resource The resource's URI
-     */
-    public XmlElement(Element node, String resource) {
-        this.node = node;
-        this.resource = resource;
-        this.namespaces = new HashMap<>();
-        init();
-    }
-
-    /**
-     * Initializes this node with a parent node
-     *
-     * @param parent The parent contextual node
-     * @param node   The represented XML node
-     */
-    public XmlElement(XmlElement parent, Element node) {
-        this.parent = parent;
-        this.node = node;
-        this.resource = parent.resource;
-        this.namespaces = new HashMap<>();
-        this.currentNamespace = parent.currentNamespace;
-        this.baseURI = parent.baseURI;
-        this.language = parent.language;
-        init();
     }
 
     /**

@@ -41,33 +41,6 @@ public class CodeActionParams implements Serializable {
     private final CodeActionContext context;
 
     /**
-     * Gets the document in which the command was invoked
-     *
-     * @return The document in which the command was invoked
-     */
-    public TextDocumentIdentifier getTextDocument() {
-        return textDocument;
-    }
-
-    /**
-     * Gets the range for which the command was invoked
-     *
-     * @return The range for which the command was invoked
-     */
-    public Range getRange() {
-        return range;
-    }
-
-    /**
-     * Gets the context carrying additional information
-     *
-     * @return The context carrying additional information
-     */
-    public CodeActionContext getContext() {
-        return context;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param textDocument The document in which the command was invoked
@@ -112,6 +85,33 @@ public class CodeActionParams implements Serializable {
         this.textDocument = textDocument != null ? textDocument : new TextDocumentIdentifier("");
         this.range = range != null ? range : new Range(new Position(0, 0), new Position(0, 0));
         this.context = context != null ? context : new CodeActionContext(new Diagnostic[0]);
+    }
+
+    /**
+     * Gets the document in which the command was invoked
+     *
+     * @return The document in which the command was invoked
+     */
+    public TextDocumentIdentifier getTextDocument() {
+        return textDocument;
+    }
+
+    /**
+     * Gets the range for which the command was invoked
+     *
+     * @return The range for which the command was invoked
+     */
+    public Range getRange() {
+        return range;
+    }
+
+    /**
+     * Gets the context carrying additional information
+     *
+     * @return The context carrying additional information
+     */
+    public CodeActionContext getContext() {
+        return context;
     }
 
     @Override

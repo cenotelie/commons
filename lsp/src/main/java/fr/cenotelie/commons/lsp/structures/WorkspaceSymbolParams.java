@@ -33,15 +33,6 @@ public class WorkspaceSymbolParams implements Serializable {
     protected final String query;
 
     /**
-     * Gets the query string
-     *
-     * @return The query string
-     */
-    public String getQuery() {
-        return query;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param query A non-empty query string
@@ -62,15 +53,21 @@ public class WorkspaceSymbolParams implements Serializable {
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "query": {
-                    query = TextUtils.unescape(nodeValue.getValue());
-                    query = query.substring(1, query.length() - 1);
-                    break;
-                }
+            if ("query".equals(name)) {
+                query = TextUtils.unescape(nodeValue.getValue());
+                query = query.substring(1, query.length() - 1);
             }
         }
         this.query = query;
+    }
+
+    /**
+     * Gets the query string
+     *
+     * @return The query string
+     */
+    public String getQuery() {
+        return query;
     }
 
     @Override

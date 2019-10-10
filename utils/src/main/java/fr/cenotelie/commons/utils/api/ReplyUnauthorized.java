@@ -31,6 +31,13 @@ public class ReplyUnauthorized implements Reply {
     private static ReplyUnauthorized INSTANCE = null;
 
     /**
+     * Initializes this instance
+     */
+    private ReplyUnauthorized() {
+
+    }
+
+    /**
      * Gets the singleton instance
      *
      * @return The singleton instance
@@ -39,13 +46,6 @@ public class ReplyUnauthorized implements Reply {
         if (INSTANCE == null)
             INSTANCE = new ReplyUnauthorized();
         return INSTANCE;
-    }
-
-    /**
-     * Initializes this instance
-     */
-    private ReplyUnauthorized() {
-
     }
 
     @Override

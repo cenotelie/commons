@@ -123,11 +123,7 @@ public class IniSection {
      * @param value    A value to associate to the property
      */
     public void add(String property, String value) {
-        List<String> values = properties.get(property);
-        if (values == null) {
-            values = new ArrayList<>();
-            properties.put(property, values);
-        }
+        List<String> values = properties.computeIfAbsent(property, k -> new ArrayList<>());
         values.add(value);
     }
 
@@ -151,11 +147,7 @@ public class IniSection {
      * @param value    The new value
      */
     public void set(String property, String value) {
-        List<String> values = properties.get(property);
-        if (values == null) {
-            values = new ArrayList<>();
-            properties.put(property, values);
-        }
+        List<String> values = properties.computeIfAbsent(property, k -> new ArrayList<>());
         values.clear();
         values.add(value);
     }

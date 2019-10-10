@@ -29,18 +29,6 @@ public class ReplyNetworkError implements Reply {
      * The singleton instance
      */
     private static ReplyNetworkError INSTANCE = null;
-
-    /**
-     * Gets the singleton instance
-     *
-     * @return The singleton instance
-     */
-    public synchronized static ReplyNetworkError instance() {
-        if (INSTANCE == null)
-            INSTANCE = new ReplyNetworkError("Connection failure");
-        return INSTANCE;
-    }
-
     /**
      * The message associated to the failure
      */
@@ -53,6 +41,17 @@ public class ReplyNetworkError implements Reply {
      */
     public ReplyNetworkError(String message) {
         this.message = message;
+    }
+
+    /**
+     * Gets the singleton instance
+     *
+     * @return The singleton instance
+     */
+    public synchronized static ReplyNetworkError instance() {
+        if (INSTANCE == null)
+            INSTANCE = new ReplyNetworkError("Connection failure");
+        return INSTANCE;
     }
 
     @Override

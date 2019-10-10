@@ -36,24 +36,6 @@ public class TextDocumentEdit implements Serializable {
     private final TextEdit[] edits;
 
     /**
-     * Gets the text document to change.
-     *
-     * @return The text document to change.
-     */
-    public VersionedTextDocumentIdentifier getTextDocument() {
-        return textDocument;
-    }
-
-    /**
-     * Gets the edits to be applied.
-     *
-     * @return The edits to be applied.
-     */
-    public TextEdit[] getEdits() {
-        return edits;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param textDocument The text document to change.
@@ -93,6 +75,24 @@ public class TextDocumentEdit implements Serializable {
         }
         this.textDocument = textDocument != null ? textDocument : new VersionedTextDocumentIdentifier("", 0);
         this.edits = edits != null ? edits : new TextEdit[0];
+    }
+
+    /**
+     * Gets the text document to change.
+     *
+     * @return The text document to change.
+     */
+    public VersionedTextDocumentIdentifier getTextDocument() {
+        return textDocument;
+    }
+
+    /**
+     * Gets the edits to be applied.
+     *
+     * @return The edits to be applied.
+     */
+    public TextEdit[] getEdits() {
+        return edits;
     }
 
     @Override

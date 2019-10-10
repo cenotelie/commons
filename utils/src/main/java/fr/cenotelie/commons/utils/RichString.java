@@ -27,6 +27,52 @@ import fr.cenotelie.commons.utils.json.Json;
  */
 public class RichString implements Serializable {
     /**
+     * The parts of this string
+     */
+    private final Object[] parts;
+
+    /**
+     * Initializes this string
+     *
+     * @param parts The parts of this string
+     */
+    public RichString(Object... parts) {
+        this.parts = parts;
+    }
+
+    @Override
+    public String serializedString() {
+        StringBuilder buffer = new StringBuilder();
+        for (int i = 0; i != parts.length; i++) {
+            if (parts[i] instanceof Serializable)
+                buffer.append(((Serializable) parts[i]).serializedString());
+            else
+                buffer.append(parts[i].toString());
+        }
+        return buffer.toString();
+    }
+
+    @Override
+    public String serializedJSON() {
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("{\"type\": \"");
+        buffer.append(TextUtils.escapeStringJSON(RichString.class.getCanonicalName()));
+        buffer.append("\", \"parts\": [");
+        for (int i = 0; i != parts.length; i++) {
+            if (i != 0)
+                buffer.append(", ");
+            Json.serialize(buffer, parts[i]);
+        }
+        buffer.append("]}");
+        return buffer.toString();
+    }
+
+    @Override
+    public String toString() {
+        return serializedString();
+    }
+
+    /**
      * The style for a font
      */
     public enum FontStyle {
@@ -103,51 +149,5 @@ public class RichString implements Serializable {
                     color +
                     "\"}";
         }
-    }
-
-    /**
-     * The parts of this string
-     */
-    private final Object[] parts;
-
-    /**
-     * Initializes this string
-     *
-     * @param parts The parts of this string
-     */
-    public RichString(Object... parts) {
-        this.parts = parts;
-    }
-
-    @Override
-    public String serializedString() {
-        StringBuilder buffer = new StringBuilder();
-        for (int i = 0; i != parts.length; i++) {
-            if (parts[i] instanceof Serializable)
-                buffer.append(((Serializable) parts[i]).serializedString());
-            else
-                buffer.append(parts[i].toString());
-        }
-        return buffer.toString();
-    }
-
-    @Override
-    public String serializedJSON() {
-        StringBuilder buffer = new StringBuilder();
-        buffer.append("{\"type\": \"");
-        buffer.append(TextUtils.escapeStringJSON(RichString.class.getCanonicalName()));
-        buffer.append("\", \"parts\": [");
-        for (int i = 0; i != parts.length; i++) {
-            if (i != 0)
-                buffer.append(", ");
-            Json.serialize(buffer, parts[i]);
-        }
-        buffer.append("]}");
-        return buffer.toString();
-    }
-
-    @Override
-    public String toString() {
-        return serializedString();
     }
 }

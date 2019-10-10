@@ -283,10 +283,8 @@ public class ObjectStoreTransactional extends ObjectStore {
 
     /**
      * Flushes any outstanding changes to this storage system
-     *
-     * @throws IOException When an IO error occurred
      */
-    public void flush() throws IOException {
+    public void flush() {
         storage.flush();
     }
 

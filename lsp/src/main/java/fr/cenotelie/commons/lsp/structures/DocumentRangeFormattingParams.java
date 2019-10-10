@@ -42,33 +42,6 @@ public class DocumentRangeFormattingParams implements Serializable {
     private final FormattingOptions options;
 
     /**
-     * Gets the document to format
-     *
-     * @return The document to format
-     */
-    public TextDocumentIdentifier getTextDocument() {
-        return textDocument;
-    }
-
-    /**
-     * Gets the range to format
-     *
-     * @return The range to format
-     */
-    public Range getRange() {
-        return range;
-    }
-
-    /**
-     * Gets the format options
-     *
-     * @return The format options
-     */
-    public FormattingOptions getOptions() {
-        return options;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param textDocument The document to format
@@ -114,6 +87,33 @@ public class DocumentRangeFormattingParams implements Serializable {
         this.textDocument = textDocument != null ? textDocument : new TextDocumentIdentifier("");
         this.range = range != null ? range : new Range(new Position(0, 0), new Position(0, 0));
         this.options = options != null ? options : new FormattingOptions(4, false);
+    }
+
+    /**
+     * Gets the document to format
+     *
+     * @return The document to format
+     */
+    public TextDocumentIdentifier getTextDocument() {
+        return textDocument;
+    }
+
+    /**
+     * Gets the range to format
+     *
+     * @return The range to format
+     */
+    public Range getRange() {
+        return range;
+    }
+
+    /**
+     * Gets the format options
+     *
+     * @return The format options
+     */
+    public FormattingOptions getOptions() {
+        return options;
     }
 
     @Override

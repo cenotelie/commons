@@ -42,24 +42,6 @@ public class ParameterInformation implements Serializable {
     private final Object documentation;
 
     /**
-     * The label of this parameter
-     *
-     * @return Gets he label of this parameter
-     */
-    public String getLabel() {
-        return label;
-    }
-
-    /**
-     * Gets the human-readable doc-comment of this parameter
-     *
-     * @return The human-readable doc-comment of this parameter
-     */
-    public Object getDocumentation() {
-        return documentation;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param label The label of this parameter
@@ -122,6 +104,24 @@ public class ParameterInformation implements Serializable {
         }
         this.label = label;
         this.documentation = documentation;
+    }
+
+    /**
+     * The label of this parameter
+     *
+     * @return Gets he label of this parameter
+     */
+    public String getLabel() {
+        return label;
+    }
+
+    /**
+     * Gets the human-readable doc-comment of this parameter
+     *
+     * @return The human-readable doc-comment of this parameter
+     */
+    public Object getDocumentation() {
+        return documentation;
     }
 
     @Override

@@ -45,42 +45,6 @@ public class SymbolInformation implements Serializable {
     private final String containerName;
 
     /**
-     * Gets the name of this symbol
-     *
-     * @return The name of this symbol
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * Gets the kind of this symbol
-     *
-     * @return The kind of this symbol
-     */
-    public int getKind() {
-        return kind;
-    }
-
-    /**
-     * Gets the location of this symbol
-     *
-     * @return The location of this symbol
-     */
-    public Location getLocation() {
-        return location;
-    }
-
-    /**
-     * Gets the name of the symbol containing this symbol
-     *
-     * @return The name of the symbol containing this symbol
-     */
-    public String getContainerName() {
-        return containerName;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param name          The name of this symbol
@@ -135,6 +99,42 @@ public class SymbolInformation implements Serializable {
         this.kind = kind;
         this.location = location;
         this.containerName = containerName;
+    }
+
+    /**
+     * Gets the name of this symbol
+     *
+     * @return The name of this symbol
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Gets the kind of this symbol
+     *
+     * @return The kind of this symbol
+     */
+    public int getKind() {
+        return kind;
+    }
+
+    /**
+     * Gets the location of this symbol
+     *
+     * @return The location of this symbol
+     */
+    public Location getLocation() {
+        return location;
+    }
+
+    /**
+     * Gets the name of the symbol containing this symbol
+     *
+     * @return The name of the symbol containing this symbol
+     */
+    public String getContainerName() {
+        return containerName;
     }
 
     @Override

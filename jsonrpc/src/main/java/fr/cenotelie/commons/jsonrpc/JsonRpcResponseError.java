@@ -27,6 +27,38 @@ import fr.cenotelie.commons.utils.json.Json;
  */
 public class JsonRpcResponseError implements JsonRpcResponse {
     /**
+     * The identifier for the corresponding request
+     */
+    private final String identifier;
+    /**
+     * The error's code
+     */
+    private final int code;
+    /**
+     * The error's message
+     */
+    private final String message;
+    /**
+     * The error's additional data
+     */
+    private final Object data;
+
+    /**
+     * Initializes this response
+     *
+     * @param identifier The identifier for the corresponding request
+     * @param code       The error's code
+     * @param message    The error's message
+     * @param data       The error's additional data
+     */
+    public JsonRpcResponseError(String identifier, int code, String message, Object data) {
+        this.identifier = identifier;
+        this.code = code;
+        this.message = message;
+        this.data = data;
+    }
+
+    /**
      * Creates an error for parsing errors
      *
      * @param identifier The identifier of the request
@@ -94,38 +126,6 @@ public class JsonRpcResponseError implements JsonRpcResponse {
      */
     public static JsonRpcResponseError newUnknownError(String identifier) {
         return new JsonRpcResponseError(identifier, -32001, "Server not initialized", null);
-    }
-
-    /**
-     * The identifier for the corresponding request
-     */
-    private final String identifier;
-    /**
-     * The error's code
-     */
-    private final int code;
-    /**
-     * The error's message
-     */
-    private final String message;
-    /**
-     * The error's additional data
-     */
-    private final Object data;
-
-    /**
-     * Initializes this response
-     *
-     * @param identifier The identifier for the corresponding request
-     * @param code       The error's code
-     * @param message    The error's message
-     * @param data       The error's additional data
-     */
-    public JsonRpcResponseError(String identifier, int code, String message, Object data) {
-        this.identifier = identifier;
-        this.code = code;
-        this.message = message;
-        this.data = data;
     }
 
     @Override

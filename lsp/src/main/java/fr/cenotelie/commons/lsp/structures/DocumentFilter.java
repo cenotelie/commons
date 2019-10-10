@@ -43,33 +43,6 @@ public class DocumentFilter implements Serializable {
     private final String pattern;
 
     /**
-     * Gets the language id, like `typescript`.
-     *
-     * @return The language id, like `typescript`.
-     */
-    public String getLanguage() {
-        return language;
-    }
-
-    /**
-     * Gets the uri scheme, like `file` or `untitled`.
-     *
-     * @return The uri scheme, like `file` or `untitled`.
-     */
-    public String getScheme() {
-        return scheme;
-    }
-
-    /**
-     * Gets the glob pattern, like `*.{ts,js}`.
-     *
-     * @return The glob pattern, like `*.{ts,js}`.
-     */
-    public String getPattern() {
-        return pattern;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param language A language id, like `typescript`.
@@ -117,6 +90,33 @@ public class DocumentFilter implements Serializable {
         this.language = language;
         this.scheme = scheme;
         this.pattern = pattern;
+    }
+
+    /**
+     * Gets the language id, like `typescript`.
+     *
+     * @return The language id, like `typescript`.
+     */
+    public String getLanguage() {
+        return language;
+    }
+
+    /**
+     * Gets the uri scheme, like `file` or `untitled`.
+     *
+     * @return The uri scheme, like `file` or `untitled`.
+     */
+    public String getScheme() {
+        return scheme;
+    }
+
+    /**
+     * Gets the glob pattern, like `*.{ts,js}`.
+     *
+     * @return The glob pattern, like `*.{ts,js}`.
+     */
+    public String getPattern() {
+        return pattern;
     }
 
     @Override

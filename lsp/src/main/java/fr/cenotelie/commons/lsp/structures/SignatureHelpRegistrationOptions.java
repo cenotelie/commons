@@ -33,15 +33,6 @@ public class SignatureHelpRegistrationOptions extends TextDocumentRegistrationOp
     private final String[] triggerCharacters;
 
     /**
-     * Gets the characters that trigger signature help automatically
-     *
-     * @return The characters that trigger signature help automatically
-     */
-    public String[] getTriggerCharacters() {
-        return triggerCharacters;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param documentSelector  A document selector to identify the scope of the registration
@@ -65,22 +56,28 @@ public class SignatureHelpRegistrationOptions extends TextDocumentRegistrationOp
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "triggerCharacters": {
-                    if (nodeValue.getSymbol().getID() == JsonParser.ID.array) {
-                        triggerCharacters = new String[nodeValue.getChildren().size()];
-                        int index = 0;
-                        for (ASTNode nodeItem : nodeValue.getChildren()) {
-                            String value = TextUtils.unescape(nodeItem.getValue());
-                            value = value.substring(1, value.length() - 1);
-                            triggerCharacters[index++] = value;
-                        }
+            if ("triggerCharacters".equals(name)) {
+                if (nodeValue.getSymbol().getID() == JsonParser.ID.array) {
+                    triggerCharacters = new String[nodeValue.getChildren().size()];
+                    int index = 0;
+                    for (ASTNode nodeItem : nodeValue.getChildren()) {
+                        String value = TextUtils.unescape(nodeItem.getValue());
+                        value = value.substring(1, value.length() - 1);
+                        triggerCharacters[index++] = value;
                     }
-                    break;
                 }
             }
         }
         this.triggerCharacters = triggerCharacters;
+    }
+
+    /**
+     * Gets the characters that trigger signature help automatically
+     *
+     * @return The characters that trigger signature help automatically
+     */
+    public String[] getTriggerCharacters() {
+        return triggerCharacters;
     }
 
     @Override

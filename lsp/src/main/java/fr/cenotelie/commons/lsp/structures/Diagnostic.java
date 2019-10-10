@@ -57,51 +57,6 @@ public class Diagnostic implements Serializable {
     private final String message;
 
     /**
-     * Gets the range at which the message applies.
-     *
-     * @return The range at which the message applies.
-     */
-    public Range getRange() {
-        return range;
-    }
-
-    /**
-     * Gets the diagnostic's severity
-     *
-     * @return The diagnostic's severity
-     */
-    public int getSeverity() {
-        return severity;
-    }
-
-    /**
-     * Gets the diagnostic's code. Can be omitted.
-     *
-     * @return The diagnostic's code. Can be omitted.
-     */
-    public Object getCode() {
-        return code;
-    }
-
-    /**
-     * Gets a human-readable string describing the source of this diagnostic
-     *
-     * @return A human-readable string describing the source of this diagnostic
-     */
-    public String getSource() {
-        return source;
-    }
-
-    /**
-     * Gets the diagnostic's message.
-     *
-     * @return The diagnostic's message.
-     */
-    public String getMessage() {
-        return message;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param range    The range at which the message applies.
@@ -178,6 +133,51 @@ public class Diagnostic implements Serializable {
         this.code = code;
         this.source = source;
         this.message = message;
+    }
+
+    /**
+     * Gets the range at which the message applies.
+     *
+     * @return The range at which the message applies.
+     */
+    public Range getRange() {
+        return range;
+    }
+
+    /**
+     * Gets the diagnostic's severity
+     *
+     * @return The diagnostic's severity
+     */
+    public int getSeverity() {
+        return severity;
+    }
+
+    /**
+     * Gets the diagnostic's code. Can be omitted.
+     *
+     * @return The diagnostic's code. Can be omitted.
+     */
+    public Object getCode() {
+        return code;
+    }
+
+    /**
+     * Gets a human-readable string describing the source of this diagnostic
+     *
+     * @return A human-readable string describing the source of this diagnostic
+     */
+    public String getSource() {
+        return source;
+    }
+
+    /**
+     * Gets the diagnostic's message.
+     *
+     * @return The diagnostic's message.
+     */
+    public String getMessage() {
+        return message;
     }
 
     @Override

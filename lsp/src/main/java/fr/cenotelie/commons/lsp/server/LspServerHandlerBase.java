@@ -38,22 +38,13 @@ import java.util.Collection;
  */
 public class LspServerHandlerBase extends LspHandlerBase {
     /**
-     * The parent server
-     */
-    protected LspServer server;
-    /**
      * The workspace to use
      */
     protected final Workspace workspace;
-
     /**
-     * Gets the workspace used by this handler
-     *
-     * @return The workspace used by this handler
+     * The parent server
      */
-    Workspace getWorkspace() {
-        return workspace;
-    }
+    protected LspServer server;
 
     /**
      * Initializes this server
@@ -63,6 +54,15 @@ public class LspServerHandlerBase extends LspHandlerBase {
     public LspServerHandlerBase(Workspace workspace) {
         super(new LspServerRequestDeserializer());
         this.workspace = workspace;
+    }
+
+    /**
+     * Gets the workspace used by this handler
+     *
+     * @return The workspace used by this handler
+     */
+    Workspace getWorkspace() {
+        return workspace;
     }
 
     /**

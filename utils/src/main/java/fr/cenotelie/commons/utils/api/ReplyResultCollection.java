@@ -36,21 +36,21 @@ public class ReplyResultCollection<T> implements Reply {
     private final Collection<T> data;
 
     /**
-     * Gets the payload
-     *
-     * @return The payload
-     */
-    public Collection<T> getData() {
-        return data;
-    }
-
-    /**
      * Initializes this result
      *
      * @param data The payload
      */
     public ReplyResultCollection(Collection<T> data) {
         this.data = Collections.unmodifiableCollection(data);
+    }
+
+    /**
+     * Gets the payload
+     *
+     * @return The payload
+     */
+    public Collection<T> getData() {
+        return data;
     }
 
     @Override

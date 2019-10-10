@@ -34,15 +34,6 @@ public class CancelParams implements Serializable {
     private final String identifier;
 
     /**
-     * Gets the identifier of the operation to cancel
-     *
-     * @return The identifier of the operation to cancel
-     */
-    public String getIdentifier() {
-        return identifier;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param identifier The identifier of the operation to cancel
@@ -63,28 +54,34 @@ public class CancelParams implements Serializable {
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "id": {
-                    switch (nodeValue.getSymbol().getID()) {
-                        case JsonLexer.ID.LITERAL_INTEGER:
-                            identifier = definition.getValue();
-                            break;
-                        case JsonLexer.ID.LITERAL_DECIMAL:
-                            identifier = definition.getValue();
-                            break;
-                        case JsonLexer.ID.LITERAL_DOUBLE:
-                            identifier = definition.getValue();
-                            break;
-                        case JsonLexer.ID.LITERAL_STRING:
-                            identifier = TextUtils.unescape(definition.getValue());
-                            identifier = identifier.substring(1, identifier.length() - 1);
-                            break;
-                    }
-                    break;
+            if ("id".equals(name)) {
+                switch (nodeValue.getSymbol().getID()) {
+                    case JsonLexer.ID.LITERAL_INTEGER:
+                        identifier = definition.getValue();
+                        break;
+                    case JsonLexer.ID.LITERAL_DECIMAL:
+                        identifier = definition.getValue();
+                        break;
+                    case JsonLexer.ID.LITERAL_DOUBLE:
+                        identifier = definition.getValue();
+                        break;
+                    case JsonLexer.ID.LITERAL_STRING:
+                        identifier = TextUtils.unescape(definition.getValue());
+                        identifier = identifier.substring(1, identifier.length() - 1);
+                        break;
                 }
             }
         }
         this.identifier = identifier;
+    }
+
+    /**
+     * Gets the identifier of the operation to cancel
+     *
+     * @return The identifier of the operation to cancel
+     */
+    public String getIdentifier() {
+        return identifier;
     }
 
     @Override

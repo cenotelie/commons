@@ -34,15 +34,6 @@ public class ExecuteCommandRegistrationOptions implements Serializable {
     protected final String[] commands;
 
     /**
-     * Gets the commands to be executed on the server
-     *
-     * @return The commands to be executed on the server
-     */
-    public String[] getCommands() {
-        return commands;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param commands The commands to be executed on the server
@@ -64,22 +55,28 @@ public class ExecuteCommandRegistrationOptions implements Serializable {
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "commands": {
-                    if (nodeValue.getSymbol().getID() == JsonParser.ID.array) {
-                        commands = new String[nodeValue.getChildren().size()];
-                        int index = 0;
-                        for (ASTNode nodeCommand : nodeValue.getChildren()) {
-                            String value = TextUtils.unescape(nodeCommand.getValue());
-                            value = value.substring(1, value.length() - 1);
-                            commands[index++] = value;
-                        }
+            if ("commands".equals(name)) {
+                if (nodeValue.getSymbol().getID() == JsonParser.ID.array) {
+                    commands = new String[nodeValue.getChildren().size()];
+                    int index = 0;
+                    for (ASTNode nodeCommand : nodeValue.getChildren()) {
+                        String value = TextUtils.unescape(nodeCommand.getValue());
+                        value = value.substring(1, value.length() - 1);
+                        commands[index++] = value;
                     }
-                    break;
                 }
             }
         }
         this.commands = commands == null ? new String[0] : commands;
+    }
+
+    /**
+     * Gets the commands to be executed on the server
+     *
+     * @return The commands to be executed on the server
+     */
+    public String[] getCommands() {
+        return commands;
     }
 
     @Override

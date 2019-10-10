@@ -33,6 +33,27 @@ public class WillSaveWaitUntilTextDocumentResponse implements Serializable {
     private final TextEdit[] edits;
 
     /**
+     * Initializes this structure
+     *
+     * @param edits The edits to be applied by the client
+     */
+    public WillSaveWaitUntilTextDocumentResponse(TextEdit[] edits) {
+        this.edits = edits;
+    }
+
+    /**
+     * Initializes this structure
+     *
+     * @param definition The serialized definition
+     */
+    public WillSaveWaitUntilTextDocumentResponse(ASTNode definition) {
+        this.edits = new TextEdit[definition.getChildren().size()];
+        int index = 0;
+        for (ASTNode child : definition.getChildren())
+            edits[index++] = new TextEdit(child);
+    }
+
+    /**
      * Gets the edits to be applied by the client
      *
      * @return The edits to be applied by the client
@@ -58,27 +79,6 @@ public class WillSaveWaitUntilTextDocumentResponse implements Serializable {
      */
     public TextEdit get(int index) {
         return edits[index];
-    }
-
-    /**
-     * Initializes this structure
-     *
-     * @param edits The edits to be applied by the client
-     */
-    public WillSaveWaitUntilTextDocumentResponse(TextEdit[] edits) {
-        this.edits = edits;
-    }
-
-    /**
-     * Initializes this structure
-     *
-     * @param definition The serialized definition
-     */
-    public WillSaveWaitUntilTextDocumentResponse(ASTNode definition) {
-        this.edits = new TextEdit[definition.getChildren().size()];
-        int index = 0;
-        for (ASTNode child : definition.getChildren())
-            edits[index++] = new TextEdit(child);
     }
 
     @Override

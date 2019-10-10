@@ -33,15 +33,6 @@ public class TextDocumentChangeRegistrationOptions extends TextDocumentRegistrat
     private final int syncKind;
 
     /**
-     * Gets how documents are synced to the server
-     *
-     * @return How documents are synced to the server
-     */
-    public int getSyncKind() {
-        return syncKind;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param documentSelector A document selector to identify the scope of the registration
@@ -65,14 +56,20 @@ public class TextDocumentChangeRegistrationOptions extends TextDocumentRegistrat
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "syncKind": {
-                    syncKind = Integer.parseInt(nodeValue.getValue());
-                    break;
-                }
+            if ("syncKind".equals(name)) {
+                syncKind = Integer.parseInt(nodeValue.getValue());
             }
         }
         this.syncKind = syncKind;
+    }
+
+    /**
+     * Gets how documents are synced to the server
+     *
+     * @return How documents are synced to the server
+     */
+    public int getSyncKind() {
+        return syncKind;
     }
 
     @Override

@@ -31,6 +31,13 @@ public class ReplyNotFound implements Reply {
     private static ReplyNotFound INSTANCE = null;
 
     /**
+     * Initializes this instance
+     */
+    private ReplyNotFound() {
+
+    }
+
+    /**
      * Gets the singleton instance
      *
      * @return The singleton instance
@@ -39,13 +46,6 @@ public class ReplyNotFound implements Reply {
         if (INSTANCE == null)
             INSTANCE = new ReplyNotFound();
         return INSTANCE;
-    }
-
-    /**
-     * Initializes this instance
-     */
-    private ReplyNotFound() {
-
     }
 
     @Override

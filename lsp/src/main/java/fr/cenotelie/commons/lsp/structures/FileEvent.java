@@ -37,24 +37,6 @@ public class FileEvent implements Serializable {
     private final int type;
 
     /**
-     * Gets the file's URI
-     *
-     * @return The file's URI
-     */
-    public String getUri() {
-        return uri;
-    }
-
-    /**
-     * Gets the change type
-     *
-     * @return The change type
-     */
-    public int getType() {
-        return type;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param uri  The file's URI
@@ -92,6 +74,24 @@ public class FileEvent implements Serializable {
         }
         this.uri = uri;
         this.type = type;
+    }
+
+    /**
+     * Gets the file's URI
+     *
+     * @return The file's URI
+     */
+    public String getUri() {
+        return uri;
+    }
+
+    /**
+     * Gets the change type
+     *
+     * @return The change type
+     */
+    public int getType() {
+        return type;
     }
 
     @Override

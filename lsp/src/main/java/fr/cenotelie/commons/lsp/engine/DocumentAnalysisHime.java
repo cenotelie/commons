@@ -31,6 +31,15 @@ public class DocumentAnalysisHime extends DocumentAnalysis {
     protected ParseResult parseResult;
 
     /**
+     * Initializes this analysis
+     *
+     * @param version The version of the document used for this analysis
+     */
+    public DocumentAnalysisHime(DocumentVersion version) {
+        super(version);
+    }
+
+    /**
      * Gets the document's parse result
      *
      * @return The document's parse result
@@ -47,14 +56,5 @@ public class DocumentAnalysisHime extends DocumentAnalysis {
     public void setParseResult(ParseResult parseResult) {
         this.parseResult = parseResult;
         this.isSuccessful = parseResult.isSuccess();
-    }
-
-    /**
-     * Initializes this analysis
-     *
-     * @param version The version of the document used for this analysis
-     */
-    public DocumentAnalysisHime(DocumentVersion version) {
-        super(version);
     }
 }

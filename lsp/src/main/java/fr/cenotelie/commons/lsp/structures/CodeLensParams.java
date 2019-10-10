@@ -33,15 +33,6 @@ public class CodeLensParams implements Serializable {
     private final TextDocumentIdentifier textDocument;
 
     /**
-     * Gets the document to request code lens for
-     *
-     * @return The document to request code lens for
-     */
-    public TextDocumentIdentifier getTextDocument() {
-        return textDocument;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param textDocument The document to request code lens for
@@ -62,14 +53,20 @@ public class CodeLensParams implements Serializable {
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "textDocument": {
-                    textDocument = new TextDocumentIdentifier(nodeValue);
-                    break;
-                }
+            if ("textDocument".equals(name)) {
+                textDocument = new TextDocumentIdentifier(nodeValue);
             }
         }
         this.textDocument = textDocument != null ? textDocument : new TextDocumentIdentifier("");
+    }
+
+    /**
+     * Gets the document to request code lens for
+     *
+     * @return The document to request code lens for
+     */
+    public TextDocumentIdentifier getTextDocument() {
+        return textDocument;
     }
 
     @Override

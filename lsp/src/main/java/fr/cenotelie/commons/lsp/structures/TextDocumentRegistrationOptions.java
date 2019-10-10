@@ -35,15 +35,6 @@ public class TextDocumentRegistrationOptions implements Serializable {
     protected final DocumentSelector documentSelector;
 
     /**
-     * Gets the document selector to identify the scope of the registration
-     *
-     * @return The document selector to identify the scope of the registration
-     */
-    public DocumentSelector getDocumentSelector() {
-        return documentSelector;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param documentSelector A document selector to identify the scope of the registration
@@ -65,15 +56,21 @@ public class TextDocumentRegistrationOptions implements Serializable {
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "documentSelector": {
-                    if (nodeValue.getSymbol().getID() == JsonParser.ID.array)
-                        documentSelector = new DocumentSelector(nodeValue);
-                    break;
-                }
+            if ("documentSelector".equals(name)) {
+                if (nodeValue.getSymbol().getID() == JsonParser.ID.array)
+                    documentSelector = new DocumentSelector(nodeValue);
             }
         }
         this.documentSelector = documentSelector;
+    }
+
+    /**
+     * Gets the document selector to identify the scope of the registration
+     *
+     * @return The document selector to identify the scope of the registration
+     */
+    public DocumentSelector getDocumentSelector() {
+        return documentSelector;
     }
 
     @Override

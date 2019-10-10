@@ -41,24 +41,6 @@ public class CompletionList implements Serializable {
     private final CompletionItem[] items;
 
     /**
-     * Gets whether this list is not complete
-     *
-     * @return Whether this list is not complete
-     */
-    public boolean isIncomplete() {
-        return isIncomplete;
-    }
-
-    /**
-     * Gets the completion items
-     *
-     * @return The completion items
-     */
-    public CompletionItem[] getItems() {
-        return items;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param isIncomplete Whether this list is not complete
@@ -110,6 +92,24 @@ public class CompletionList implements Serializable {
         }
         this.isIncomplete = isIncomplete;
         this.items = items != null ? items : new CompletionItem[0];
+    }
+
+    /**
+     * Gets whether this list is not complete
+     *
+     * @return Whether this list is not complete
+     */
+    public boolean isIncomplete() {
+        return isIncomplete;
+    }
+
+    /**
+     * Gets the completion items
+     *
+     * @return The completion items
+     */
+    public CompletionItem[] getItems() {
+        return items;
     }
 
     @Override

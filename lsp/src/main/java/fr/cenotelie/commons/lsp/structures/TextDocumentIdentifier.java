@@ -33,15 +33,6 @@ public class TextDocumentIdentifier implements Serializable {
     protected final String uri;
 
     /**
-     * Gets the document's URI
-     *
-     * @return The document's URI
-     */
-    public String getUri() {
-        return uri;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param uri The document's URI
@@ -62,15 +53,21 @@ public class TextDocumentIdentifier implements Serializable {
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "uri": {
-                    uri = TextUtils.unescape(nodeValue.getValue());
-                    uri = uri.substring(1, uri.length() - 1);
-                    break;
-                }
+            if ("uri".equals(name)) {
+                uri = TextUtils.unescape(nodeValue.getValue());
+                uri = uri.substring(1, uri.length() - 1);
             }
         }
         this.uri = uri;
+    }
+
+    /**
+     * Gets the document's URI
+     *
+     * @return The document's URI
+     */
+    public String getUri() {
+        return uri;
     }
 
     @Override

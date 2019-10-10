@@ -32,6 +32,34 @@ import java.util.*;
  */
 public class IniDocument {
     /**
+     * The initial length of the buffer for loading a document
+     */
+    private static final int BUFFER_LENGTH = 1024;
+    /**
+     * The initial state of the loader state machine
+     */
+    private static final int STATE_INIT = 0x00;
+    /**
+     * The state when within a comment
+     */
+    private static final int STATE_COMMENT = 0x01;
+    /**
+     * The state when within the title of a section
+     */
+    private static final int STATE_SECTION_TITLE_WITHIN = 0x10;
+    /**
+     * The state when after the title of a section (still on the same line)
+     */
+    private static final int STATE_SECTION_TITLE_AFTER = 0x11;
+    /**
+     * The state when reading a property name
+     */
+    private static final int STATE_PROPERTY_NAME = 0x20;
+    /**
+     * The state when reading a property value
+     */
+    private static final int STATE_PROPERTY_VALUE = 0x21;
+    /**
      * The global section of this document
      */
     private final IniSection global;
@@ -46,6 +74,36 @@ public class IniDocument {
     public IniDocument() {
         global = new IniSection(null);
         sections = new HashMap<>();
+    }
+
+    /**
+     * Gets whether the specified character starts a comment in a document file
+     *
+     * @param c The character
+     * @return Whether the specified character starts a comment in a document file
+     */
+    private static boolean isCommentStart(int c) {
+        return c == '#' || c == ';';
+    }
+
+    /**
+     * Gets whether the specified character is a line-ending character
+     *
+     * @param c The character
+     * @return Whether the specified character is a line-ending character
+     */
+    private static boolean isLineEnding(int c) {
+        return c == '\n' || c == '\r' || c == 0x2028 || c == 0x2029;
+    }
+
+    /**
+     * Gets whether the character is a spacing character
+     *
+     * @param c The character
+     * @return Whether the character is a spacing character
+     */
+    private static boolean isWhitespace(int c) {
+        return c == 0x0020 || c == 0x0009 || c == 0x000B || c == 0x000C;
     }
 
     /**
@@ -412,63 +470,4 @@ public class IniDocument {
             add(currentSection, currentProperty, value);
         }
     }
-
-    /**
-     * Gets whether the specified character starts a comment in a document file
-     *
-     * @param c The character
-     * @return Whether the specified character starts a comment in a document file
-     */
-    private static boolean isCommentStart(int c) {
-        return c == '#' || c == ';';
-    }
-
-    /**
-     * Gets whether the specified character is a line-ending character
-     *
-     * @param c The character
-     * @return Whether the specified character is a line-ending character
-     */
-    private static boolean isLineEnding(int c) {
-        return c == '\n' || c == '\r' || c == 0x2028 || c == 0x2029;
-    }
-
-    /**
-     * Gets whether the character is a spacing character
-     *
-     * @param c The character
-     * @return Whether the character is a spacing character
-     */
-    private static boolean isWhitespace(int c) {
-        return c == 0x0020 || c == 0x0009 || c == 0x000B || c == 0x000C;
-    }
-
-    /**
-     * The initial length of the buffer for loading a document
-     */
-    private static final int BUFFER_LENGTH = 1024;
-    /**
-     * The initial state of the loader state machine
-     */
-    private static final int STATE_INIT = 0x00;
-    /**
-     * The state when within a comment
-     */
-    private static final int STATE_COMMENT = 0x01;
-    /**
-     * The state when within the title of a section
-     */
-    private static final int STATE_SECTION_TITLE_WITHIN = 0x10;
-    /**
-     * The state when after the title of a section (still on the same line)
-     */
-    private static final int STATE_SECTION_TITLE_AFTER = 0x11;
-    /**
-     * The state when reading a property name
-     */
-    private static final int STATE_PROPERTY_NAME = 0x20;
-    /**
-     * The state when reading a property value
-     */
-    private static final int STATE_PROPERTY_VALUE = 0x21;
 }

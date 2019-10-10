@@ -45,12 +45,7 @@ class DocumentContentProvider {
         if (services.hasNext()) {
             this.factory = services.next();
         } else {
-            this.factory = new DocumentContentFactory() {
-                @Override
-                public DocumentContent newContent(String text) {
-                    return new DocumentContentString(text);
-                }
-            };
+            this.factory = DocumentContentString::new;
         }
     }
 

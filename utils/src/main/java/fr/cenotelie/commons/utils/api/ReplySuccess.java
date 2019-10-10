@@ -29,18 +29,6 @@ public class ReplySuccess implements Reply {
      * The singleton instance
      */
     private static ReplySuccess INSTANCE = null;
-
-    /**
-     * Gets the default instance
-     *
-     * @return The default instance
-     */
-    public synchronized static ReplySuccess instance() {
-        if (INSTANCE == null)
-            INSTANCE = new ReplySuccess("OK");
-        return INSTANCE;
-    }
-
     /**
      * The associated message
      */
@@ -53,6 +41,17 @@ public class ReplySuccess implements Reply {
      */
     public ReplySuccess(String message) {
         this.message = message;
+    }
+
+    /**
+     * Gets the default instance
+     *
+     * @return The default instance
+     */
+    public synchronized static ReplySuccess instance() {
+        if (INSTANCE == null)
+            INSTANCE = new ReplySuccess("OK");
+        return INSTANCE;
     }
 
     @Override

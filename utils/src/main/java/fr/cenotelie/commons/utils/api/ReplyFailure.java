@@ -29,18 +29,6 @@ public class ReplyFailure implements Reply {
      * The singleton instance
      */
     private static ReplyFailure INSTANCE = null;
-
-    /**
-     * Gets the default instance
-     *
-     * @return The default instance
-     */
-    public synchronized static ReplyFailure instance() {
-        if (INSTANCE == null)
-            INSTANCE = new ReplyFailure("FAILED");
-        return INSTANCE;
-    }
-
     /**
      * The message associated to the failure
      */
@@ -53,6 +41,17 @@ public class ReplyFailure implements Reply {
      */
     public ReplyFailure(String message) {
         this.message = message;
+    }
+
+    /**
+     * Gets the default instance
+     *
+     * @return The default instance
+     */
+    public synchronized static ReplyFailure instance() {
+        if (INSTANCE == null)
+            INSTANCE = new ReplyFailure("FAILED");
+        return INSTANCE;
     }
 
     @Override

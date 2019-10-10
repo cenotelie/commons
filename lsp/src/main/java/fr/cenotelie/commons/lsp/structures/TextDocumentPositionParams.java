@@ -37,24 +37,6 @@ public class TextDocumentPositionParams implements Serializable {
     protected final Position position;
 
     /**
-     * Gets the text document
-     *
-     * @return The text document
-     */
-    public TextDocumentIdentifier getTextDocument() {
-        return textDocument;
-    }
-
-    /**
-     * Gets the position inside the text document.
-     *
-     * @return The position inside the text document.
-     */
-    public Position getPosition() {
-        return position;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param textDocument The text document
@@ -91,6 +73,24 @@ public class TextDocumentPositionParams implements Serializable {
         }
         this.textDocument = textDocument != null ? textDocument : new TextDocumentIdentifier("");
         this.position = position != null ? position : new Position(0, 0);
+    }
+
+    /**
+     * Gets the text document
+     *
+     * @return The text document
+     */
+    public TextDocumentIdentifier getTextDocument() {
+        return textDocument;
+    }
+
+    /**
+     * Gets the position inside the text document.
+     *
+     * @return The position inside the text document.
+     */
+    public Position getPosition() {
+        return position;
     }
 
     @Override

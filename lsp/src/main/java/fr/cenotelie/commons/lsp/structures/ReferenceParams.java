@@ -32,15 +32,6 @@ public class ReferenceParams extends TextDocumentPositionParams {
     private final ReferenceContext context;
 
     /**
-     * Gets the context for the request
-     *
-     * @return The context for the request
-     */
-    public ReferenceContext getContext() {
-        return context;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param textDocument The text document
@@ -65,14 +56,20 @@ public class ReferenceParams extends TextDocumentPositionParams {
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "context": {
-                    context = new ReferenceContext(nodeValue);
-                    break;
-                }
+            if ("context".equals(name)) {
+                context = new ReferenceContext(nodeValue);
             }
         }
         this.context = context;
+    }
+
+    /**
+     * Gets the context for the request
+     *
+     * @return The context for the request
+     */
+    public ReferenceContext getContext() {
+        return context;
     }
 
     @Override

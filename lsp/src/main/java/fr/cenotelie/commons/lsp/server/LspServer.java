@@ -63,7 +63,10 @@ public class LspServer extends LspEndpointLocalBase {
      * The server has exited
      */
     public static final int STATE_EXITED = 6;
-
+    /**
+     * The capabilities of this current server
+     */
+    protected final ServerCapabilities serverCapabilities;
     /**
      * The server's current state
      */
@@ -72,10 +75,6 @@ public class LspServer extends LspEndpointLocalBase {
      * The listeners for this server
      */
     private final Collection<LspServerListener> listeners;
-    /**
-     * The capabilities of this current server
-     */
-    protected final ServerCapabilities serverCapabilities;
     /**
      * The initialization parameters received from the client
      */

@@ -33,6 +33,7 @@ public class DocumentServiceProviderStatic<T extends DocumentService> implements
      *
      * @param services The provided services
      */
+    @SafeVarargs
     public DocumentServiceProviderStatic(T... services) {
         this.services = services;
     }

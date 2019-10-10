@@ -51,42 +51,6 @@ public class TextEdit implements Serializable {
     private final String newText;
 
     /**
-     * Gets the range of the text document to be manipulated.
-     *
-     * @return The range of the text document to be manipulated.
-     */
-    public Range getRange() {
-        return range;
-    }
-
-    /**
-     * Gets the string to be inserted.
-     *
-     * @return The string to be inserted.
-     */
-    public String getNewText() {
-        return newText;
-    }
-
-    /**
-     * Gets whether this edit is an insert
-     *
-     * @return Whether this edit is an insert
-     */
-    public boolean isInsert() {
-        return range.isEmpty();
-    }
-
-    /**
-     * Get whether this edit is a deletion
-     *
-     * @return Whether this edit is a deletion
-     */
-    public boolean isDeletion() {
-        return (newText == null || newText.isEmpty());
-    }
-
-    /**
      * Initializes this structure
      *
      * @param range   The range of the text document to be manipulated.
@@ -124,6 +88,42 @@ public class TextEdit implements Serializable {
         }
         this.newText = newText;
         this.range = range != null ? range : new Range(new Position(0, 0), new Position(0, 0));
+    }
+
+    /**
+     * Gets the range of the text document to be manipulated.
+     *
+     * @return The range of the text document to be manipulated.
+     */
+    public Range getRange() {
+        return range;
+    }
+
+    /**
+     * Gets the string to be inserted.
+     *
+     * @return The string to be inserted.
+     */
+    public String getNewText() {
+        return newText;
+    }
+
+    /**
+     * Gets whether this edit is an insert
+     *
+     * @return Whether this edit is an insert
+     */
+    public boolean isInsert() {
+        return range.isEmpty();
+    }
+
+    /**
+     * Get whether this edit is a deletion
+     *
+     * @return Whether this edit is a deletion
+     */
+    public boolean isDeletion() {
+        return (newText == null || newText.isEmpty());
     }
 
     @Override

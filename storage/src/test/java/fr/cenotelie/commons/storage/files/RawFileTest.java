@@ -17,8 +17,8 @@
 
 package fr.cenotelie.commons.storage.files;
 
-import fr.cenotelie.commons.storage.Constants;
 import fr.cenotelie.commons.storage.Access;
+import fr.cenotelie.commons.storage.Constants;
 import org.junit.Assert;
 import org.junit.Test;
 

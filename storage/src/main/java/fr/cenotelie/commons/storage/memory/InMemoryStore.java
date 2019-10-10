@@ -21,7 +21,6 @@ import fr.cenotelie.commons.storage.Constants;
 import fr.cenotelie.commons.storage.Endpoint;
 import fr.cenotelie.commons.storage.Storage;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -51,13 +50,13 @@ public class InMemoryStore extends Storage {
      */
     private final AtomicLong size;
     /**
-     * The pages
-     */
-    private volatile InMemoryPage[] pages;
-    /**
      * The current state of this storage
      */
     private final AtomicInteger state;
+    /**
+     * The pages
+     */
+    private volatile InMemoryPage[] pages;
 
     /**
      * Initializes this store
@@ -86,13 +85,11 @@ public class InMemoryStore extends Storage {
             // 0-length cut => do nothing
             return false;
 
-        while (true) {
+        do {
             int s = state.get();
             if (s == STATE_CLOSED)
                 throw new IllegalStateException();
-            if (state.compareAndSet(STATE_READY, STATE_BUSY))
-                break;
-        }
+        } while (!state.compareAndSet(STATE_READY, STATE_BUSY));
         try {
             // do we have to update the current size?
             long currentSize;
@@ -152,7 +149,7 @@ public class InMemoryStore extends Storage {
     }
 
     @Override
-    public void flush() throws IOException {
+    public void flush() {
         // do nothing
     }
 
@@ -160,13 +157,11 @@ public class InMemoryStore extends Storage {
     public Endpoint acquireEndpointAt(long index) {
         if (index < 0)
             throw new IndexOutOfBoundsException();
-        while (true) {
+        do {
             int s = state.get();
             if (s == STATE_CLOSED)
                 throw new IllegalStateException();
-            if (state.compareAndSet(STATE_READY, STATE_BUSY))
-                break;
-        }
+        } while (!state.compareAndSet(STATE_READY, STATE_BUSY));
         try {
             int requested = (int) (index >>> Constants.PAGE_INDEX_LENGTH);
             while (requested >= pages.length) {
@@ -187,13 +182,11 @@ public class InMemoryStore extends Storage {
 
     @Override
     public void close() {
-        while (true) {
+        do {
             int s = state.get();
             if (s == STATE_CLOSED)
                 throw new IllegalStateException();
-            if (state.compareAndSet(STATE_READY, STATE_BUSY))
-                break;
-        }
+        } while (!state.compareAndSet(STATE_READY, STATE_BUSY));
         try {
             pages = null;
         } finally {

@@ -35,7 +35,7 @@ public class CombiningIteratorTest {
     @Test
     public void test_0x0_size() {
         Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(
-                new SingleIterator<Integer>(null),
+                new SingleIterator<>(null),
                 element -> new SingleIterator<>(null));
 
         int count = 0;
@@ -49,7 +49,7 @@ public class CombiningIteratorTest {
     @Test
     public void test_0x1_size() {
         Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(
-                new SingleIterator<Integer>(null),
+                new SingleIterator<>(null),
                 element -> new SingleIterator<>(0));
 
         int count = 0;
@@ -63,7 +63,7 @@ public class CombiningIteratorTest {
     @Test
     public void test_0xn_size() {
         Iterator<Couple<Integer, Integer>> iterator = new CombiningIterator<>(
-                new SingleIterator<Integer>(null),
+                new SingleIterator<>(null),
                 element -> Arrays.asList(content).iterator());
 
         int count = 0;

@@ -33,11 +33,6 @@ class LogTransactionData {
      * - int32: the number of touched pages
      */
     public static final int SERIALIZATION_SIZE_HEADER = 8 + 8 + 4;
-
-    /**
-     * Location of this transaction in the log
-     */
-    public long logLocation;
     /**
      * Sequence number of this transaction
      */
@@ -50,6 +45,10 @@ class LogTransactionData {
      * The data for the pages
      */
     private final LogPageData[] pages;
+    /**
+     * Location of this transaction in the log
+     */
+    public long logLocation;
 
     /**
      * Initializes this structure

@@ -37,11 +37,15 @@ public class RewindableTextStream {
     /**
      * Encapsulated text reader
      */
-    private Reader reader;
+    private final Reader reader;
     /**
      * First stage buffer for batch reading of the stream
      */
-    private char[] buffer;
+    private final char[] buffer;
+    /**
+     * Ring memory of this reader storing the already read characters
+     */
+    private final char[] ring;
     /**
      * Index where the next character shall be read in the buffer
      */
@@ -54,10 +58,6 @@ public class RewindableTextStream {
      * Marker of the end of input
      */
     private boolean atEnd;
-    /**
-     * Ring memory of this reader storing the already read characters
-     */
-    private char[] ring;
     /**
      * Start index of the ring where to read characters
      */

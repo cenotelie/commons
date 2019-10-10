@@ -23,7 +23,6 @@ import fr.cenotelie.commons.utils.http.HttpConstants;
 import fr.cenotelie.commons.utils.http.HttpResponse;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -44,11 +43,6 @@ import java.io.InputStream;
 @Mojo(name = "upload-p2", defaultPhase = LifecyclePhase.DEPLOY)
 public class UploadP2Mojo extends AbstractMojo {
     /**
-     * The current Maven session
-     */
-    @Parameter(property = "session", readonly = true)
-    private MavenSession session;
-    /**
      * The current Maven project
      */
     @Parameter(readonly = true, defaultValue = "${project}", required = true)
@@ -68,9 +62,14 @@ public class UploadP2Mojo extends AbstractMojo {
      */
     @Parameter(required = true)
     protected String targetUrl;
+    /**
+     * The current Maven session
+     */
+    @Parameter(property = "session", readonly = true)
+    private MavenSession session;
 
     @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
+    public void execute() throws MojoFailureException {
         File repository = new File(project.getModel().getBuild().getDirectory(), repositoryFolder);
         if (!repository.exists())
             throw new MojoFailureException("The repository folder does not exist (" + repository.toString() + ")");

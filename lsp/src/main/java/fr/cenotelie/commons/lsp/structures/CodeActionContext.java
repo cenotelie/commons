@@ -34,15 +34,6 @@ public class CodeActionContext implements Serializable {
     private final Diagnostic[] diagnostics;
 
     /**
-     * Gets the diagnostics
-     *
-     * @return The diagnostics
-     */
-    public Diagnostic[] getDiagnostics() {
-        return diagnostics;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param diagnostics The diagnostics
@@ -63,19 +54,25 @@ public class CodeActionContext implements Serializable {
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "diagnostics": {
-                    if (nodeValue.getSymbol().getID() == JsonParser.ID.array) {
-                        diagnostics = new Diagnostic[nodeValue.getChildren().size()];
-                        int index = 0;
-                        for (ASTNode nodeItem : nodeValue.getChildren())
-                            diagnostics[index++] = new Diagnostic(nodeItem);
-                    }
-                    break;
+            if ("diagnostics".equals(name)) {
+                if (nodeValue.getSymbol().getID() == JsonParser.ID.array) {
+                    diagnostics = new Diagnostic[nodeValue.getChildren().size()];
+                    int index = 0;
+                    for (ASTNode nodeItem : nodeValue.getChildren())
+                        diagnostics[index++] = new Diagnostic(nodeItem);
                 }
             }
         }
         this.diagnostics = diagnostics == null ? new Diagnostic[0] : diagnostics;
+    }
+
+    /**
+     * Gets the diagnostics
+     *
+     * @return The diagnostics
+     */
+    public Diagnostic[] getDiagnostics() {
+        return diagnostics;
     }
 
     @Override

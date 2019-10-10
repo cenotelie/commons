@@ -33,15 +33,6 @@ public class MessageActionItem implements Serializable {
     private final String title;
 
     /**
-     * Gets the title
-     *
-     * @return The title
-     */
-    public String getTitle() {
-        return title;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param title The document's URI
@@ -62,15 +53,21 @@ public class MessageActionItem implements Serializable {
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "title": {
-                    title = TextUtils.unescape(nodeValue.getValue());
-                    title = title.substring(1, title.length() - 1);
-                    break;
-                }
+            if ("title".equals(name)) {
+                title = TextUtils.unescape(nodeValue.getValue());
+                title = title.substring(1, title.length() - 1);
             }
         }
         this.title = title;
+    }
+
+    /**
+     * Gets the title
+     *
+     * @return The title
+     */
+    public String getTitle() {
+        return title;
     }
 
     @Override

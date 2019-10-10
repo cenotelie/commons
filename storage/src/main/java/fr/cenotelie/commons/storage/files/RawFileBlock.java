@@ -55,6 +55,19 @@ class RawFileBlock extends Endpoint {
     protected boolean isDirty;
 
     /**
+     * Initializes this structure
+     *
+     * @param parent The parent file
+     */
+    public RawFileBlock(RawFileBuffered parent) {
+        this.parent = parent;
+        this.buffer = null;
+        this.location = -1;
+        this.lastHit = Long.MIN_VALUE;
+        this.isDirty = false;
+    }
+
+    /**
      * Gets the location of this block in the parent file
      *
      * @return The location of this block in the parent file
@@ -70,19 +83,6 @@ class RawFileBlock extends Endpoint {
      */
     public long getLastHit() {
         return lastHit;
-    }
-
-    /**
-     * Initializes this structure
-     *
-     * @param parent The parent file
-     */
-    public RawFileBlock(RawFileBuffered parent) {
-        this.parent = parent;
-        this.buffer = null;
-        this.location = -1;
-        this.lastHit = Long.MIN_VALUE;
-        this.isDirty = false;
     }
 
     /**

@@ -75,7 +75,7 @@ class PositionalSaxHandler extends DefaultHandler implements LexicalHandler {
     }
 
     @Override
-    public void startElement(final String uri, final String localName, final String qName, final Attributes attributes) throws SAXException {
+    public void startElement(final String uri, final String localName, final String qName, final Attributes attributes) {
         appendText();
         Element element = document.createElement(qName);
         for (int i = 0; i < attributes.getLength(); i++) {
@@ -97,7 +97,7 @@ class PositionalSaxHandler extends DefaultHandler implements LexicalHandler {
     }
 
     @Override
-    public void characters(final char[] ch, final int start, final int length) throws SAXException {
+    public void characters(final char[] ch, final int start, final int length) {
         textBuffer.append(ch, start, length);
         lastLocation = new TextPosition(locator.getLineNumber(), locator.getColumnNumber());
     }
@@ -121,37 +121,37 @@ class PositionalSaxHandler extends DefaultHandler implements LexicalHandler {
     }
 
     @Override
-    public void comment(char[] ch, int start, int length) throws SAXException {
+    public void comment(char[] ch, int start, int length) {
         lastLocation = new TextPosition(locator.getLineNumber(), locator.getColumnNumber());
     }
 
     @Override
-    public void startDTD(String name, String publicId, String systemId) throws SAXException {
+    public void startDTD(String name, String publicId, String systemId) {
         lastLocation = new TextPosition(locator.getLineNumber(), locator.getColumnNumber());
     }
 
     @Override
-    public void endDTD() throws SAXException {
+    public void endDTD() {
         lastLocation = new TextPosition(locator.getLineNumber(), locator.getColumnNumber());
     }
 
     @Override
-    public void startEntity(String name) throws SAXException {
+    public void startEntity(String name) {
         lastLocation = new TextPosition(locator.getLineNumber(), locator.getColumnNumber());
     }
 
     @Override
-    public void endEntity(String name) throws SAXException {
+    public void endEntity(String name) {
         lastLocation = new TextPosition(locator.getLineNumber(), locator.getColumnNumber());
     }
 
     @Override
-    public void startCDATA() throws SAXException {
+    public void startCDATA() {
         lastLocation = new TextPosition(locator.getLineNumber(), locator.getColumnNumber());
     }
 
     @Override
-    public void endCDATA() throws SAXException {
+    public void endCDATA() {
         lastLocation = new TextPosition(locator.getLineNumber(), locator.getColumnNumber());
     }
 

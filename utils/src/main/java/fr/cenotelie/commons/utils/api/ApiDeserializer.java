@@ -33,21 +33,21 @@ public class ApiDeserializer extends JsonDeserializer {
     private final ApiFactory factory;
 
     /**
-     * Gets the associated factory
-     *
-     * @return The associated factory
-     */
-    public ApiFactory getFactory() {
-        return factory;
-    }
-
-    /**
      * Initializes this deserializer
      *
      * @param factory The associated factory
      */
     public ApiDeserializer(ApiFactory factory) {
         this.factory = factory;
+    }
+
+    /**
+     * Gets the associated factory
+     *
+     * @return The associated factory
+     */
+    public ApiFactory getFactory() {
+        return factory;
     }
 
     @Override
@@ -58,10 +58,8 @@ public class ApiDeserializer extends JsonDeserializer {
             String memberName = TextUtils.unescape(memberNode.getChildren().get(0).getValue());
             memberName = memberName.substring(1, memberName.length() - 1);
             ASTNode memberValue = memberNode.getChildren().get(1);
-            switch (memberName) {
-                case "type":
-                    nodeType = memberValue;
-                    break;
+            if ("type".equals(memberName)) {
+                nodeType = memberValue;
             }
         }
         if (nodeType != null && factory != null) {

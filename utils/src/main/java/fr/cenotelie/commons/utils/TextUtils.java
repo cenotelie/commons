@@ -118,9 +118,9 @@ public class TextUtils {
         for (int i = 0; i != value.length(); i++) {
             char c = value.charAt(i);
             if (c <= 0x20 || ESCAPED_GLYPHS_ABSOLUTE_URIS.contains(Character.toString(c))) {
-                String s = Integer.toHexString(c);
+                StringBuilder s = new StringBuilder(Integer.toHexString(c));
                 while (s.length() < 4)
-                    s = "0" + s;
+                    s.insert(0, "0");
                 builder.append("\\u");
                 builder.append(s);
             } else

@@ -38,24 +38,6 @@ public class DocumentFormattingParams implements Serializable {
     private final FormattingOptions options;
 
     /**
-     * Gets the document to format
-     *
-     * @return The document to format
-     */
-    public TextDocumentIdentifier getTextDocument() {
-        return textDocument;
-    }
-
-    /**
-     * Gets the format options
-     *
-     * @return The format options
-     */
-    public FormattingOptions getOptions() {
-        return options;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param textDocument The document to format
@@ -93,6 +75,24 @@ public class DocumentFormattingParams implements Serializable {
         }
         this.textDocument = textDocument != null ? textDocument : new TextDocumentIdentifier("");
         this.options = options != null ? options : new FormattingOptions(4, false);
+    }
+
+    /**
+     * Gets the document to format
+     *
+     * @return The document to format
+     */
+    public TextDocumentIdentifier getTextDocument() {
+        return textDocument;
+    }
+
+    /**
+     * Gets the format options
+     *
+     * @return The format options
+     */
+    public FormattingOptions getOptions() {
+        return options;
     }
 
     @Override

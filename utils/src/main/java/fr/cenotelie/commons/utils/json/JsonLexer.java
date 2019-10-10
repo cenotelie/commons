@@ -36,6 +36,50 @@ public class JsonLexer extends ContextFreeLexer {
      * The automaton for this lexer
      */
     private static final Automaton commonAutomaton = Automaton.find(JsonLexer.class, "JsonLexer.bin");
+    /**
+     * The collection of terminals matched by this lexer
+     * <p>
+     * The terminals are in an order consistent with the automaton,
+     * so that terminal indices in the automaton can be used to retrieve the terminals in this table
+     */
+    private static final Symbol[] terminals = {
+            new Symbol(0x0001, "ε"),
+            new Symbol(0x0002, "$"),
+            new Symbol(0x0013, "{"),
+            new Symbol(0x0014, ","),
+            new Symbol(0x0016, "}"),
+            new Symbol(0x0017, ":"),
+            new Symbol(0x0018, "["),
+            new Symbol(0x001A, "]"),
+            new Symbol(0x0006, "BLANK"),
+            new Symbol(0x0003, "NEW_LINE"),
+            new Symbol(0x0004, "WHITE_SPACE"),
+            new Symbol(0x0007, "LITERAL_INTEGER"),
+            new Symbol(0x0005, "COMMENT"),
+            new Symbol(0x000A, "LITERAL_STRING"),
+            new Symbol(0x0008, "LITERAL_DECIMAL"),
+            new Symbol(0x0009, "LITERAL_DOUBLE"),
+            new Symbol(0x000B, "LITERAL_NULL"),
+            new Symbol(0x000C, "LITERAL_TRUE"),
+            new Symbol(0x000D, "LITERAL_FALSE")};
+
+    /**
+     * Initializes a new instance of the lexer
+     *
+     * @param input The lexer's input
+     */
+    public JsonLexer(String input) {
+        super(commonAutomaton, terminals, 0x0006, input);
+    }
+
+    /**
+     * Initializes a new instance of the lexer
+     *
+     * @param input The lexer's input
+     */
+    public JsonLexer(InputStreamReader input) {
+        super(commonAutomaton, terminals, 0x0006, input);
+    }
 
     /**
      * Contains the constant IDs for the terminals for this lexer
@@ -95,50 +139,5 @@ public class JsonLexer extends ContextFreeLexer {
          * The unique identifier for the default context
          */
         public static final int DEFAULT = 0;
-    }
-
-    /**
-     * The collection of terminals matched by this lexer
-     * <p>
-     * The terminals are in an order consistent with the automaton,
-     * so that terminal indices in the automaton can be used to retrieve the terminals in this table
-     */
-    private static final Symbol[] terminals = {
-            new Symbol(0x0001, "ε"),
-            new Symbol(0x0002, "$"),
-            new Symbol(0x0013, "{"),
-            new Symbol(0x0014, ","),
-            new Symbol(0x0016, "}"),
-            new Symbol(0x0017, ":"),
-            new Symbol(0x0018, "["),
-            new Symbol(0x001A, "]"),
-            new Symbol(0x0006, "BLANK"),
-            new Symbol(0x0003, "NEW_LINE"),
-            new Symbol(0x0004, "WHITE_SPACE"),
-            new Symbol(0x0007, "LITERAL_INTEGER"),
-            new Symbol(0x0005, "COMMENT"),
-            new Symbol(0x000A, "LITERAL_STRING"),
-            new Symbol(0x0008, "LITERAL_DECIMAL"),
-            new Symbol(0x0009, "LITERAL_DOUBLE"),
-            new Symbol(0x000B, "LITERAL_NULL"),
-            new Symbol(0x000C, "LITERAL_TRUE"),
-            new Symbol(0x000D, "LITERAL_FALSE")};
-
-    /**
-     * Initializes a new instance of the lexer
-     *
-     * @param input The lexer's input
-     */
-    public JsonLexer(String input) {
-        super(commonAutomaton, terminals, 0x0006, input);
-    }
-
-    /**
-     * Initializes a new instance of the lexer
-     *
-     * @param input The lexer's input
-     */
-    public JsonLexer(InputStreamReader input) {
-        super(commonAutomaton, terminals, 0x0006, input);
     }
 }

@@ -77,6 +77,10 @@ public class RawFileSplit extends RawFile {
      */
     private final long fileMaxSize;
     /**
+     * The current state of this storage
+     */
+    private final AtomicInteger state;
+    /**
      * The number of part files
      */
     private volatile int filesCount;
@@ -84,10 +88,6 @@ public class RawFileSplit extends RawFile {
      * The part files
      */
     private volatile RawFile[] files;
-    /**
-     * The current state of this storage
-     */
-    private final AtomicInteger state;
 
     /**
      * Initializes this storage
@@ -164,13 +164,11 @@ public class RawFileSplit extends RawFile {
 
     @Override
     public long getSize() {
-        while (true) {
+        do {
             int s = state.get();
             if (s == STATE_CLOSED)
                 return 0;
-            if (state.compareAndSet(STATE_READY, STATE_BUSY))
-                break;
-        }
+        } while (!state.compareAndSet(STATE_READY, STATE_BUSY));
         try {
             if (filesCount == 0)
                 return 0;
@@ -193,13 +191,11 @@ public class RawFileSplit extends RawFile {
         if (from == to)
             // 0-length cut => do nothing
             return false;
-        while (true) {
+        do {
             int s = state.get();
             if (s == STATE_CLOSED)
                 throw new IllegalStateException();
-            if (state.compareAndSet(STATE_READY, STATE_BUSY))
-                break;
-        }
+        } while (!state.compareAndSet(STATE_READY, STATE_BUSY));
         try {
             return doCut(from, to);
         } finally {
@@ -339,13 +335,11 @@ public class RawFileSplit extends RawFile {
 
     @Override
     public void flush() throws IOException {
-        while (true) {
+        do {
             int s = state.get();
             if (s == STATE_CLOSED)
                 throw new IllegalStateException();
-            if (state.compareAndSet(STATE_READY, STATE_BUSY))
-                break;
-        }
+        } while (!state.compareAndSet(STATE_READY, STATE_BUSY));
         try {
             for (int i = 0; i != filesCount; i++) {
                 if (files[i] != null)
@@ -360,13 +354,11 @@ public class RawFileSplit extends RawFile {
     public Endpoint acquireEndpointAt(long index) {
         if (index < 0)
             throw new IndexOutOfBoundsException();
-        while (true) {
+        do {
             int s = state.get();
             if (s == STATE_CLOSED)
                 throw new IllegalStateException();
-            if (state.compareAndSet(STATE_READY, STATE_BUSY))
-                break;
-        }
+        } while (!state.compareAndSet(STATE_READY, STATE_BUSY));
         try {
             return doAcquireEndpointAt(index);
         } catch (IOException exception) {
@@ -407,13 +399,11 @@ public class RawFileSplit extends RawFile {
 
     @Override
     public void close() throws IOException {
-        while (true) {
+        do {
             int s = state.get();
             if (s == STATE_CLOSED)
                 throw new IllegalStateException();
-            if (state.compareAndSet(STATE_READY, STATE_BUSY))
-                break;
-        }
+        } while (!state.compareAndSet(STATE_READY, STATE_BUSY));
         try {
             for (int i = 0; i != filesCount; i++) {
                 if (files[i] != null)

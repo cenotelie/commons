@@ -53,6 +53,18 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 class RawFileBlockTS extends RawFileBlock {
     /**
+     * When reserving the block, the block was free and successfully reserved
+     */
+    public static final int RESERVE_RESULT_OK = 0;
+    /**
+     * When reserving the block, the block was already reserved for the same location
+     */
+    public static final int RESERVE_RESULT_READY = 1;
+    /**
+     * When reserving the block, the block was already reserved for another location
+     */
+    public static final int RESERVE_RESULT_FAIL = -1;
+    /**
      * The block is free, i.e. not assigned to any location
      */
     private static final int BLOCK_STATE_FREE = 0;
@@ -72,20 +84,6 @@ class RawFileBlockTS extends RawFileBlock {
      * The block is used by one or more users in a shared manner
      */
     private static final int BLOCK_STATE_IN_USE = 4;
-
-    /**
-     * When reserving the block, the block was free and successfully reserved
-     */
-    public static final int RESERVE_RESULT_OK = 0;
-    /**
-     * When reserving the block, the block was already reserved for the same location
-     */
-    public static final int RESERVE_RESULT_READY = 1;
-    /**
-     * When reserving the block, the block was already reserved for another location
-     */
-    public static final int RESERVE_RESULT_FAIL = -1;
-
     /**
      * The state of this block
      */

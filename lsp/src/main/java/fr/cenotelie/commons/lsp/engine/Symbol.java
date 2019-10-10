@@ -38,6 +38,14 @@ public class Symbol {
      */
     private final String identifier;
     /**
+     * The various definitions of this symbol by the URI of the defining files
+     */
+    private final Map<String, Collection<Range>> definitions;
+    /**
+     * The various references to this symbol by the URI of the referencing files
+     */
+    private final Map<String, Collection<Range>> references;
+    /**
      * The name of this symbol
      */
     private String name;
@@ -49,14 +57,6 @@ public class Symbol {
      * The documentation for this symbol
      */
     private MarkupContent documentation;
-    /**
-     * The various definitions of this symbol by the URI of the defining files
-     */
-    private final Map<String, Collection<Range>> definitions;
-    /**
-     * The various references to this symbol by the URI of the referencing files
-     */
-    private final Map<String, Collection<Range>> references;
     /**
      * The parent symbol, if any
      */
@@ -105,6 +105,15 @@ public class Symbol {
     }
 
     /**
+     * Sets th user name of this symbol
+     *
+     * @param name the user name of this symbol
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
      * Gets the kind of this symbol
      *
      * @return The kind of this symbol
@@ -114,12 +123,30 @@ public class Symbol {
     }
 
     /**
+     * Sets the kind of this symbol
+     *
+     * @param kind The kind of this symbol
+     */
+    public void setKind(int kind) {
+        this.kind = kind;
+    }
+
+    /**
      * Gets the documentation for this symbol
      *
      * @return The documentation for this symbol
      */
     public MarkupContent getDocumentation() {
         return documentation;
+    }
+
+    /**
+     * Sets the documentation for this symbol
+     *
+     * @param documentation The documentation for this symbol
+     */
+    public void setDocumentation(MarkupContent documentation) {
+        this.documentation = documentation;
     }
 
     /**
@@ -197,33 +224,6 @@ public class Symbol {
      */
     public Symbol getParent() {
         return parent;
-    }
-
-    /**
-     * Sets th user name of this symbol
-     *
-     * @param name the user name of this symbol
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * Sets the kind of this symbol
-     *
-     * @param kind The kind of this symbol
-     */
-    public void setKind(int kind) {
-        this.kind = kind;
-    }
-
-    /**
-     * Sets the documentation for this symbol
-     *
-     * @param documentation The documentation for this symbol
-     */
-    public void setDocumentation(MarkupContent documentation) {
-        this.documentation = documentation;
     }
 
     /**

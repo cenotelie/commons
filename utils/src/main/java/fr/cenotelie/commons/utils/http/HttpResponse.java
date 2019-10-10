@@ -35,6 +35,10 @@ public class HttpResponse {
      */
     private final int code;
     /**
+     * The content type for the response body, if any
+     */
+    private final String contentType;
+    /**
      * The response body, if any
      */
     private byte[] bodyBytes;
@@ -43,13 +47,46 @@ public class HttpResponse {
      */
     private String bodyString;
     /**
-     * The content type for the response body, if any
-     */
-    private final String contentType;
-    /**
      * The response's headers
      */
     private Collection<Couple<String, String>> headers;
+
+    /**
+     * Initializes this response
+     *
+     * @param code The response code
+     */
+    public HttpResponse(int code) {
+        this.code = code;
+        this.contentType = null;
+        this.bodyBytes = null;
+    }
+
+    /**
+     * Initializes this response
+     *
+     * @param code        The response code
+     * @param contentType The response content type, if any
+     * @param body        The response content, if any
+     */
+    public HttpResponse(int code, String contentType, byte[] body) {
+        this.code = code;
+        this.contentType = contentType;
+        this.bodyBytes = body;
+    }
+
+    /**
+     * Initializes this response
+     *
+     * @param code        The response code
+     * @param contentType The response content type, if any
+     * @param body        The response content, if any
+     */
+    public HttpResponse(int code, String contentType, String body) {
+        this.code = code;
+        this.contentType = contentType;
+        this.bodyString = body;
+    }
 
     /**
      * Gets the HTTP response code
@@ -120,42 +157,5 @@ public class HttpResponse {
         if (headers == null)
             headers = new ArrayList<>();
         headers.add(new Couple<>(name, value));
-    }
-
-    /**
-     * Initializes this response
-     *
-     * @param code The response code
-     */
-    public HttpResponse(int code) {
-        this.code = code;
-        this.contentType = null;
-        this.bodyBytes = null;
-    }
-
-    /**
-     * Initializes this response
-     *
-     * @param code        The response code
-     * @param contentType The response content type, if any
-     * @param body        The response content, if any
-     */
-    public HttpResponse(int code, String contentType, byte[] body) {
-        this.code = code;
-        this.contentType = contentType;
-        this.bodyBytes = body;
-    }
-
-    /**
-     * Initializes this response
-     *
-     * @param code        The response code
-     * @param contentType The response content type, if any
-     * @param body        The response content, if any
-     */
-    public HttpResponse(int code, String contentType, String body) {
-        this.code = code;
-        this.contentType = contentType;
-        this.bodyString = body;
     }
 }

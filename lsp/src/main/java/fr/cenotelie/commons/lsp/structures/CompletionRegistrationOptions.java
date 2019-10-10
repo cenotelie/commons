@@ -38,24 +38,6 @@ public class CompletionRegistrationOptions extends TextDocumentRegistrationOptio
     private final boolean resolveProvider;
 
     /**
-     * Gets the characters that trigger completion automatically
-     *
-     * @return The characters that trigger completion automatically
-     */
-    public String[] getTriggerCharacters() {
-        return triggerCharacters;
-    }
-
-    /**
-     * Gets whether the server provides support to resolve additional information for a completion item
-     *
-     * @return Whether the server provides support to resolve additional information for a completion item
-     */
-    public boolean getResolveProvider() {
-        return resolveProvider;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param documentSelector  A document selector to identify the scope of the registration
@@ -111,6 +93,24 @@ public class CompletionRegistrationOptions extends TextDocumentRegistrationOptio
         }
         this.triggerCharacters = triggerCharacters;
         this.resolveProvider = resolveProvider;
+    }
+
+    /**
+     * Gets the characters that trigger completion automatically
+     *
+     * @return The characters that trigger completion automatically
+     */
+    public String[] getTriggerCharacters() {
+        return triggerCharacters;
+    }
+
+    /**
+     * Gets whether the server provides support to resolve additional information for a completion item
+     *
+     * @return Whether the server provides support to resolve additional information for a completion item
+     */
+    public boolean getResolveProvider() {
+        return resolveProvider;
     }
 
     @Override

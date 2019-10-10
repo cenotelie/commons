@@ -36,6 +36,10 @@ public class CombiningIterator<X, Y> implements Iterator<Couple<X, Y>> {
      */
     protected final Iterator<? extends X> leftIterator;
     /**
+     * The adapter to get an iterator of Y for each X item
+     */
+    protected final Adapter<X, Iterator<Y>> adapter;
+    /**
      * The next left value for the result
      */
     protected X nextLeft;
@@ -47,10 +51,6 @@ public class CombiningIterator<X, Y> implements Iterator<Couple<X, Y>> {
      * The last iterator on the right used for the last result
      */
     protected Iterator<Y> lastRightIterator;
-    /**
-     * The adapter to get an iterator of Y for each X item
-     */
-    protected final Adapter<X, Iterator<Y>> adapter;
 
     /**
      * Initializes this iterator

@@ -39,24 +39,6 @@ public class DocumentHighlight implements Serializable {
     private final int kind;
 
     /**
-     * Gets the range this highlight applies to
-     *
-     * @return The range this highlight applies to
-     */
-    public Range getRange() {
-        return range;
-    }
-
-    /**
-     * Gets the highlight kind, default is DocumentHighlightKind.Text
-     *
-     * @return The highlight kind, default is DocumentHighlightKind.Text
-     */
-    public int getKind() {
-        return kind;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param range The range this highlight applies to
@@ -103,6 +85,24 @@ public class DocumentHighlight implements Serializable {
         }
         this.range = range != null ? range : new Range(new Position(0, 0), new Position(0, 0));
         this.kind = kind;
+    }
+
+    /**
+     * Gets the range this highlight applies to
+     *
+     * @return The range this highlight applies to
+     */
+    public Range getRange() {
+        return range;
+    }
+
+    /**
+     * Gets the highlight kind, default is DocumentHighlightKind.Text
+     *
+     * @return The highlight kind, default is DocumentHighlightKind.Text
+     */
+    public int getKind() {
+        return kind;
     }
 
     @Override

@@ -133,8 +133,7 @@ public class SymbolRegistry implements SymbolFactory {
      * @return The found symbols
      */
     public Collection<SymbolInformation> search(String query) {
-        Collection<SymbolInformation> result = new ArrayList<>();
-        return result;
+        return new ArrayList<>();
     }
 
     /**

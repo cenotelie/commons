@@ -33,15 +33,6 @@ public class TextDocumentSaveRegistrationOptions extends TextDocumentRegistratio
     private final boolean includeText;
 
     /**
-     * Gets whether the client is supposed to include the content on save
-     *
-     * @return Whether the client is supposed to include the content on save
-     */
-    public boolean getIncludeText() {
-        return includeText;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param documentSelector A document selector to identify the scope of the registration
@@ -65,15 +56,21 @@ public class TextDocumentSaveRegistrationOptions extends TextDocumentRegistratio
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "includeText": {
-                    if (nodeValue.getSymbol().getID() == JsonLexer.ID.LITERAL_TRUE)
-                        includeText = true;
-                    break;
-                }
+            if ("includeText".equals(name)) {
+                if (nodeValue.getSymbol().getID() == JsonLexer.ID.LITERAL_TRUE)
+                    includeText = true;
             }
         }
         this.includeText = includeText;
+    }
+
+    /**
+     * Gets whether the client is supposed to include the content on save
+     *
+     * @return Whether the client is supposed to include the content on save
+     */
+    public boolean getIncludeText() {
+        return includeText;
     }
 
     @Override

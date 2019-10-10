@@ -32,15 +32,6 @@ public class ShowMessageRequestParams extends ShowMessageParams {
     private final MessageActionItem[] actions;
 
     /**
-     * Gets the message action items to present
-     *
-     * @return The message action items to present
-     */
-    public MessageActionItem[] getActions() {
-        return actions;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param type    The message type
@@ -65,17 +56,24 @@ public class ShowMessageRequestParams extends ShowMessageParams {
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "actions": {
-                    actions = new MessageActionItem[nodeValue.getChildren().size()];
-                    int index = 0;
-                    for (ASTNode action : nodeValue.getChildren()) {
-                        actions[index++] = new MessageActionItem(action);
-                    }
+            if ("actions".equals(name)) {
+                actions = new MessageActionItem[nodeValue.getChildren().size()];
+                int index = 0;
+                for (ASTNode action : nodeValue.getChildren()) {
+                    actions[index++] = new MessageActionItem(action);
                 }
             }
         }
         this.actions = actions;
+    }
+
+    /**
+     * Gets the message action items to present
+     *
+     * @return The message action items to present
+     */
+    public MessageActionItem[] getActions() {
+        return actions;
     }
 
     @Override

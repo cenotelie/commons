@@ -63,61 +63,6 @@ public class InitializeParams implements Serializable {
     private final String trace;
 
     /**
-     * Gets the process Id of the parent process that started the server.
-     *
-     * @return The process Id of the parent process that started the server.
-     */
-    public int getProcessId() {
-        return processId;
-    }
-
-    /**
-     * Gets the rootPath of the workspace.
-     *
-     * @return The rootPath of the workspace.
-     * @deprecated in favour of rootUri.
-     */
-    public String getRootPath() {
-        return rootPath;
-    }
-
-    /**
-     * Gets the rootUri of the workspace.
-     *
-     * @return The rootUri of the workspace.
-     */
-    public String getRootUri() {
-        return rootUri;
-    }
-
-    /**
-     * Gets the user provided initialization options.
-     *
-     * @return The user provided initialization options.
-     */
-    public Object getInitializationOptions() {
-        return initializationOptions;
-    }
-
-    /**
-     * Gets the capabilities provided by the client (editor or tool)
-     *
-     * @return The capabilities provided by the client (editor or tool)
-     */
-    public ClientCapabilities getCapabilities() {
-        return capabilities;
-    }
-
-    /**
-     * Gets the initial trace setting
-     *
-     * @return The initial trace setting
-     */
-    public String getTrace() {
-        return trace;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param processId             The process Id of the parent process that started the server.
@@ -197,6 +142,61 @@ public class InitializeParams implements Serializable {
         this.initializationOptions = initializationOptions;
         this.capabilities = capabilities != null ? capabilities : new ClientCapabilities();
         this.trace = trace;
+    }
+
+    /**
+     * Gets the process Id of the parent process that started the server.
+     *
+     * @return The process Id of the parent process that started the server.
+     */
+    public int getProcessId() {
+        return processId;
+    }
+
+    /**
+     * Gets the rootPath of the workspace.
+     *
+     * @return The rootPath of the workspace.
+     * @deprecated in favour of rootUri.
+     */
+    public String getRootPath() {
+        return rootPath;
+    }
+
+    /**
+     * Gets the rootUri of the workspace.
+     *
+     * @return The rootUri of the workspace.
+     */
+    public String getRootUri() {
+        return rootUri;
+    }
+
+    /**
+     * Gets the user provided initialization options.
+     *
+     * @return The user provided initialization options.
+     */
+    public Object getInitializationOptions() {
+        return initializationOptions;
+    }
+
+    /**
+     * Gets the capabilities provided by the client (editor or tool)
+     *
+     * @return The capabilities provided by the client (editor or tool)
+     */
+    public ClientCapabilities getCapabilities() {
+        return capabilities;
+    }
+
+    /**
+     * Gets the initial trace setting
+     *
+     * @return The initial trace setting
+     */
+    public String getTrace() {
+        return trace;
     }
 
     @Override

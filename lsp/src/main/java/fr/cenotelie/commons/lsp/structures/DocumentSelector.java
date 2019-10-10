@@ -33,6 +33,27 @@ public class DocumentSelector implements Serializable {
     private final DocumentFilter[] filters;
 
     /**
+     * Initializes this structure
+     *
+     * @param filters The filters
+     */
+    public DocumentSelector(DocumentFilter[] filters) {
+        this.filters = filters;
+    }
+
+    /**
+     * Initializes this structure
+     *
+     * @param definition The serialized definition
+     */
+    public DocumentSelector(ASTNode definition) {
+        this.filters = new DocumentFilter[definition.getChildren().size()];
+        int index = 0;
+        for (ASTNode child : definition.getChildren())
+            filters[index++] = new DocumentFilter(child);
+    }
+
+    /**
      * Gets the inner filter
      *
      * @return The inner filters
@@ -58,27 +79,6 @@ public class DocumentSelector implements Serializable {
      */
     public DocumentFilter get(int index) {
         return filters[index];
-    }
-
-    /**
-     * Initializes this structure
-     *
-     * @param filters The filters
-     */
-    public DocumentSelector(DocumentFilter[] filters) {
-        this.filters = filters;
-    }
-
-    /**
-     * Initializes this structure
-     *
-     * @param definition The serialized definition
-     */
-    public DocumentSelector(ASTNode definition) {
-        this.filters = new DocumentFilter[definition.getChildren().size()];
-        int index = 0;
-        for (ASTNode child : definition.getChildren())
-            filters[index++] = new DocumentFilter(child);
     }
 
     @Override

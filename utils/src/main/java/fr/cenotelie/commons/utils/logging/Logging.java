@@ -24,13 +24,13 @@ package fr.cenotelie.commons.utils.logging;
  */
 public class Logging {
     /**
-     * The default logger
-     */
-    private static Logger DEFAULT = new ConsoleLogger();
-    /**
      * The loggers for specific threads
      */
     private static final ThreadLocal<Logger> THREAD_LOGGERS = new ThreadLocal<>();
+    /**
+     * The default logger
+     */
+    private static Logger DEFAULT = new ConsoleLogger();
 
     /**
      * Gets the default logger

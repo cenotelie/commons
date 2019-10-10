@@ -33,15 +33,6 @@ public class UnregistrationParams implements Serializable {
     private final Unregistration[] unregisterations;
 
     /**
-     * Gets the un-registrations
-     *
-     * @return The un-registrations
-     */
-    public Unregistration[] getUnregisterations() {
-        return unregisterations;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param registrations The un-registrations
@@ -62,16 +53,23 @@ public class UnregistrationParams implements Serializable {
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "unregisterations": {
-                    unregisterations = new Unregistration[nodeValue.getChildren().size()];
-                    int index = 0;
-                    for (ASTNode registration : nodeValue.getChildren())
-                        unregisterations[index++] = new Unregistration(registration);
-                }
+            if ("unregisterations".equals(name)) {
+                unregisterations = new Unregistration[nodeValue.getChildren().size()];
+                int index = 0;
+                for (ASTNode registration : nodeValue.getChildren())
+                    unregisterations[index++] = new Unregistration(registration);
             }
         }
         this.unregisterations = unregisterations;
+    }
+
+    /**
+     * Gets the un-registrations
+     *
+     * @return The un-registrations
+     */
+    public Unregistration[] getUnregisterations() {
+        return unregisterations;
     }
 
     @Override

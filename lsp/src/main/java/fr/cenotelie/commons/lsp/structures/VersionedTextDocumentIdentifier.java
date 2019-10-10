@@ -32,15 +32,6 @@ public class VersionedTextDocumentIdentifier extends TextDocumentIdentifier {
     private final int version;
 
     /**
-     * Gets the version number of this document
-     *
-     * @return The version number of this document
-     */
-    public int getVersion() {
-        return version;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param uri     The document's URI
@@ -64,14 +55,20 @@ public class VersionedTextDocumentIdentifier extends TextDocumentIdentifier {
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "version": {
-                    version = Integer.parseInt(nodeValue.getValue());
-                    break;
-                }
+            if ("version".equals(name)) {
+                version = Integer.parseInt(nodeValue.getValue());
             }
         }
         this.version = version;
+    }
+
+    /**
+     * Gets the version number of this document
+     *
+     * @return The version number of this document
+     */
+    public int getVersion() {
+        return version;
     }
 
     @Override

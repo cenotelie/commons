@@ -52,6 +52,14 @@ public class Workspace {
     protected LspEndpointLocal local;
 
     /**
+     * Initializes an empty workspace
+     */
+    public Workspace() {
+        this.documents = new HashMap<>();
+        this.symbolRegistry = new SymbolRegistry();
+    }
+
+    /**
      * Gets the server capabilities that are supported by this workspace
      *
      * @return The server capabilities that are supported by this workspace
@@ -122,14 +130,6 @@ public class Workspace {
      */
     public void setLocal(LspEndpointLocal local) {
         this.local = local;
-    }
-
-    /**
-     * Initializes an empty workspace
-     */
-    public Workspace() {
-        this.documents = new HashMap<>();
-        this.symbolRegistry = new SymbolRegistry();
     }
 
     /**
@@ -366,7 +366,7 @@ public class Workspace {
             local.send(new JsonRpcRequest(
                     null,
                     "textDocument/publishDiagnostics",
-                    new PublishDiagnosticsParams(document.getUri(), analysis.getDiagnostics().toArray(new Diagnostic[analysis.getDiagnostics().size()]))
+                    new PublishDiagnosticsParams(document.getUri(), analysis.getDiagnostics().toArray(new Diagnostic[0]))
             ));
         }
         symbolRegistry.onDocumentChanged(document, analysis.getSymbols());
@@ -572,7 +572,7 @@ public class Workspace {
         DocumentAnalysis analysis = document.getLastAnalysis();
         if (analysis == null)
             return new DocumentLink[0];
-        return analysis.getLinks().toArray(new DocumentLink[analysis.getLinks().size()]);
+        return analysis.getLinks().toArray(new DocumentLink[0]);
     }
 
     /**

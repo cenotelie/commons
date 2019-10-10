@@ -65,7 +65,7 @@ public class MetricComposite implements Metric {
         this.name = name;
         this.snapshotTTL = snapshotTTL;
         this.hints = Collections.singletonList(new Couple<>(HINT_IS_COMPOSITE, "true"));
-        this.parts = (parts == null || parts.length == 0) ? new ArrayList<Metric>() : Arrays.asList(parts);
+        this.parts = (parts == null || parts.length == 0) ? new ArrayList<>() : Arrays.asList(parts);
     }
 
     /**

@@ -130,13 +130,21 @@ public class WriteAheadLog extends TransactionalStorage {
      */
     private final WalAccess[] accesses;
     /**
-     * The currently running transactions
-     */
-    private volatile WalTransaction[] transactions;
-    /**
      * The currently running transactions by thread
      */
     private final WeakHashMap<Thread, Transaction> transactionsByThread;
+    /**
+     * The next identifier for transactions
+     */
+    private final AtomicLong indexSequencer;
+    /**
+     * The scheduler for the janitor's task
+     */
+    private final DaemonTaskScheduler janitorScheduler;
+    /**
+     * The currently running transactions
+     */
+    private volatile WalTransaction[] transactions;
     /**
      * The number of running transactions
      */
@@ -153,14 +161,6 @@ public class WriteAheadLog extends TransactionalStorage {
      * The identifier of the last committed transaction
      */
     private volatile long indexLastCommitted;
-    /**
-     * The next identifier for transactions
-     */
-    private final AtomicLong indexSequencer;
-    /**
-     * The scheduler for the janitor's task
-     */
-    private final DaemonTaskScheduler janitorScheduler;
 
     /**
      * Initializes this log with a janitor
@@ -293,7 +293,7 @@ public class WriteAheadLog extends TransactionalStorage {
     }
 
     @Override
-    public void flush() throws IOException {
+    public void flush() {
         cleanup();
     }
 

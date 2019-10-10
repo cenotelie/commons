@@ -38,24 +38,6 @@ public class PublishDiagnosticsParams implements Serializable {
     private final Diagnostic[] diagnostics;
 
     /**
-     * Gets the URI for which diagnostic information is reported
-     *
-     * @return The URI for which diagnostic information is reported
-     */
-    public String getUri() {
-        return uri;
-    }
-
-    /**
-     * Gets the diagnostic information items
-     *
-     * @return The diagnostic information items
-     */
-    public Diagnostic[] getDiagnostics() {
-        return diagnostics;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param uri         The URI for which diagnostic information is reported
@@ -96,6 +78,24 @@ public class PublishDiagnosticsParams implements Serializable {
         }
         this.uri = uri;
         this.diagnostics = diagnostics;
+    }
+
+    /**
+     * Gets the URI for which diagnostic information is reported
+     *
+     * @return The URI for which diagnostic information is reported
+     */
+    public String getUri() {
+        return uri;
+    }
+
+    /**
+     * Gets the diagnostic information items
+     *
+     * @return The diagnostic information items
+     */
+    public Diagnostic[] getDiagnostics() {
+        return diagnostics;
     }
 
     @Override

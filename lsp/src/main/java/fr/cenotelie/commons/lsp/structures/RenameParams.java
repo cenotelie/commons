@@ -42,33 +42,6 @@ public class RenameParams implements Serializable {
     private final String newName;
 
     /**
-     * Gets the document that contains the symbol to be renamed
-     *
-     * @return The document that contains the symbol to be renamed
-     */
-    public TextDocumentIdentifier getTextDocument() {
-        return textDocument;
-    }
-
-    /**
-     * Gets the position of the symbol within the document
-     *
-     * @return The position of the symbol within the document
-     */
-    public Position getPosition() {
-        return position;
-    }
-
-    /**
-     * Gets the new name of the symbol
-     *
-     * @return The new name of the symbol
-     */
-    public String getNewName() {
-        return newName;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param textDocument The document that contains the symbol to be renamed
@@ -114,6 +87,33 @@ public class RenameParams implements Serializable {
         this.textDocument = textDocument != null ? textDocument : new TextDocumentIdentifier("");
         this.position = position != null ? position : new Position(0, 0);
         this.newName = newName;
+    }
+
+    /**
+     * Gets the document that contains the symbol to be renamed
+     *
+     * @return The document that contains the symbol to be renamed
+     */
+    public TextDocumentIdentifier getTextDocument() {
+        return textDocument;
+    }
+
+    /**
+     * Gets the position of the symbol within the document
+     *
+     * @return The position of the symbol within the document
+     */
+    public Position getPosition() {
+        return position;
+    }
+
+    /**
+     * Gets the new name of the symbol
+     *
+     * @return The new name of the symbol
+     */
+    public String getNewName() {
+        return newName;
     }
 
     @Override

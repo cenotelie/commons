@@ -54,11 +54,6 @@ public class StoredObject<T> extends StoredEntity {
         this.mediator = mediator;
     }
 
-    @Override
-    public long getLocation() {
-        return entry;
-    }
-
     /**
      * Creates a stored object
      *
@@ -74,6 +69,11 @@ public class StoredObject<T> extends StoredEntity {
             mediator.write(access, initValue);
         }
         return new StoredObject<>(store, entry, mediator);
+    }
+
+    @Override
+    public long getLocation() {
+        return entry;
     }
 
     /**

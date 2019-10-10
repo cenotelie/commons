@@ -38,24 +38,6 @@ public class DidChangeTextDocumentParams implements Serializable {
     private final TextDocumentContentChangeEvent[] contentChanges;
 
     /**
-     * Gets the document that did change
-     *
-     * @return The document that did change
-     */
-    public VersionedTextDocumentIdentifier getTextDocument() {
-        return textDocument;
-    }
-
-    /**
-     * Gets the actual changes
-     *
-     * @return The actual changes
-     */
-    public TextDocumentContentChangeEvent[] getContentChanges() {
-        return contentChanges;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param textDocument   The document that did change
@@ -95,6 +77,24 @@ public class DidChangeTextDocumentParams implements Serializable {
         }
         this.textDocument = textDocument;
         this.contentChanges = contentChanges;
+    }
+
+    /**
+     * Gets the document that did change
+     *
+     * @return The document that did change
+     */
+    public VersionedTextDocumentIdentifier getTextDocument() {
+        return textDocument;
+    }
+
+    /**
+     * Gets the actual changes
+     *
+     * @return The actual changes
+     */
+    public TextDocumentContentChangeEvent[] getContentChanges() {
+        return contentChanges;
     }
 
     @Override

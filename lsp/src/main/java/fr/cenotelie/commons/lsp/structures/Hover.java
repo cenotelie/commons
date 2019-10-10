@@ -40,24 +40,6 @@ public class Hover implements Serializable {
     private final Range range;
 
     /**
-     * Gets the hover's content
-     *
-     * @return The hover's content
-     */
-    public Object getContents() {
-        return contents;
-    }
-
-    /**
-     * Gets the range inside a text document that is used to visualize a hover
-     *
-     * @return The range inside a text document that is used to visualize a hover
-     */
-    public Range getRange() {
-        return range;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param content The hover's content
@@ -141,6 +123,24 @@ public class Hover implements Serializable {
                 return new MarkedStringCodeBlock(definition);
         }
         return null;
+    }
+
+    /**
+     * Gets the hover's content
+     *
+     * @return The hover's content
+     */
+    public Object getContents() {
+        return contents;
+    }
+
+    /**
+     * Gets the range inside a text document that is used to visualize a hover
+     *
+     * @return The range inside a text document that is used to visualize a hover
+     */
+    public Range getRange() {
+        return range;
     }
 
     @Override

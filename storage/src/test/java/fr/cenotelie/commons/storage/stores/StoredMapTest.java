@@ -78,34 +78,31 @@ public class StoredMapTest {
             final StoredMap map = StoredMap.create(store);
             for (int i = 0; i != THREAD_COUNT; i++) {
                 final int index = i;
-                Thread thread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        boolean success = true;
-                        try {
-                            for (int i = index; i < ENTRIES; i += THREAD_COUNT) {
-                                if (!map.tryPut(i, i)) {
-                                    success = false;
-                                    break;
-                                }
+                Thread thread = new Thread(() -> {
+                    boolean success = true;
+                    try {
+                        for (int i1 = index; i1 < ENTRIES; i1 += THREAD_COUNT) {
+                            if (!map.tryPut(i1, i1)) {
+                                success = false;
+                                break;
                             }
-                            for (int i = index; i < ENTRIES; i += THREAD_COUNT) {
-                                if (!map.compareAndSet(i, i, i + 1)) {
-                                    success = false;
-                                    break;
-                                }
-                            }
-                            for (int i = index; i < ENTRIES; i += THREAD_COUNT) {
-                                if (map.compareAndSet(i, i, i + 1)) {
-                                    success = false;
-                                    break;
-                                }
-                            }
-                        } catch (Throwable exception) {
-                            success = false;
                         }
-                        successes[index] = success;
+                        for (int i1 = index; i1 < ENTRIES; i1 += THREAD_COUNT) {
+                            if (!map.compareAndSet(i1, i1, i1 + 1)) {
+                                success = false;
+                                break;
+                            }
+                        }
+                        for (int i1 = index; i1 < ENTRIES; i1 += THREAD_COUNT) {
+                            if (map.compareAndSet(i1, i1, i1 + 1)) {
+                                success = false;
+                                break;
+                            }
+                        }
+                    } catch (Throwable exception) {
+                        success = false;
                     }
+                    successes[index] = success;
                 }, "Test Thread " + i);
                 threads.add(thread);
                 thread.start();

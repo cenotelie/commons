@@ -51,6 +51,19 @@ public class DocumentAnalysis {
     protected boolean isSuccessful;
 
     /**
+     * Initializes this analysis
+     *
+     * @param version The version of the document used for this analysis
+     */
+    public DocumentAnalysis(DocumentVersion version) {
+        this.version = version;
+        this.symbols = new DocumentSymbols();
+        this.diagnostics = new ArrayList<>();
+        this.links = new ArrayList<>();
+        this.isSuccessful = false;
+    }
+
+    /**
      * Gets the version of the document used for this analysis
      *
      * @return The version of the document used for this analysis
@@ -102,18 +115,5 @@ public class DocumentAnalysis {
      */
     public void setIsSuccessful(boolean isSuccessful) {
         this.isSuccessful = isSuccessful;
-    }
-
-    /**
-     * Initializes this analysis
-     *
-     * @param version The version of the document used for this analysis
-     */
-    public DocumentAnalysis(DocumentVersion version) {
-        this.version = version;
-        this.symbols = new DocumentSymbols();
-        this.diagnostics = new ArrayList<>();
-        this.links = new ArrayList<>();
-        this.isSuccessful = false;
     }
 }

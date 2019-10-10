@@ -34,15 +34,6 @@ public class RegistrationParams implements Serializable {
     private final Registration[] registrations;
 
     /**
-     * Gets the registrations
-     *
-     * @return The registrations
-     */
-    public Registration[] getRegistrations() {
-        return registrations;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param registrations The registrations
@@ -64,16 +55,23 @@ public class RegistrationParams implements Serializable {
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "registrations": {
-                    registrations = new Registration[nodeValue.getChildren().size()];
-                    int index = 0;
-                    for (ASTNode registration : nodeValue.getChildren())
-                        registrations[index++] = new Registration(registration, deserializer);
-                }
+            if ("registrations".equals(name)) {
+                registrations = new Registration[nodeValue.getChildren().size()];
+                int index = 0;
+                for (ASTNode registration : nodeValue.getChildren())
+                    registrations[index++] = new Registration(registration, deserializer);
             }
         }
         this.registrations = registrations;
+    }
+
+    /**
+     * Gets the registrations
+     *
+     * @return The registrations
+     */
+    public Registration[] getRegistrations() {
+        return registrations;
     }
 
     @Override

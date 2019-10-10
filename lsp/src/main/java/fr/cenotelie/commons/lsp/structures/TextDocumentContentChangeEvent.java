@@ -72,53 +72,6 @@ public class TextDocumentContentChangeEvent implements Serializable {
     private final String text;
 
     /**
-     * Gets the range of the document that changed
-     *
-     * @return The range of the document that changed
-     */
-    public Range getRange() {
-        return range;
-    }
-
-    /**
-     * Gets the length of the range that got replaced (-1 when omitted)
-     *
-     * @return The length of the range that got replaced (-1 when omitted)
-     */
-    public int getRangeLength() {
-        return rangeLength;
-    }
-
-    /**
-     * Gets the new text of the range/document
-     *
-     * @return The new text of the range/document
-     */
-    public String getText() {
-        return text;
-    }
-
-    /**
-     * Gets whether this event is a full replacement of the text
-     *
-     * @return Whether this event is a full replacement of the text
-     */
-    public boolean isFullReplace() {
-        return (range == null && rangeLength == NO_RANGE);
-    }
-
-    /**
-     * Returns the equivalent edit, if possible
-     *
-     * @return The equivalent edit , if possible, null otherwise
-     */
-    public TextEdit toEdit() {
-        if (range == null || rangeLength < 0)
-            return null;
-        return new TextEdit(range, text);
-    }
-
-    /**
      * Initializes this structure
      *
      * @param range       The range of the document that changed
@@ -164,6 +117,53 @@ public class TextDocumentContentChangeEvent implements Serializable {
         this.range = range;
         this.rangeLength = rangeLength;
         this.text = text;
+    }
+
+    /**
+     * Gets the range of the document that changed
+     *
+     * @return The range of the document that changed
+     */
+    public Range getRange() {
+        return range;
+    }
+
+    /**
+     * Gets the length of the range that got replaced (-1 when omitted)
+     *
+     * @return The length of the range that got replaced (-1 when omitted)
+     */
+    public int getRangeLength() {
+        return rangeLength;
+    }
+
+    /**
+     * Gets the new text of the range/document
+     *
+     * @return The new text of the range/document
+     */
+    public String getText() {
+        return text;
+    }
+
+    /**
+     * Gets whether this event is a full replacement of the text
+     *
+     * @return Whether this event is a full replacement of the text
+     */
+    public boolean isFullReplace() {
+        return (range == null && rangeLength == NO_RANGE);
+    }
+
+    /**
+     * Returns the equivalent edit, if possible
+     *
+     * @return The equivalent edit , if possible, null otherwise
+     */
+    public TextEdit toEdit() {
+        if (range == null || rangeLength < 0)
+            return null;
+        return new TextEdit(range, text);
     }
 
     @Override

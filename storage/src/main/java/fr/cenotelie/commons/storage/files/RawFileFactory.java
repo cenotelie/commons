@@ -27,16 +27,6 @@ import java.io.IOException;
  */
 public abstract class RawFileFactory {
     /**
-     * Creates a file storage system for the specified file
-     *
-     * @param file     The system file
-     * @param writable Whether the storage system shall allow writing
-     * @return The file storage system
-     * @throws IOException when an IO error occurred
-     */
-    public abstract RawFile newStorage(File file, boolean writable) throws IOException;
-
-    /**
      * The default factory
      */
     public static final RawFileFactory DEFAULT = new RawFileFactory() {
@@ -45,4 +35,14 @@ public abstract class RawFileFactory {
             return new RawFileBuffered(file, writable);
         }
     };
+
+    /**
+     * Creates a file storage system for the specified file
+     *
+     * @param file     The system file
+     * @param writable Whether the storage system shall allow writing
+     * @return The file storage system
+     * @throws IOException when an IO error occurred
+     */
+    public abstract RawFile newStorage(File file, boolean writable) throws IOException;
 }

@@ -46,33 +46,6 @@ public class SignatureInformation implements Serializable {
     private final ParameterInformation[] parameters;
 
     /**
-     * The label of this signature
-     *
-     * @return Gets he label of this signature
-     */
-    public String getLabel() {
-        return label;
-    }
-
-    /**
-     * Gets the human-readable doc-comment of this signature
-     *
-     * @return The human-readable doc-comment of this signature
-     */
-    public Object getDocumentation() {
-        return documentation;
-    }
-
-    /**
-     * Gets the parameters of this signature
-     *
-     * @return The parameters of this signature
-     */
-    public ParameterInformation[] getParameters() {
-        return parameters;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param label The label of this signature
@@ -168,6 +141,33 @@ public class SignatureInformation implements Serializable {
         this.label = label;
         this.documentation = documentation;
         this.parameters = parameters;
+    }
+
+    /**
+     * The label of this signature
+     *
+     * @return Gets he label of this signature
+     */
+    public String getLabel() {
+        return label;
+    }
+
+    /**
+     * Gets the human-readable doc-comment of this signature
+     *
+     * @return The human-readable doc-comment of this signature
+     */
+    public Object getDocumentation() {
+        return documentation;
+    }
+
+    /**
+     * Gets the parameters of this signature
+     *
+     * @return The parameters of this signature
+     */
+    public ParameterInformation[] getParameters() {
+        return parameters;
     }
 
     @Override

@@ -43,6 +43,45 @@ public class WorkspaceEdit implements Serializable {
     private final Map<String, TextDocumentEdit> documentChanges;
 
     /**
+     * Initializes this structure
+     */
+    public WorkspaceEdit() {
+        this.changes = new HashMap<>();
+        this.documentChanges = new HashMap<>();
+    }
+
+    /**
+     * Initializes this structure
+     *
+     * @param definition The serialized definition
+     */
+    public WorkspaceEdit(ASTNode definition) {
+        Map<String, TextEdit[]> changes = null;
+        Map<String, TextDocumentEdit> documentChanges = null;
+        for (ASTNode child : definition.getChildren()) {
+            ASTNode nodeMemberName = child.getChildren().get(0);
+            String name = TextUtils.unescape(nodeMemberName.getValue());
+            name = name.substring(1, name.length() - 1);
+            ASTNode nodeValue = child.getChildren().get(1);
+            switch (name) {
+                case "changes": {
+                    changes = loadChanges(nodeValue);
+                    break;
+                }
+                case "documentChanges": {
+                    documentChanges = new HashMap<>();
+                    for (ASTNode nodeItem : nodeValue.getChildren()) {
+                        TextDocumentEdit edit = new TextDocumentEdit(nodeItem);
+                        documentChanges.put(edit.getTextDocument().getUri(), edit);
+                    }
+                }
+            }
+        }
+        this.changes = changes;
+        this.documentChanges = documentChanges;
+    }
+
+    /**
      * Gets the changed resources
      *
      * @return The changed resources
@@ -82,45 +121,6 @@ public class WorkspaceEdit implements Serializable {
         if (documentChanges == null)
             return null;
         return documentChanges.get(resource);
-    }
-
-    /**
-     * Initializes this structure
-     */
-    public WorkspaceEdit() {
-        this.changes = new HashMap<>();
-        this.documentChanges = new HashMap<>();
-    }
-
-    /**
-     * Initializes this structure
-     *
-     * @param definition The serialized definition
-     */
-    public WorkspaceEdit(ASTNode definition) {
-        Map<String, TextEdit[]> changes = null;
-        Map<String, TextDocumentEdit> documentChanges = null;
-        for (ASTNode child : definition.getChildren()) {
-            ASTNode nodeMemberName = child.getChildren().get(0);
-            String name = TextUtils.unescape(nodeMemberName.getValue());
-            name = name.substring(1, name.length() - 1);
-            ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "changes": {
-                    changes = loadChanges(nodeValue);
-                    break;
-                }
-                case "documentChanges": {
-                    documentChanges = new HashMap<>();
-                    for (ASTNode nodeItem : nodeValue.getChildren()) {
-                        TextDocumentEdit edit = new TextDocumentEdit(nodeItem);
-                        documentChanges.put(edit.getTextDocument().getUri(), edit);
-                    }
-                }
-            }
-        }
-        this.changes = changes;
-        this.documentChanges = documentChanges;
     }
 
     /**

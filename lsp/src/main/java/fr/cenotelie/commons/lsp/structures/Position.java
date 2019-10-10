@@ -49,24 +49,6 @@ public class Position implements Serializable, Comparable<Position> {
     private final int character;
 
     /**
-     * Gets the line position in a document (zero-based).
-     *
-     * @return Line position in a document (zero-based).
-     */
-    public int getLine() {
-        return line;
-    }
-
-    /**
-     * Gets the character offset on a line in a document (zero-based).
-     *
-     * @return Character offset on a line in a document (zero-based).
-     */
-    public int getCharacter() {
-        return character;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param line      Line position in a document (zero-based).
@@ -103,6 +85,24 @@ public class Position implements Serializable, Comparable<Position> {
         }
         this.line = line;
         this.character = character;
+    }
+
+    /**
+     * Gets the line position in a document (zero-based).
+     *
+     * @return Line position in a document (zero-based).
+     */
+    public int getLine() {
+        return line;
+    }
+
+    /**
+     * Gets the character offset on a line in a document (zero-based).
+     *
+     * @return Character offset on a line in a document (zero-based).
+     */
+    public int getCharacter() {
+        return character;
     }
 
     @Override

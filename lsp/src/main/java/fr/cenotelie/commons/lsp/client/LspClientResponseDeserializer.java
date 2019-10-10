@@ -42,11 +42,9 @@ public class LspClientResponseDeserializer extends JsonDeserializer {
      * @return The de-serialized object
      */
     public Object deserializeObject(ASTNode definition, String method) {
-        switch (method) {
-            case "initialize":
-                return new InitializationResult(definition, this);
-            default:
-                return super.deserializeObject(definition, method);
+        if ("initialize".equals(method)) {
+            return new InitializationResult(definition, this);
         }
+        return super.deserializeObject(definition, method);
     }
 }

@@ -38,24 +38,6 @@ public class DocumentLink implements Serializable {
     private final String target;
 
     /**
-     * Gets the range this link applies to
-     *
-     * @return The range this link applies to
-     */
-    public Range getRange() {
-        return range;
-    }
-
-    /**
-     * Gets the uri this link points to
-     *
-     * @return The uri this link points to
-     */
-    public String getTarget() {
-        return target;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param range The range this link applies to
@@ -102,6 +84,24 @@ public class DocumentLink implements Serializable {
         }
         this.range = range != null ? range : new Range(new Position(0, 0), new Position(0, 0));
         this.target = target;
+    }
+
+    /**
+     * Gets the range this link applies to
+     *
+     * @return The range this link applies to
+     */
+    public Range getRange() {
+        return range;
+    }
+
+    /**
+     * Gets the uri this link points to
+     *
+     * @return The uri this link points to
+     */
+    public String getTarget() {
+        return target;
     }
 
     @Override

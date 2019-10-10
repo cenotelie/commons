@@ -38,24 +38,6 @@ public class MarkedStringCodeBlock implements MarkedString {
     private final String value;
 
     /**
-     * Gets the language identifier
-     *
-     * @return The language identifier
-     */
-    public String getLanguage() {
-        return language;
-    }
-
-    /**
-     * Gets the value of the code block
-     *
-     * @return The value of the code block
-     */
-    public String getValue() {
-        return value;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param language The language identifier
@@ -94,6 +76,24 @@ public class MarkedStringCodeBlock implements MarkedString {
         }
         this.language = language;
         this.value = value;
+    }
+
+    /**
+     * Gets the language identifier
+     *
+     * @return The language identifier
+     */
+    public String getLanguage() {
+        return language;
+    }
+
+    /**
+     * Gets the value of the code block
+     *
+     * @return The value of the code block
+     */
+    public String getValue() {
+        return value;
     }
 
     @Override

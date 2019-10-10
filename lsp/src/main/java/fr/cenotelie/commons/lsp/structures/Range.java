@@ -50,33 +50,6 @@ public class Range implements Serializable {
     private final Position end;
 
     /**
-     * Gets the range's start position.
-     *
-     * @return The range's start position.
-     */
-    public Position getStart() {
-        return start;
-    }
-
-    /**
-     * Gets the range's end position.
-     *
-     * @return The range's end position.
-     */
-    public Position getEnd() {
-        return end;
-    }
-
-    /**
-     * Gets whether this range is empty
-     *
-     * @return Whether this range is empty
-     */
-    public boolean isEmpty() {
-        return start.equals(end);
-    }
-
-    /**
      * Initializes this structure
      *
      * @param start The range's start position.
@@ -113,6 +86,33 @@ public class Range implements Serializable {
         }
         this.start = start != null ? start : new Position(0, 0);
         this.end = end != null ? end : new Position(0, 0);
+    }
+
+    /**
+     * Gets the range's start position.
+     *
+     * @return The range's start position.
+     */
+    public Position getStart() {
+        return start;
+    }
+
+    /**
+     * Gets the range's end position.
+     *
+     * @return The range's end position.
+     */
+    public Position getEnd() {
+        return end;
+    }
+
+    /**
+     * Gets whether this range is empty
+     *
+     * @return Whether this range is empty
+     */
+    public boolean isEmpty() {
+        return start.equals(end);
     }
 
     @Override

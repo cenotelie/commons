@@ -37,24 +37,6 @@ public class WillSaveTextDocumentParams implements Serializable {
     private final int reason;
 
     /**
-     * Gets the document that will be saved
-     *
-     * @return The document that will be saved
-     */
-    public TextDocumentIdentifier getTextDocument() {
-        return textDocument;
-    }
-
-    /**
-     * Gets the reason for saving
-     *
-     * @return The reason for saving
-     */
-    public int getReason() {
-        return reason;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param textDocument The document that will be saved
@@ -91,6 +73,24 @@ public class WillSaveTextDocumentParams implements Serializable {
         }
         this.textDocument = textDocument;
         this.reason = reason;
+    }
+
+    /**
+     * Gets the document that will be saved
+     *
+     * @return The document that will be saved
+     */
+    public TextDocumentIdentifier getTextDocument() {
+        return textDocument;
+    }
+
+    /**
+     * Gets the reason for saving
+     *
+     * @return The reason for saving
+     */
+    public int getReason() {
+        return reason;
     }
 
     @Override

@@ -90,6 +90,132 @@ public class CompletionItem implements Serializable {
     private Object data;
 
     /**
+     * Initializes this structure
+     *
+     * @param label The label of this completion item
+     * @param kind  The kind of this completion item
+     */
+    public CompletionItem(String label, int kind) {
+        this.label = label;
+        this.kind = kind;
+        this.insertTextFormat = InsertTextFormat.PLAIN_TEXT;
+    }
+
+    /**
+     * Initializes this structure
+     *
+     * @param label The label of this completion item
+     */
+    public CompletionItem(String label) {
+        this(label, CompletionItemKind.TEXT);
+    }
+
+    /**
+     * Initializes this structure
+     *
+     * @param definition   The serialized definition
+     * @param deserializer The deserializer to use
+     */
+    public CompletionItem(ASTNode definition, JsonDeserializer deserializer) {
+        String label = "";
+        int kind = CompletionItemKind.TEXT;
+        String detail = null;
+        Object documentation = null;
+        String sortText = null;
+        String filterText = null;
+        String insertText = null;
+        int insertTextFormat = InsertTextFormat.PLAIN_TEXT;
+        TextEdit textEdit = null;
+        TextEdit[] additionalTextEdits = null;
+        Command command = null;
+        Object data = null;
+        for (ASTNode child : definition.getChildren()) {
+            ASTNode nodeMemberName = child.getChildren().get(0);
+            String name = TextUtils.unescape(nodeMemberName.getValue());
+            name = name.substring(1, name.length() - 1);
+            ASTNode nodeValue = child.getChildren().get(1);
+            switch (name) {
+                case "label": {
+                    label = TextUtils.unescape(nodeValue.getValue());
+                    label = label.substring(1, label.length() - 1);
+                    break;
+                }
+                case "kind": {
+                    kind = Integer.parseInt(nodeValue.getValue());
+                    break;
+                }
+                case "detail": {
+                    detail = TextUtils.unescape(nodeValue.getValue());
+                    detail = detail.substring(1, detail.length() - 1);
+                    break;
+                }
+                case "documentation": {
+                    if (nodeValue.getSymbol().getID() == JsonParser.ID.object)
+                        documentation = new MarkupContent(nodeValue);
+                    else {
+                        String value = TextUtils.unescape(nodeValue.getValue());
+                        documentation = value.substring(1, value.length() - 1);
+                    }
+                    break;
+                }
+                case "sortText": {
+                    sortText = TextUtils.unescape(nodeValue.getValue());
+                    sortText = sortText.substring(1, sortText.length() - 1);
+                    break;
+                }
+                case "filterText": {
+                    filterText = TextUtils.unescape(nodeValue.getValue());
+                    filterText = filterText.substring(1, filterText.length() - 1);
+                    break;
+                }
+                case "insertText": {
+                    insertText = TextUtils.unescape(nodeValue.getValue());
+                    insertText = insertText.substring(1, insertText.length() - 1);
+                    break;
+                }
+                case "insertTextFormat": {
+                    insertTextFormat = Integer.parseInt(nodeValue.getValue());
+                    break;
+                }
+                case "textEdit": {
+                    textEdit = new TextEdit(nodeValue);
+                    break;
+                }
+                case "additionalTextEdits": {
+                    if (nodeValue.getSymbol().getID() == JsonParser.ID.array) {
+                        additionalTextEdits = new TextEdit[nodeValue.getChildren().size()];
+                        int index = 0;
+                        for (ASTNode nodeItem : nodeValue.getChildren()) {
+                            additionalTextEdits[index++] = new TextEdit(nodeItem);
+                        }
+                    }
+                    break;
+                }
+                case "command": {
+                    command = new Command(nodeValue, deserializer);
+                    break;
+                }
+                case "data": {
+                    data = deserializer.deserialize(nodeValue, this);
+                    break;
+                }
+            }
+        }
+        this.label = label;
+        this.kind = kind;
+        this.detail = detail;
+        this.documentation = documentation;
+        this.sortText = sortText;
+        this.filterText = filterText;
+        this.insertText = insertText;
+        this.insertTextFormat = insertTextFormat;
+        this.textEdit = textEdit;
+        this.additionalTextEdits = additionalTextEdits;
+        this.command = command;
+        this.data = data;
+    }
+
+    /**
      * Gets the label of this completion item
      *
      * @return The label of this completion item
@@ -293,132 +419,6 @@ public class CompletionItem implements Serializable {
      * @param data The data entry field that is preserved on a completion item between a completion and a completion resolve request
      */
     public void setData(Object data) {
-        this.data = data;
-    }
-
-    /**
-     * Initializes this structure
-     *
-     * @param label The label of this completion item
-     * @param kind  The kind of this completion item
-     */
-    public CompletionItem(String label, int kind) {
-        this.label = label;
-        this.kind = kind;
-        this.insertTextFormat = InsertTextFormat.PLAIN_TEXT;
-    }
-
-    /**
-     * Initializes this structure
-     *
-     * @param label The label of this completion item
-     */
-    public CompletionItem(String label) {
-        this(label, CompletionItemKind.TEXT);
-    }
-
-    /**
-     * Initializes this structure
-     *
-     * @param definition   The serialized definition
-     * @param deserializer The deserializer to use
-     */
-    public CompletionItem(ASTNode definition, JsonDeserializer deserializer) {
-        String label = "";
-        int kind = CompletionItemKind.TEXT;
-        String detail = null;
-        Object documentation = null;
-        String sortText = null;
-        String filterText = null;
-        String insertText = null;
-        int insertTextFormat = InsertTextFormat.PLAIN_TEXT;
-        TextEdit textEdit = null;
-        TextEdit[] additionalTextEdits = null;
-        Command command = null;
-        Object data = null;
-        for (ASTNode child : definition.getChildren()) {
-            ASTNode nodeMemberName = child.getChildren().get(0);
-            String name = TextUtils.unescape(nodeMemberName.getValue());
-            name = name.substring(1, name.length() - 1);
-            ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "label": {
-                    label = TextUtils.unescape(nodeValue.getValue());
-                    label = label.substring(1, label.length() - 1);
-                    break;
-                }
-                case "kind": {
-                    kind = Integer.parseInt(nodeValue.getValue());
-                    break;
-                }
-                case "detail": {
-                    detail = TextUtils.unescape(nodeValue.getValue());
-                    detail = detail.substring(1, detail.length() - 1);
-                    break;
-                }
-                case "documentation": {
-                    if (nodeValue.getSymbol().getID() == JsonParser.ID.object)
-                        documentation = new MarkupContent(nodeValue);
-                    else {
-                        String value = TextUtils.unescape(nodeValue.getValue());
-                        documentation = value.substring(1, value.length() - 1);
-                    }
-                    break;
-                }
-                case "sortText": {
-                    sortText = TextUtils.unescape(nodeValue.getValue());
-                    sortText = sortText.substring(1, sortText.length() - 1);
-                    break;
-                }
-                case "filterText": {
-                    filterText = TextUtils.unescape(nodeValue.getValue());
-                    filterText = filterText.substring(1, filterText.length() - 1);
-                    break;
-                }
-                case "insertText": {
-                    insertText = TextUtils.unescape(nodeValue.getValue());
-                    insertText = insertText.substring(1, insertText.length() - 1);
-                    break;
-                }
-                case "insertTextFormat": {
-                    insertTextFormat = Integer.parseInt(nodeValue.getValue());
-                    break;
-                }
-                case "textEdit": {
-                    textEdit = new TextEdit(nodeValue);
-                    break;
-                }
-                case "additionalTextEdits": {
-                    if (nodeValue.getSymbol().getID() == JsonParser.ID.array) {
-                        additionalTextEdits = new TextEdit[nodeValue.getChildren().size()];
-                        int index = 0;
-                        for (ASTNode nodeItem : nodeValue.getChildren()) {
-                            additionalTextEdits[index++] = new TextEdit(nodeItem);
-                        }
-                    }
-                    break;
-                }
-                case "command": {
-                    command = new Command(nodeValue, deserializer);
-                    break;
-                }
-                case "data": {
-                    data = deserializer.deserialize(nodeValue, this);
-                    break;
-                }
-            }
-        }
-        this.label = label;
-        this.kind = kind;
-        this.detail = detail;
-        this.documentation = documentation;
-        this.sortText = sortText;
-        this.filterText = filterText;
-        this.insertText = insertText;
-        this.insertTextFormat = insertTextFormat;
-        this.textEdit = textEdit;
-        this.additionalTextEdits = additionalTextEdits;
-        this.command = command;
         this.data = data;
     }
 

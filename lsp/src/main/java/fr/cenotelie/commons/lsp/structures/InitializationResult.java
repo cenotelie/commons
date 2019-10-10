@@ -34,15 +34,6 @@ public class InitializationResult implements Serializable {
     private final ServerCapabilities capabilities;
 
     /**
-     * Gets the capabilities the language server provides.
-     *
-     * @return The capabilities the language server provides.
-     */
-    public ServerCapabilities getCapabilities() {
-        return capabilities;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param capabilities The capabilities the language server provides.
@@ -64,14 +55,20 @@ public class InitializationResult implements Serializable {
             String name = TextUtils.unescape(nodeMemberName.getValue());
             name = name.substring(1, name.length() - 1);
             ASTNode nodeValue = child.getChildren().get(1);
-            switch (name) {
-                case "capabilities": {
-                    capabilities = new ServerCapabilities(nodeValue, deserializer);
-                    break;
-                }
+            if ("capabilities".equals(name)) {
+                capabilities = new ServerCapabilities(nodeValue, deserializer);
             }
         }
         this.capabilities = capabilities != null ? capabilities : new ServerCapabilities();
+    }
+
+    /**
+     * Gets the capabilities the language server provides.
+     *
+     * @return The capabilities the language server provides.
+     */
+    public ServerCapabilities getCapabilities() {
+        return capabilities;
     }
 
     @Override

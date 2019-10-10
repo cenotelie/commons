@@ -45,11 +45,6 @@ public class StoredLong extends StoredEntity {
         this.entry = entry;
     }
 
-    @Override
-    public long getLocation() {
-        return entry;
-    }
-
     /**
      * Creates a new persisted value
      *
@@ -63,6 +58,11 @@ public class StoredLong extends StoredEntity {
             access.writeLong(initValue);
         }
         return new StoredLong(store, entry);
+    }
+
+    @Override
+    public long getLocation() {
+        return entry;
     }
 
     /**

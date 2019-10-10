@@ -32,7 +32,6 @@ import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.*;
 
@@ -52,11 +51,11 @@ public class HttpConnection implements Closeable {
      */
     private static final TrustManager TRUST_MANAGER_ACCEPT_ALL = new X509TrustManager() {
         @Override
-        public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+        public void checkClientTrusted(X509Certificate[] x509Certificates, String s) {
         }
 
         @Override
-        public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+        public void checkServerTrusted(X509Certificate[] x509Certificates, String s) {
         }
 
         @Override
@@ -68,56 +67,7 @@ public class HttpConnection implements Closeable {
     /**
      * Represents a hostname verifier that accepts all hosts
      */
-    private static final HostnameVerifier HOSTNAME_VERIFIER_ACCEPT_ALL = new HostnameVerifier() {
-        @Override
-        public boolean verify(String s, SSLSession sslSession) {
-            return true;
-        }
-    };
-
-    /**
-     * Represents a cookie for a connection
-     */
-    private final class Cookie {
-        /**
-         * The name of the cookie
-         */
-        public final String name;
-        /**
-         * The associated value
-         */
-        public final String value;
-        /**
-         * The properties associated to the cookie
-         */
-        public final Collection<String> properties;
-
-        /**
-         * Initializes this cookie
-         *
-         * @param content The original content
-         */
-        public Cookie(String content) {
-            String data = content.trim();
-            int indexEqual = content.indexOf('=');
-            int indexSemicolon = content.indexOf(';');
-            this.name = content.substring(0, indexEqual).trim();
-            this.value = content.substring(indexEqual + 1, indexSemicolon < 0 ? content.length() : indexSemicolon).trim();
-            this.properties = new ArrayList<>();
-            if (indexSemicolon > 0) {
-                data = data.substring(indexSemicolon + 1).trim();
-                while (!data.isEmpty()) {
-                    indexSemicolon = data.indexOf(';');
-                    String value = data.substring(0, indexSemicolon < 0 ? data.length() : indexSemicolon).trim();
-                    properties.add(value);
-                    if (indexSemicolon < 0)
-                        break;
-                    data = data.substring(indexSemicolon + 1).trim();
-                }
-            }
-        }
-    }
-
+    private static final HostnameVerifier HOSTNAME_VERIFIER_ACCEPT_ALL = (s, sslSession) -> true;
     /**
      * The SSL context for HTTPS connections
      */
@@ -146,7 +96,6 @@ public class HttpConnection implements Closeable {
      * Login/Password for the endpoint, if any, used for an HTTP Basic authentication
      */
     private final String authToken;
-
     /**
      * Initializes this connection
      *
@@ -396,5 +345,48 @@ public class HttpConnection implements Closeable {
             }
         }
         return response;
+    }
+
+    /**
+     * Represents a cookie for a connection
+     */
+    private final class Cookie {
+        /**
+         * The name of the cookie
+         */
+        public final String name;
+        /**
+         * The associated value
+         */
+        public final String value;
+        /**
+         * The properties associated to the cookie
+         */
+        public final Collection<String> properties;
+
+        /**
+         * Initializes this cookie
+         *
+         * @param content The original content
+         */
+        public Cookie(String content) {
+            String data = content.trim();
+            int indexEqual = content.indexOf('=');
+            int indexSemicolon = content.indexOf(';');
+            this.name = content.substring(0, indexEqual).trim();
+            this.value = content.substring(indexEqual + 1, indexSemicolon < 0 ? content.length() : indexSemicolon).trim();
+            this.properties = new ArrayList<>();
+            if (indexSemicolon > 0) {
+                data = data.substring(indexSemicolon + 1).trim();
+                while (!data.isEmpty()) {
+                    indexSemicolon = data.indexOf(';');
+                    String value = data.substring(0, indexSemicolon < 0 ? data.length() : indexSemicolon).trim();
+                    properties.add(value);
+                    if (indexSemicolon < 0)
+                        break;
+                    data = data.substring(indexSemicolon + 1).trim();
+                }
+            }
+        }
     }
 }

@@ -36,6 +36,17 @@ public class DocumentVersion {
     private final DocumentContent content;
 
     /**
+     * Initializes this version
+     *
+     * @param number  The version number for this version
+     * @param content The content of the document in this version
+     */
+    public DocumentVersion(int number, DocumentContent content) {
+        this.number = number;
+        this.content = content;
+    }
+
+    /**
      * Gets the version number for this document version
      *
      * @return The version number
@@ -51,17 +62,6 @@ public class DocumentVersion {
      */
     public DocumentContent getContent() {
         return content;
-    }
-
-    /**
-     * Initializes this version
-     *
-     * @param number  The version number for this version
-     * @param content The content of the document in this version
-     */
-    public DocumentVersion(int number, DocumentContent content) {
-        this.number = number;
-        this.content = content;
     }
 
     /**

@@ -56,24 +56,6 @@ public class MarkupContent implements Serializable {
     private final String content;
 
     /**
-     * Gets the type of the Markup
-     *
-     * @return The type of the Markup
-     */
-    public String getKind() {
-        return kind;
-    }
-
-    /**
-     * Gets the content itself
-     *
-     * @return The content itself
-     */
-    public String getContent() {
-        return content;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param kind    The type of the Markup
@@ -112,6 +94,24 @@ public class MarkupContent implements Serializable {
         }
         this.kind = kind;
         this.content = content;
+    }
+
+    /**
+     * Gets the type of the Markup
+     *
+     * @return The type of the Markup
+     */
+    public String getKind() {
+        return kind;
+    }
+
+    /**
+     * Gets the content itself
+     *
+     * @return The content itself
+     */
+    public String getContent() {
+        return content;
     }
 
     @Override

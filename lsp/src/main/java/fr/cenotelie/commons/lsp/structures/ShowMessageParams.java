@@ -37,24 +37,6 @@ public class ShowMessageParams implements Serializable {
     private final String message;
 
     /**
-     * Gets the message type
-     *
-     * @return The message type
-     */
-    public int getType() {
-        return type;
-    }
-
-    /**
-     * Gets the actual message
-     *
-     * @return The actual message
-     */
-    public String getMessage() {
-        return message;
-    }
-
-    /**
      * Initializes this structure
      *
      * @param type    The message type
@@ -92,6 +74,24 @@ public class ShowMessageParams implements Serializable {
         }
         this.type = type;
         this.message = message;
+    }
+
+    /**
+     * Gets the message type
+     *
+     * @return The message type
+     */
+    public int getType() {
+        return type;
+    }
+
+    /**
+     * Gets the actual message
+     *
+     * @return The actual message
+     */
+    public String getMessage() {
+        return message;
     }
 
     @Override
