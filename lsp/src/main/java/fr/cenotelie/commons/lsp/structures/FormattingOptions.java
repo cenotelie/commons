@@ -154,9 +154,9 @@ public class FormattingOptions implements Serializable {
     public String serializedJSON() {
         StringBuilder builder = new StringBuilder();
         builder.append("{\"tabSize\": ");
-        builder.append(Integer.toString(tabSize));
+        builder.append(tabSize);
         builder.append(", \"insertSpaces\": ");
-        builder.append(Boolean.toString(insertSpaces));
+        builder.append(insertSpaces);
         for (Map.Entry<String, Object> mapping : properties.entrySet()) {
             builder.append(", ");
             builder.append("\"");

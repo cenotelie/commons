@@ -191,7 +191,7 @@ public class Diagnostic implements Serializable {
         builder.append("{\"range\": ");
         builder.append(range.serializedJSON());
         builder.append(", \"severity\": ");
-        builder.append(Integer.toString(severity));
+        builder.append(severity);
         if (code != null) {
             builder.append(", \"code\": ");
             Json.serialize(builder, code);

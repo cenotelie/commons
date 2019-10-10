@@ -113,9 +113,9 @@ public class Position implements Serializable, Comparable<Position> {
     @Override
     public String serializedJSON() {
         return "{\"line\": " +
-                Integer.toString(line) +
+                line +
                 ",\"character\": " +
-                Integer.toString(character) +
+                character +
                 "}";
     }
 

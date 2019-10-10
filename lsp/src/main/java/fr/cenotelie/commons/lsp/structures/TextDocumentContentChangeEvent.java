@@ -185,7 +185,7 @@ public class TextDocumentContentChangeEvent implements Serializable {
             if (!first)
                 builder.append(", ");
             builder.append("\"rangeLength\": ");
-            builder.append(Integer.toString(rangeLength));
+            builder.append(rangeLength);
             first = false;
         }
         if (!first)

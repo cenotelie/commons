@@ -97,7 +97,7 @@ class PositionalSaxHandler extends DefaultHandler implements LexicalHandler {
     }
 
     @Override
-    public void characters(final char ch[], final int start, final int length) throws SAXException {
+    public void characters(final char[] ch, final int start, final int length) throws SAXException {
         textBuffer.append(ch, start, length);
         lastLocation = new TextPosition(locator.getLineNumber(), locator.getColumnNumber());
     }

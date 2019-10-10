@@ -81,7 +81,7 @@ public class ApiError implements Serializable {
 
     @Override
     public String serializedString() {
-        return Integer.toString(code) + " - " + message;
+        return code + " - " + message;
     }
 
     @Override
@@ -89,7 +89,7 @@ public class ApiError implements Serializable {
         return "{\"type\": \"" +
                 TextUtils.escapeStringJSON(ApiError.class.getCanonicalName()) +
                 "\", \"code\": " +
-                Integer.toString(code) +
+                code +
                 ", \"message\": \"" +
                 TextUtils.escapeStringJSON(message) +
                 "\", \"helpLink\": \"" +
@@ -107,7 +107,7 @@ public class ApiError implements Serializable {
         return "{\"type\": \"" +
                 TextUtils.escapeStringJSON(ApiError.class.getCanonicalName()) +
                 "\", \"code\": " +
-                Integer.toString(code) +
+                code +
                 ", \"message\": \"" +
                 TextUtils.escapeStringJSON(message) +
                 "\", \"helpLink\": \"" +

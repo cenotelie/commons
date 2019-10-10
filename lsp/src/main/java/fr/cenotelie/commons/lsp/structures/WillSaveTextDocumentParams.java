@@ -103,7 +103,7 @@ public class WillSaveTextDocumentParams implements Serializable {
         return "{\"textDocument\": " +
                 textDocument.serializedJSON() +
                 ", \"reason\": " +
-                Integer.toString(reason) +
+                reason +
                 "}";
     }
 }

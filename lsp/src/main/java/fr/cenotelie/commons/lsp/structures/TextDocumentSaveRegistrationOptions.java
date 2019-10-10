@@ -85,7 +85,7 @@ public class TextDocumentSaveRegistrationOptions extends TextDocumentRegistratio
         else
             builder.append(documentSelector.serializedJSON());
         builder.append(", \"includeText\": ");
-        builder.append(Boolean.toString(includeText));
+        builder.append(includeText);
         builder.append("}");
         return builder.toString();
     }

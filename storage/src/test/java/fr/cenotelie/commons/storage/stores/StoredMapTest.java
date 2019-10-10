@@ -73,7 +73,7 @@ public class StoredMapTest {
     @Test
     public void testConcurrentInserts() throws IOException {
         Collection<Thread> threads = new ArrayList<>();
-        final boolean successes[] = new boolean[THREAD_COUNT];
+        final boolean[] successes = new boolean[THREAD_COUNT];
         try (ObjectStoreSimple store = new ObjectStoreSimple(new ThreadSafeStorage(new InMemoryStore()))) {
             final StoredMap map = StoredMap.create(store);
             for (int i = 0; i != THREAD_COUNT; i++) {

@@ -138,7 +138,7 @@ public class CompletionRegistrationOptions extends TextDocumentRegistrationOptio
             builder.append("]");
         }
         builder.append(", \"resolveProvider\": ");
-        builder.append(Boolean.toString(resolveProvider));
+        builder.append(resolveProvider);
         builder.append("}");
         return builder.toString();
     }

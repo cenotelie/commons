@@ -150,7 +150,7 @@ public class FastBuffer<T> implements Collection<T> {
     }
 
     @Override
-    public boolean containsAll(Collection<? extends Object> clctn) {
+    public boolean containsAll(Collection<?> clctn) {
         for (Object element : clctn) {
             if (!contains(element))
                 return false;

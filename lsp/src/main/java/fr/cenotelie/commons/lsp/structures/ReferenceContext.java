@@ -80,7 +80,7 @@ public class ReferenceContext implements Serializable {
     @Override
     public String serializedJSON() {
         return "{\"includeDeclaration\": " +
-                Boolean.toString(includeDeclaration) +
+                includeDeclaration +
                 "}";
     }
 }

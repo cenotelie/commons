@@ -156,15 +156,15 @@ public class Json {
         if (object == null) {
             builder.append("null");
         } else if (object instanceof Integer) {
-            builder.append(Integer.toString((Integer) object));
+            builder.append((Integer) object);
         } else if (object instanceof Long) {
-            builder.append(Long.toString((Long) object));
+            builder.append((Long) object);
         } else if (object instanceof Float) {
-            builder.append(Float.toString((Float) object));
+            builder.append((Float) object);
         } else if (object instanceof Double) {
-            builder.append(Double.toString((Double) object));
+            builder.append((Double) object);
         } else if (object instanceof Boolean) {
-            builder.append(Boolean.toString((Boolean) object));
+            builder.append((Boolean) object);
         } else if (object instanceof Serializable) {
             builder.append(((Serializable) object).serializedJSON());
         } else if (object.getClass().isArray()) {

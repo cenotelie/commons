@@ -121,7 +121,7 @@ public class CompletionList implements Serializable {
     public String serializedJSON() {
         StringBuilder builder = new StringBuilder();
         builder.append("{\"isIncomplete\": ");
-        builder.append(Boolean.toString(isIncomplete));
+        builder.append(isIncomplete);
         builder.append(", \"items\": [");
         for (int i = 0; i != items.length; i++) {
             if (i == 0)

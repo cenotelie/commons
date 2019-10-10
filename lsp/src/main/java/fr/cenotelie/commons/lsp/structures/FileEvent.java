@@ -104,7 +104,7 @@ public class FileEvent implements Serializable {
         return "{\"uri\": \"" +
                 TextUtils.escapeStringJSON(uri) +
                 "\", \"type\": " +
-                Integer.toString(type) +
+                type +
                 "}";
     }
 }

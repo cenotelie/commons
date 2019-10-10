@@ -64,7 +64,7 @@ public class LspUtils {
     public static String envelop(String content) {
         if (content == null)
             return null;
-        return HEADER_CONTENT_LENGTH + ": " + Integer.toString(content.length()) + EOL +
+        return HEADER_CONTENT_LENGTH + ": " + content.length() + EOL +
                 HEADER_CONTENT_TYPE + ": " + HEADER_CONTENT_TYPE_VALUE + EOL +
                 EOL +
                 content;

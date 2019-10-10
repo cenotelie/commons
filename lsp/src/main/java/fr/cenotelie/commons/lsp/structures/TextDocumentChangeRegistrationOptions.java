@@ -84,7 +84,7 @@ public class TextDocumentChangeRegistrationOptions extends TextDocumentRegistrat
         else
             builder.append(documentSelector.serializedJSON());
         builder.append(", \"syncKind\": ");
-        builder.append(Integer.toString(syncKind));
+        builder.append(syncKind);
         builder.append("}");
         return builder.toString();
     }

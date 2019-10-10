@@ -102,7 +102,7 @@ public class ShowMessageParams implements Serializable {
     @Override
     public String serializedJSON() {
         return "{\"type\": " +
-                Integer.toString(type) +
+                type +
                 ",\"message\": \"" +
                 TextUtils.escapeStringJSON(message) +
                 "\"}";

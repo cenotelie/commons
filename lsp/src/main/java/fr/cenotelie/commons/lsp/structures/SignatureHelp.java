@@ -132,9 +132,9 @@ public class SignatureHelp implements Serializable {
             builder.append(signatures[i].serializedJSON());
         }
         builder.append("], \"activeSignature\": ");
-        builder.append(Integer.toString(activeSignature));
+        builder.append(activeSignature);
         builder.append(", \"activeParameter\": ");
-        builder.append(Integer.toString(activeParameter));
+        builder.append(activeParameter);
         builder.append("}");
         return builder.toString();
     }

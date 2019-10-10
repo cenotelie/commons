@@ -208,7 +208,7 @@ public class InitializeParams implements Serializable {
     public String serializedJSON() {
         StringBuilder builder = new StringBuilder();
         builder.append("{\"processId\": ");
-        builder.append(Integer.toString(processId));
+        builder.append(processId);
         if (rootPath != null) {
             builder.append(", \"rootPath\": \"");
             builder.append(TextUtils.escapeStringJSON(rootPath));

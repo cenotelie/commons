@@ -96,7 +96,7 @@ public class CodeLensRegistrationOptions extends TextDocumentRegistrationOptions
         else
             builder.append(documentSelector.serializedJSON());
         builder.append(", \"resolveProvider\": ");
-        builder.append(Boolean.toString(resolveProvider));
+        builder.append(resolveProvider);
         builder.append("}");
         return builder.toString();
     }

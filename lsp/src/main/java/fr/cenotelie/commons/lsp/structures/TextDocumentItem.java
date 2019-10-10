@@ -150,7 +150,7 @@ public class TextDocumentItem implements Serializable {
                 "\", \"languageId\": \"" +
                 TextUtils.escapeStringJSON(languageId) +
                 "\", \"version\": " +
-                Integer.toString(version) +
+                version +
                 ", \"text\": \"" +
                 TextUtils.escapeStringJSON(text) +
                 "\"}";

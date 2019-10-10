@@ -435,7 +435,7 @@ public class CompletionItem implements Serializable {
         builder.append("\"");
         if (kind > 0) {
             builder.append(", \"kind\": ");
-            builder.append(Integer.toString(kind));
+            builder.append(kind);
         }
         if (detail != null) {
             builder.append(", \"detail\": \"");
@@ -463,7 +463,7 @@ public class CompletionItem implements Serializable {
         }
         if (insertTextFormat > 0) {
             builder.append(", \"insertTextFormat\": ");
-            builder.append(Integer.toString(insertTextFormat));
+            builder.append(insertTextFormat);
         }
         if (textEdit != null) {
             builder.append(", \"textEdit\": ");

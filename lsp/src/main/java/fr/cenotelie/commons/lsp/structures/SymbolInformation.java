@@ -148,7 +148,7 @@ public class SymbolInformation implements Serializable {
         builder.append("{\"name\": \"");
         builder.append(TextUtils.escapeStringJSON(name));
         builder.append("\", \"kind\": ");
-        builder.append(Integer.toString(kind));
+        builder.append(kind);
         builder.append(", \"location\": ");
         builder.append(location.serializedJSON());
         if (containerName != null) {

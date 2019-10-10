@@ -82,7 +82,7 @@ public class ShowMessageRequestParams extends ShowMessageParams {
     public String serializedJSON() {
         StringBuilder builder = new StringBuilder();
         builder.append("{\"type\": ");
-        builder.append(Integer.toString(getType()));
+        builder.append(getType());
         builder.append(", \"message\": \"");
         builder.append(TextUtils.escapeStringJSON(getMessage()));
         builder.append("\"");

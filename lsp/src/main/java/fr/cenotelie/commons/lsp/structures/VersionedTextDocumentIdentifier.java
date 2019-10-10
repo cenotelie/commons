@@ -84,7 +84,7 @@ public class VersionedTextDocumentIdentifier extends TextDocumentIdentifier {
         return "{\"uri\": \"" +
                 TextUtils.escapeStringJSON(uri) +
                 "\", \"version\": " +
-                Integer.toString(version) +
+                version +
                 "}";
     }
 }

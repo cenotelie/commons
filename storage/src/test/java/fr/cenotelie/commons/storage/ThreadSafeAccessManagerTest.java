@@ -50,7 +50,7 @@ public class ThreadSafeAccessManagerTest {
         final Random random = new Random();
         final ThreadSafeAccessManager manager = new ThreadSafeAccessManager(new InMemoryStore());
 
-        final boolean failures[] = new boolean[THREAD_COUNT];
+        final boolean[] failures = new boolean[THREAD_COUNT];
         for (int i = 0; i != THREAD_COUNT; i++) {
             final int index = i;
             failures[i] = false;

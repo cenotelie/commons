@@ -100,7 +100,7 @@ public class RichString implements Serializable {
                     "\", \"fontSize\": \"" +
                     TextUtils.escapeStringJSON(fontSize.toString()) +
                     "\", \"color\": \"" +
-                    Integer.toString(color) +
+                    color +
                     "\"}";
         }
     }

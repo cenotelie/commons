@@ -115,7 +115,7 @@ public class DocumentHighlight implements Serializable {
         return "{\"range\": " +
                 range.serializedJSON() +
                 ", \"kind\": " +
-                Integer.toString(kind) +
+                kind +
                 "}";
     }
 }

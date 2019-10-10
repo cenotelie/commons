@@ -81,7 +81,7 @@ public class Base64 {
             padding++;
 
         int length = ((chars.length * 3) / 4) - padding;
-        byte result[] = new byte[length];
+        byte[] result = new byte[length];
         int b0, b1, b2, b3;
         int index = 0;
         for (int i = 0; i < chars.length; i += 4) {

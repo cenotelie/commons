@@ -182,7 +182,7 @@ public class JsonRpcResponseError implements JsonRpcResponse {
             builder.append("\"");
         }
         builder.append(", \"error\": {\"code\": ");
-        builder.append(Integer.toString(code));
+        builder.append(code);
         builder.append(", \"message\": \"");
         builder.append(TextUtils.escapeStringJSON(message));
         builder.append("\"");
