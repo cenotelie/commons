@@ -315,8 +315,10 @@ public class WriteAheadLog extends TransactionalStorage {
         }
         try {
             WalTransaction transaction = new WalTransaction(this, indexLastCommitted, writable, autocommit);
+            // guarded by state with STATE_FLAG_TRANSACTIONS_LOCK
             // register this transaction
             if (transactionsCount >= transactions.length) {
+                //noinspection NonAtomicOperationOnVolatileField
                 transactions = Arrays.copyOf(transactions, transactions.length * 2);
                 transactions[transactionsCount] = transaction;
             } else {
@@ -327,6 +329,8 @@ public class WriteAheadLog extends TransactionalStorage {
                     }
                 }
             }
+            // guarded by state with STATE_FLAG_TRANSACTIONS_LOCK
+            //noinspection NonAtomicOperationOnVolatileField
             transactionsCount++;
             transactionsByThread.put(Thread.currentThread(), transaction);
             return transaction;
@@ -404,9 +408,13 @@ public class WriteAheadLog extends TransactionalStorage {
             } catch (IOException exception) {
                 throw new ConcurrentWriteException(exception);
             }
+            // guarded by state with STATE_FLAG_INDEX_LOCK
             // adds to the index
             if (indexLength == index.length)
+                //noinspection NonAtomicOperationOnVolatileField
                 index = Arrays.copyOf(index, index.length * 2);
+            // guarded by state with STATE_FLAG_INDEX_LOCK
+            //noinspection NonAtomicOperationOnVolatileField
             index[indexLength++] = data;
             indexLastCommitted = data.getSequenceNumber();
         } finally {
@@ -436,6 +444,8 @@ public class WriteAheadLog extends TransactionalStorage {
             for (int i = 0; i != transactions.length; i++) {
                 if (transactions[i] == transaction) {
                     transactions[i] = null;
+                    // guarded by state with STATE_FLAG_TRANSACTIONS_LOCK
+                    //noinspection NonAtomicOperationOnVolatileField
                     transactionsCount--;
                     transactionsByThread.remove(transaction.getThread());
                     break;

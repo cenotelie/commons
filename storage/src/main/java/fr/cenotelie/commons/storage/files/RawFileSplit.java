@@ -379,6 +379,8 @@ public class RawFileSplit extends RawFile {
         int fileIndex = (int) (index / fileMaxSize);
         long rest = index % fileMaxSize;
         if (fileIndex >= files.length)
+            // guarded by the caller acquireEndpointAt
+            //noinspection NonAtomicOperationOnVolatileField
             files = Arrays.copyOf(files, bufferSize(fileIndex + 1));
         if (files[fileIndex] == null)
             files[fileIndex] = factory.newStorage(new File(directory, fileName(fileIndex)), writable);

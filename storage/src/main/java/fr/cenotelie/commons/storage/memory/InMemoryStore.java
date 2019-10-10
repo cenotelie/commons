@@ -165,6 +165,8 @@ public class InMemoryStore extends Storage {
         try {
             int requested = (int) (index >>> Constants.PAGE_INDEX_LENGTH);
             while (requested >= pages.length) {
+                // guarded by state
+                //noinspection NonAtomicOperationOnVolatileField
                 pages = Arrays.copyOf(pages, pages.length * 2);
             }
             if (pages[requested] == null)
