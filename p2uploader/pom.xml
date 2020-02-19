@@ -3,11 +3,11 @@
     <parent>
         <groupId>fr.cenotelie.commons</groupId>
         <artifactId>commons-top</artifactId>
-        <version>2.1.2-SNAPSHOT</version>
+        <version>2.2.0</version>
     </parent>
     <artifactId>p2-uploader-maven-plugin</artifactId>
     <packaging>maven-plugin</packaging>
-    <version>2.1.2-SNAPSHOT</version>
+    <version>2.2.0</version>
     <name>Cénotélie Commons - Eclipse P2 Uploader</name>
     <description>Maven plugin to deploy a Eclipse Update Site to a Sonatype Nexus raw repository.</description>
     <url>https://cenotelie.fr/commons</url>
@@ -31,7 +31,7 @@
         <dependency>
             <groupId>fr.cenotelie.commons</groupId>
             <artifactId>commons-utils</artifactId>
-            <version>2.1.2-SNAPSHOT</version>
+            <version>2.2.0</version>
         </dependency>
     </dependencies>
     <build>
