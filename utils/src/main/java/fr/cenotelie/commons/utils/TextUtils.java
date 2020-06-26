@@ -222,10 +222,43 @@ public class TextUtils {
                 builder.append("\\b");
             else if (c == '\f')
                 builder.append("\\f");
-            else
+            else if (c >= 0xD800 && c <= 0xDFFF) {
+                // UTF-16 codepoint
+                char c2 = value.charAt(i + 1);
+                i++;
+                int cp = Character.toCodePoint(c, c2);
+                encodeCodePoint(cp, builder);
+            } else if (c >= 0x7F) {
+                encodeCodePoint(c, builder);
+            } else
                 builder.append(c);
         }
         return builder.toString();
+    }
+
+    /**
+     * Encode a unicode code point escape sequence
+     *
+     * @param cp      The unicode code point
+     * @param builder The string builder to append to
+     */
+    private static void encodeCodePoint(int cp, StringBuilder builder) {
+        String number = Integer.toHexString(cp).toUpperCase();
+        int remaining;
+        String header;
+        if (number.length() <= 4) {
+            remaining = 4 - number.length();
+            header = "u";
+        } else {
+            remaining = 8 - number.length();
+            header = "U";
+        }
+        builder.append("\\");
+        builder.append(header);
+        for (int i = 0; i < remaining; i++) {
+            builder.append("0");
+        }
+        builder.append(number);
     }
 
     /**
